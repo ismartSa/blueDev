@@ -5,8 +5,24 @@ import {
     CheckBadgeIcon,
     KeyIcon,
     ShieldCheckIcon,
+    ClipboardIcon,
+    PlusCircleIcon,
+    ChartBarIcon,
 } from "@heroicons/vue/24/solid";
 import { Link } from "@inertiajs/vue3";
+
+const assessmentItems = [
+    { route: 'assessments.index', icon: ClipboardIcon, label: 'assessmentsList', permission: 'read assessment' },
+    { route: 'assessments.create', icon: PlusCircleIcon, label: 'createAssessment', permission: 'create assessment' },
+    { route: 'assessments.reports', icon: ChartBarIcon, label: 'assessmentReports', permission: 'view assessment reports' }
+];
+
+const quizItems = [
+    { route: 'quizzes.index', icon: ClipboardIcon, label: 'quizzesList', permission: 'read quiz' },
+    { route: 'quizzes.create', icon: PlusCircleIcon, label: 'createQuiz', permission: 'create quiz' },
+    { route: 'quizzes.reports', icon: ChartBarIcon, label: 'quizReports', permission: 'view quiz reports' }
+];
+
 </script>
 <template>
     <div class="text-slate-300 pt-5 pb-20">
@@ -76,6 +92,29 @@ import { Link } from "@inertiajs/vue3";
                     <span class="ml-3">{{ lang().label.user }}</span>
                 </Link>
             </li>
+            <!-- courses -->
+            <li v-show="can(['read user'])" class="py-2">
+                <p>{{ lang().label.courses }}</p>
+            </li>
+            <li
+                v-show="can(['read user'])"
+                class="text-white rounded-lg hover:bg-primary dark:hover:bg-primary"
+                v-bind:class="
+                    route().current('courses.index')
+                        ? 'bg-primary'
+                        : 'bg-slate-700/40 dark:bg-slate-800/40'
+                "
+            >
+                <Link
+                    :href="route('courses.index')"
+                    class="flex items-center py-2 px-4"
+                >
+                    <UserIcon class="w-6 h-5" />
+                    <span class="ml-3">{{ lang().label.courses }}</span>
+                </Link>
+            </li>
+                <!--  end courses -->
+
             <li v-show="can(['read role', 'read permission'])" class="py-2">
                 <p>{{ lang().label.access }}</p>
             </li>
@@ -113,6 +152,28 @@ import { Link } from "@inertiajs/vue3";
                     <span class="ml-3">{{ lang().label.permission }}</span>
                 </Link>
             </li>
+
+            <!-- إضافة قسم الاختبارات -->
+            <li v-show="can(['read quiz'])" class="py-2">
+                <p>{{ lang().label.quizzes }}</p>
+            </li>
+            <li
+                v-for="item in quizItems"
+                :key="item.route"
+                v-show="can([item.permission])"
+                class="text-white rounded-lg hover:bg-primary dark:hover:bg-primary"
+                :class="route().current(item.route) ? 'bg-primary' : 'bg-slate-700/40 dark:bg-slate-800/40'"
+            >
+                <Link
+                    :href="route(item.route)"
+                    class="flex items-center py-2 px-4"
+                >
+                    <component :is="item.icon" class="w-6 h-5" />
+                    <span class="ml-3">{{ lang().label[item.label] }}</span>
+                </Link>
+            </li>
+
+            <!-- العناصر الأخرى -->
         </ul>
     </div>
 </template>

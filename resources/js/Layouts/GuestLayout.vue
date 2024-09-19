@@ -7,8 +7,10 @@ import SwitchLangNavbar from "@/Components/SwitchLangNavbar.vue";
 
 <template>
     <div
+
         class="min-h-screen flex flex-col-2 sm:justify-center items-center pt-6 sm:pt-0 bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-300"
     >
+    
         <div
             class="w-full sm:max-w-md lg:max-w-4xl my-4 bg-white dark:bg-slate-800 shadow-md overflow-hidden sm:rounded-lg"
         >

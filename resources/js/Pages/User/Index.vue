@@ -83,6 +83,7 @@ const select = () => {
         data.multipleSelect = false;
     }
 };
+
 </script>
 
 <template>

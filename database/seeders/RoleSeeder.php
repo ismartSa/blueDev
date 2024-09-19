@@ -23,6 +23,10 @@ class RoleSeeder extends Seeder
             'update user',
             'read user',
             'create user',
+            'delete course',
+            'update course',
+            'read course',
+            'create course',
             'delete role',
             'update role',
             'read role',
@@ -46,7 +50,7 @@ class RoleSeeder extends Seeder
         $operator = Role::create([
             'name'          => 'operator'
         ]);
-        
+
         $operator->givePermissionTo([
             'read user',
             'create user',
