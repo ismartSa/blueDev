@@ -13,6 +13,7 @@ const props = defineProps({
     users: Number,
     roles: Number,
     permissions: Number,
+    courses: Number,
 });
 </script>
 
@@ -97,6 +98,34 @@ const props = defineProps({
                     >
                         <Link
                             :href="route('permission.index')"
+                            class="flex justify-between items-center"
+                        >
+                            <p>{{ lang().label.more }}</p>
+                            <ChevronRightIcon class="w-5 h-5" />
+                        </Link>
+                    </div>
+                </div>
+                <div>
+                    <div
+                        class="rounded-t-none sm:rounded-t-lg px-4 py-6 flex justify-between bg-cyan-300/70 dark:bg-bg-cyan-300/80 items-center overflow-hidden"
+                    >
+                        <div class="flex flex-col">
+                            <p class="text-4xl font-bold">
+                                {{ props.courses }}
+                            </p>
+                            <p class="text-md md:text-lg uppercase">
+                                {{ lang().label.courses }}
+                            </p>
+                        </div>
+                        <div>
+                            <ShieldCheckIcon class="w-16 h-auto" />
+                        </div>
+                    </div>
+                    <div
+                        class="bg-cyan-300/90 dark:bg-cyan-300/90 rounded-b-none sm:rounded-b-lg p-2 overflow-hidden hover:bg-cyan-300/90 dark:hover:bg-cyan-300/70"
+                    >
+                        <Link
+                            :href="route('courses.index')"
                             class="flex justify-between items-center"
                         >
                             <p>{{ lang().label.more }}</p>

@@ -93,6 +93,7 @@ defineProps({
                                         class="ml-4 text-lg text-slate-700 dark:text-slate-500 underline"
                                         >{{ lang().label.register }}</Link
                                     >
+                                 
                                 </template>
                             </div>
                         </div>

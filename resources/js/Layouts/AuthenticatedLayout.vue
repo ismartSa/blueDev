@@ -11,6 +11,7 @@ const emit = defineEmits(["close", "open"]);
 
 <template>
     <div class="flex w-full overflow-hidden">
+        
         <SideBarVue :open="sidebarOpened" @close="sidebarOpened = false" />
         <div
             class="pl-0 lg:pl-64 w-full min-h-screen block bg-slate-100 dark:bg-slate-900"

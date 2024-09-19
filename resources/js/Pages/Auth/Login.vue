@@ -4,6 +4,7 @@ import GuestLayout from "@/Layouts/GuestLayout.vue";
 import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import DangerButton from "@/Components/DangerButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import { Head, Link, useForm } from "@inertiajs/vue3";
 import AuntheticationIllustration from "@/Components/AuntheticationIllustration.vue";
@@ -23,7 +24,14 @@ const submit = () => {
     form.post(route("login"), {
         onFinish: () => form.reset("password"),
     });
+
 };
+const loginByGoogle = () => {
+    //form.get(route("google.login"), {});
+    window.location.href = route('google.login');
+
+};
+
 </script>
 
 <template>
@@ -34,6 +42,8 @@ const submit = () => {
         </template>
         <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
             {{ status }}
+
+           
         </div>
 
         <form @submit.prevent="submit">
@@ -85,6 +95,7 @@ const submit = () => {
                 >
                     {{ lang().label.lost_password }}
                 </Link>
+
                 <PrimaryButton
                     class="ml-4"
                     :class="{ 'opacity-25': form.processing }"
@@ -96,7 +107,22 @@ const submit = () => {
                             : lang().button.login
                     }}
                 </PrimaryButton>
-            </div>
+                <form @submit.prevent="loginByGoogle">
+             <DangerButton class="ml-4"  :class="{ 'opacity-25': form.processing }"
+                    :disabled="form.processing" >
+                <span class="ml-2">Login with Google</span>
+              </DangerButton>
         </form>
+            </div>
+
+
+
+
+        </form>
+
+
+
+
+
     </GuestLayout>
 </template>
