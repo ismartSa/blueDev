@@ -42,9 +42,17 @@
                   <Link
                     v-else
                     :href="route('course.player', [course.id, course.slug])"
-                    class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out transform hover:scale-105 inline-block"
+                    class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out transform hover:scale-105 inline-block mb-2"
                   >
                     Go to Course
+                  </Link>
+                  <!-- New button for Course Quizzes -->
+                  <Link
+                    v-if="isEnrolled"
+                    :href="route('course.quizzes', course.id)"
+                    class="w-full bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out transform hover:scale-105 inline-block"
+                  >
+                    Course Quizzes
                   </Link>
                 </div>
               </div>

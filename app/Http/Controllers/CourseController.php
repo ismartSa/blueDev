@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User;
 use Inertia\Inertia;
@@ -9,15 +10,15 @@ use App\Models\Course;
 use App\Models\Lecture;
 use App\Models\Section;
 use App\Models\Enrollment;
+use App\Models\QuizAttempt;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\course\CourseStoreRequest;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Log;
 
 class CourseController extends Controller
 {
@@ -216,7 +217,7 @@ public function storeSection(Request $request, Course $course)
         'firstLecture' => $data['lectureData'],
         'completionPercentage' => $data['completionPercentage'],
         'breadcrumbs' => [
-            ['label' => 'Course List', 'href' => route('course.courseList')],
+
             ['label' => $data['lectureData']['title'], 'href' => route('course.player', ['courseId' => $courseId, 'courseSlug' => $courseSlug])]
         ],
     ]);
@@ -412,5 +413,30 @@ private function getCourseWithLectureData($courseId, $courseSlug, $lectureID = n
         } catch (\Throwable $th) {
             return back()->with('error', __('app.label.deleted_error', ['name' => count($request->id) . ' ' . __('app.label.user')]) . $th->getMessage());
         }
+    }
+
+    public function quizzes(Course $course)
+    {
+        $quizzes = $course->quizzes;
+        $quizHistory = QuizAttempt::where('user_id', auth()->id())
+                                   ->where('course_id', $course->id)
+                                   ->with('quiz:id,title')
+                                   ->orderBy('created_at', 'desc')
+                                   ->get()
+                                   ->map(function ($attempt) {
+                                       return [
+                                           'id' => $attempt->id,
+                                           'quiz_title' => $attempt->quiz->title,
+                                           'date' => $attempt->created_at,
+                                           'score' => $attempt->score,
+                                           'passed' => $attempt->passed,
+                                       ];
+                                   });
+
+        return Inertia::render('Course/Quizzes', [
+            'course' => $course,
+            'quizzes' => $quizzes,
+            'quizHistory' => $quizHistory,
+        ]);
     }
 }

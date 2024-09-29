@@ -27,9 +27,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('quiz_id')->constrained()->onDelete('cascade');
             $table->integer('correct_answers_required');
+            $table->string('question_title_en');
+            $table->string('question_title_ar');
             $table->integer('question_type_id');
-            $table->text('question_title');
-            $table->text('question_title_ar');
             $table->string('image')->nullable();
             $table->boolean('demo')->default(false);
             $table->timestamps();
@@ -38,11 +38,12 @@ return new class extends Migration
         Schema::create('answers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('question_id')->constrained()->onDelete('cascade');
-            $table->text('answer');
-            $table->text('answer_ar');
+            $table->string('answer_en');
+            $table->string('answer_ar');
+            $table->boolean('is_correct');
             $table->text('feedback')->nullable();
             $table->text('feedback_ar')->nullable();
-            $table->boolean('is_correct');
+    
             $table->timestamps();
         });
     }

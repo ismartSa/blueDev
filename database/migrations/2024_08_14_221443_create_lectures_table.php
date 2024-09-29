@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('uuid')->unique()->nullable();
             $table->string('name');
             $table->string('title');
+            $table->string('slug')->unique()->nullable();
             $table->foreignId('course_id')->constrained()->onDelete('cascade');
             $table->foreignId('section_id')->constrained()->onDelete('cascade');
             $table->text('description')->nullable();
