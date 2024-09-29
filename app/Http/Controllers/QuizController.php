@@ -14,11 +14,21 @@ use Illuminate\Support\Facades\DB;
 
 class QuizController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $quizzes = Quiz::withCount('questions')->get();
+        $search = $request->input('search');
+        $perPage = $request->input('perPage', 10); // Default to 10 items per page
+
+        $quizzes = Quiz::withCount('questions')
+            ->when($search, function ($query, $search) {
+                return $query->where('title', 'like', "%{$search}%")
+                             ->orWhere('description', 'like', "%{$search}%");
+            })
+            ->paginate($perPage);
+
         return Inertia::render('Quizzes/Index', [
-            'quizzes' => $quizzes
+            'quizzes' => $quizzes,
+            'filters' => $request->only('search', 'perPage')
         ]);
     }
 
@@ -72,9 +82,16 @@ class QuizController extends Controller
         // التحقق من الصحة وتحديث الاختبار
     }
 
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Quiz  $quiz
+     * @return \Illuminate\Http\Response
+     */
     public function destroy(Quiz $quiz)
     {
-        // حذف الاختبار
+        $quiz->delete();
+        return redirect()->route('quizzes.index')->with('success', 'Quiz deleted successfully.');
     }
 
     public function reports()
@@ -243,5 +260,13 @@ class QuizController extends Controller
         });
 
         return back()->with('success', 'Questions imported successfully from JSON.');
+    }
+
+    public function questionsList(Quiz $quiz)
+    {
+        $quiz->load('questions.answers');
+        return Inertia::render('Quizzes/QuestionsList', [
+            'quiz' => $quiz
+        ]);
     }
 }

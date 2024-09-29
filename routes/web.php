@@ -101,6 +101,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/courses/{course}/sections/{section}', 'destroySection')->name('course.sections.destroy');
         Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
         Route::delete('/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+        Route::get('/courses/{course}/quizzes', [CourseController::class, 'quizzes'])->name('course.quizzes');
     });
 
     // Section routes
@@ -167,11 +168,15 @@ Route::post('/quizzes/{quiz}/import-questions-json', [QuizController::class, 'im
 
 Route::get('/quizzes/template/download', [QuizController::class, 'downloadTemplate'])->name('quizzes.template.download');
 
+Route::get('/quizzes/{quiz}/questions', [QuizController::class, 'questionsList'])->name('quizzes.questions.list');
+
 Route::get('/quizzes/{quiz}/questions/create', [QuestionController::class, 'create'])->name('quizzes.questions.create');
 Route::post('/quizzes/{quiz}/questions', [QuestionController::class, 'store'])->name('quizzes.questions.store');
 
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::post('/courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');
 Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.details');
+
+Route::delete('/quizzes/{quiz}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
 
 

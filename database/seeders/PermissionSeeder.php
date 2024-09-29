@@ -30,6 +30,10 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'read role']);
         Permission::create(['name' => 'create role']);
 
+        Permission::create(['name' => 'read quiz']);
+        Permission::create(['name' => 'create quiz']);
+        Permission::create(['name' => 'view quiz reports']);
+        
         Permission::create(['name' => 'delete permission']);
         Permission::create(['name' => 'update permission']);
         Permission::create(['name' => 'read permission']);
