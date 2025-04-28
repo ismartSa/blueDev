@@ -269,4 +269,14 @@ class QuizController extends Controller
             'quiz' => $quiz
         ]);
     }
+
+    public function edit(Quiz $quiz)
+    {
+        $courses = Course::with('sections')->get();
+    
+        return Inertia::render('Quizzes/Edit', [
+            'quiz' => $quiz,
+            'courses' => $courses,
+        ]);
+    }
 }
