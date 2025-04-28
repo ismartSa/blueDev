@@ -418,6 +418,7 @@ private function getCourseWithLectureData($courseId, $courseSlug, $lectureID = n
     public function quizzes(Course $course)
     {
         $quizzes = $course->quizzes;
+     
         $quizHistory = QuizAttempt::where('user_id', auth()->id())
                                    ->where('course_id', $course->id)
                                    ->with('quiz:id,title')

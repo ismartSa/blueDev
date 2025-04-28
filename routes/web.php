@@ -179,4 +179,6 @@ Route::get('/courses/{course}', [CourseController::class, 'show'])->name('course
 
 Route::delete('/quizzes/{quiz}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
 
+Route::get('/quizzes/{quiz}/edit', [QuizController::class, 'edit'])->name('quizzes.edit');
+
 
