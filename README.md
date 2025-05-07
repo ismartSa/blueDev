@@ -1,38 +1,42 @@
-# Screenshots
-<p align="center">
-  <img alt="Light" src="https://i.postimg.cc/HLjcWFM4/Snipaste-2022-12-26-13-47-15.png" width="45%">&nbsp;
-  <img alt="Dark" src="https://i.postimg.cc/X7QYZQ42/Snipaste-2022-12-26-13-47-21.png" width="45%">
-  <img alt="Login" src="https://i.postimg.cc/8zcXDPZy/Snipaste-2022-12-26-13-58-34.png" width="45%">&nbsp;
-  <img alt="Register" src="https://i.postimg.cc/wMbJkHDv/Snipaste-2022-12-26-13-59-48.png" width="45%">
-  <img alt="Dashboard" src="https://i.postimg.cc/XJqYk5Lf/Snipaste-2022-12-26-14-01-12.png" width="45%">&nbsp;
-  <img alt="User" src="https://i.postimg.cc/wj9ys7CV/Snipaste-2022-12-26-14-01-58.png" width="45%">
-  <img alt="User" src="https://i.postimg.cc/DwWZGLC1/Snipaste-2022-12-26-14-10-29.png" width="45%">&nbsp;
-  <img alt="Permission" src="https://i.postimg.cc/QC6PkB6T/Snipaste-2022-12-26-14-04-01.png" width="45%">
-  <img alt="Modal Form" src="https://i.postimg.cc/vmcWc4nK/Snipaste-2022-12-26-14-08-50.png" width="45%">&nbsp;
-  <img alt="Modal Confirm" src="https://i.postimg.cc/7L3q1VSJ/Snipaste-2022-12-26-14-11-02.png" width="45%">
-  <img alt="Toast Notification Success" src="https://i.postimg.cc/pXF4ndfp/Snipaste-2022-12-26-14-11-53.png" width="45%">&nbsp;
-  <img alt="Toast Notification Error" src="https://i.postimg.cc/TPp4fY3d/Snipaste-2022-12-26-14-13-50.png" width="45%">
-</p>
+# Laravel-Brive مشروع
 
-# Features
-- Role Based Access Control
-- Responsive Design
-- Modal Form
-- Bulk Action
-- Light/Dark Mode
-- Toast Notification
-- Rich Feature Datatable Serverside
-- Tooltip
-- Localization (EN/ID)
-- SSR (Server Side Rendering)
-# Requirements
-- Php 8
+## نظرة عامة
+مشروع Laravel-Brive هو تطبيق ويب مبني على إطار عمل Laravel مع دعم للمصادقة والواجهة الأمامية الحديثة.
+
+## المتطلبات الأساسية
+- PHP 8.2.0 أو أحدث
 - Composer
-- Mysql
-- Apache
-# Installation
-``` bash
-git clone https://github.com/erikwibowo/Laravel-Brive.git
+- Node.js
+- Docker (اختياري، للتطوير باستخدام Laravel Sail)
+
+## التقنيات المستخدمة
+- Laravel Framework 11.0
+- Inertia.js للواجهة الأمامية
+- Laravel Socialite للمصادقة الاجتماعية
+- Laravel Sanctum للمصادقة API
+- TailwindCSS للتصميم
+
+## الميزات الرئيسية
+1. نظام المصادقة
+   - تسجيل الدخول والتسجيل التقليدي
+   - المصادقة الاجتماعية عبر Laravel Socialite
+   - مصادقة API باستخدام Sanctum
+
+2. واجهة المستخدم
+   - واجهة حديثة مع Inertia.js
+   - تصميم متجاوب باستخدام TailwindCSS
+   - دعم للتحميل التدريجي
+
+3. بيئة التطوير
+   - دعم Docker مع Laravel Sail
+   - تكامل مع أدوات التطوير الحديثة
+   - دعم للتطوير المحلي السريع
+
+## التثبيت والإعداد
+
+1. استنساخ المشروع:
+```bash
+git clone <repository-url>
 cd Laravel-Brive
 composer update
 npm install
