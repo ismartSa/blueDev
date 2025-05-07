@@ -2,73 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\Role;
-use App\Models\User;
-use Inertia\Inertia;
-use App\Models\Course;
-use App\Models\Lecture;
-use App\Models\Section;
-use App\Models\Enrollment;
-use App\Models\QuizAttempt;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use App\Http\Requests\User\UserStoreRequest;
-use App\Http\Requests\course\CourseStoreRequest;
+use App\Services\CourseService;
+use App\Repositories\CourseRepository;
+use App\Http\Requests\CourseStoreRequest;
+use App\Http\Resources\CourseResource;
 
 class CourseController extends Controller
 {
+    protected $courseService;
+    protected $courseRepository;
 
-
-
-    public function __construct()
+    public function __construct(CourseService $courseService, CourseRepository $courseRepository)
     {
-
-         $this->middleware('permission:create course', ['only' => ['create', 'store']]);
-         $this->middleware('permission:read course', ['only' => ['index', 'show']]);
-         $this->middleware('permission:update course', ['only' => ['edit', 'update']]);
-         $this->middleware('permission:delete course', ['only' => ['destroy', 'destroyBulk']]);
+        $this->courseService = $courseService;
+        $this->courseRepository = $courseRepository;
+        $this->middleware('permission:view courses', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit courses', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete courses', ['only' => ['destroy']]);
     }
-  /**
-     * Display a listing of the resource.s
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+
+    public function index()
     {
-        $user = auth()->user();
-        $query = Course::query();
-
-        // تطبيق فلتر البحث إذا تم توفيره
-        if ($request->has('search')) {
-            $searchTerm = $request->input('search');
-            $query->where('title', 'like', "%{$searchTerm}%")
-                  ->orWhere('description', 'like', "%{$searchTerm}%");
-        }
-
-        $courses = $query->get();
-
-
-        return Inertia::render('Course/Index', [
-            'courses' => $courses,
-            'filters' => $request->only(['search']),
-            'breadcrumbs' => [['label' => __('app.label.courses'), 'href' => route('courses.index')]],
+        $courses = $this->courseRepository->getActiveCourses();
+        return inertia('Courses/Index', [
+            'courses' => CourseResource::collection($courses)
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function store(CourseStoreRequest $request)
     {
-
-        return Inertia::render('Course/Create');
+        try {
+            $course = $this->courseService->create($request->validated());
+            return redirect()->route('courses.show', $course)
+                ->with('success', 'تم إنشاء الدورة بنجاح');
+        } catch (CourseException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function createLecture(Course $course ,$courseId)
@@ -418,7 +388,7 @@ private function getCourseWithLectureData($courseId, $courseSlug, $lectureID = n
     public function quizzes(Course $course)
     {
         $quizzes = $course->quizzes;
-     
+
         $quizHistory = QuizAttempt::where('user_id', auth()->id())
                                    ->where('course_id', $course->id)
                                    ->with('quiz:id,title')
