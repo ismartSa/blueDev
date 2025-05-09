@@ -1,0 +1,46 @@
+public function enroll($courseId)
+{
+    try {
+        $user = auth()->user();
+        $course = Course::findOrFail($courseId);
+
+        // التحقق من حالة الدورة
+        if ($course->status !== 'published') {
+            return back()->with('error', 'هذه الدورة غير متاحة للتسجيل حالياً');
+        }
+
+        // التحقق من التسجيل المسبق
+        $existingEnrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $courseId)
+            ->first();
+
+        if ($existingEnrollment) {
+            return redirect()->route('course.player', [
+                'courseId' => $course->id,
+                'courseSlug' => $course->slug
+            ])->with('info', 'أنت مسجل بالفعل في هذه الدورة');
+        }
+
+        // إنشاء تسجيل جديد
+        Enrollment::create([
+            'user_id' => $user->id,
+            'course_id' => $courseId,
+            'enrollment_status' => 'active',
+            'enrollment_date' => Carbon::now()
+        ]);
+
+        // تسجيل النشاط
+        activity()
+            ->causedBy($user)
+            ->performedOn($course)
+            ->log('تم التسجيل في الدورة');
+
+        return redirect()->route('course.details', [
+            'id' => $course->id,
+            'courseSlug' => $course->slug
+        ])->with('success', 'تم التسجيل في الدورة بنجاح');
+    } catch (\Exception $e) {
+        \Log::error('خطأ في التسجيل بالدورة: ' . $e->getMessage());
+        return back()->with('error', 'حدث خطأ أثناء التسجيل في الدورة، يرجى المحاولة مرة أخرى');
+    }
+}

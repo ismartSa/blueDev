@@ -9,7 +9,10 @@ use Illuminate\Support\Str;
 
 class CourseSeeder extends Seeder
 {
-    public function run()
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
     {
         $courses = [
             [
@@ -19,6 +22,7 @@ class CourseSeeder extends Seeder
                 'duration' => 30,
                 'status' => true,
                 'intro_video' => 'https://example.com/intro-video.mp4',
+                'price' => 0, // دورة مجانية
             ],
             [
                 'title' => 'Advanced JavaScript Programming',
@@ -27,6 +31,7 @@ class CourseSeeder extends Seeder
                 'duration' => 45,
                 'status' => true,
                 'intro_video' => 'https://example.com/advanced-js-intro.mp4',
+                'price' => 49.99,
             ],
             [
                 'title' => 'PHP for Beginners',
@@ -35,26 +40,33 @@ class CourseSeeder extends Seeder
                 'duration' => 35,
                 'status' => true,
                 'intro_video' => 'https://example.com/php-intro.mp4',
-            ],
-            [
-                'title' => 'Laravel Framework Essentials',
-                'description' => 'Master Laravel, the PHP framework for web artisans.',
-                'body' => 'Discover Laravel\'s powerful features including Eloquent ORM, routing, and Blade templating...',
-                'duration' => 50,
-                'status' => true,
-                'intro_video' => 'https://example.com/laravel-intro.mp4',
-            ],
-            [
-                'title' => 'Vue.js Fundamentals',
-                'description' => 'Build dynamic user interfaces with Vue.js.',
-                'body' => 'Learn component-based architecture, state management, and more with Vue.js...',
-                'duration' => 40,
-                'status' => true,
-                'intro_video' => 'https://example.com/vuejs-intro.mp4',
+                'price' => 29.99,
             ],
         ];
 
-        foreach ($courses as $courseData) {
+        $this->createCoursesWithSections($courses);
+
+        // إنشاء دورات إضافية باستخدام المصنع
+        Course::factory(3)->create()->each(function ($course) {
+            // إنشاء 2-4 أقسام لكل دورة
+            $sectionCount = rand(2, 4);
+            for ($i = 1; $i <= $sectionCount; $i++) {
+                Section::create([
+                    'course_id' => $course->id,
+                    'title' => "Section $i for " . $course->title,
+                    'description' => "This section covers important topics related to " . $course->title,
+                    'order' => $i,
+                ]);
+            }
+        });
+    }
+
+    /**
+     * إنشاء الدورات مع الأقسام الخاصة بها
+     */
+    private function createCoursesWithSections(array $coursesData): void
+    {
+        foreach ($coursesData as $courseData) {
             $course = Course::create([
                 'title' => $courseData['title'],
                 'name' => $courseData['title'],
@@ -65,13 +77,16 @@ class CourseSeeder extends Seeder
                 'image' => 'https://via.placeholder.com/640x480.png/005588?text=' . urlencode($courseData['title']),
                 'status' => $courseData['status'],
                 'intro_video' => $courseData['intro_video'],
+                'price' => $courseData['price'] ?? 0,
             ]);
 
-            // Create sections for each course
-            for ($i = 1; $i <= 3; $i++) {
+            // إنشاء أقسام لكل دورة
+            $sectionCount = rand(2, 4);
+            for ($i = 1; $i <= $sectionCount; $i++) {
                 Section::create([
                     'course_id' => $course->id,
                     'title' => "Section $i for " . $course->title,
+                    'description' => "This section covers important topics related to " . $course->title,
                     'order' => $i,
                 ]);
             }

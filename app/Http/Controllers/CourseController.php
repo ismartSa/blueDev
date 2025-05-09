@@ -6,6 +6,17 @@ use App\Services\CourseService;
 use App\Repositories\CourseRepository;
 use App\Http\Requests\CourseStoreRequest;
 use App\Http\Resources\CourseResource;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use App\Models\Course;
+use App\Models\Section;
+use App\Models\Lecture;
+use App\Models\Enrollment;
+use App\Models\QuizAttempt;
+use Carbon\Carbon;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Redirect;
 
 class CourseController extends Controller
 {
@@ -30,69 +41,99 @@ class CourseController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created course in storage.
+     *
+     * @param  \App\Http\Requests\CourseStoreRequest  $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(CourseStoreRequest $request)
     {
         try {
-            $course = $this->courseService->create($request->validated());
-            return redirect()->route('courses.show', $course)
-                ->with('success', 'تم إنشاء الدورة بنجاح');
-        } catch (CourseException $e) {
-            return back()->with('error', $e->getMessage());
+            // If using the service approach
+            if (method_exists($this->courseService, 'create')) {
+                $course = $this->courseService->create($request->validated());
+                return redirect()->route('courses.show', $course)
+                    ->with('success', 'تم إنشاء الدورة بنجاح');
+            }
+            // Fallback to direct creation if service method doesn't exist
+            else {
+                $course = new Course($request->except('image'));
+                $course->slug = Str::slug($request->title);
+
+                if ($request->hasFile('image')) {
+                    $imagePath = $request->file('image')->store('course_images', 'public');
+                    $course->image = $imagePath;
+                }
+
+                $course->save();
+                Log::info('Course created successfully', ['course_id' => $course->id]);
+
+                return redirect()->route('courses.index')
+                    ->with('success', 'Course created successfully.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error creating course', ['error' => $e->getMessage()]);
+            return back()->with('error', 'An error occurred while creating the course: ' . $e->getMessage());
         }
     }
 
-    public function createLecture(Course $course ,$courseId)
+    public function createLecture(Course $course)
     {
-        $sections = Section::where('course_id',$courseId)->get(); // Fetch sections for the course
+        $sections = Section::where('course_id', $course->id)->get();
 
-        $url = route('course.create.lecture', ['courseId' => $courseId]);
+        $url = route('course.create.lecture', ['courseId' => $course->id]);
         return Inertia::render('Course/CreateLecture', [
             'title'         => __('app.label.courses'),
-            'course'         => $course,
-            'sections'       => $sections,
-            'breadcrumbs'   => [['label' => __('app.label.learn'), 'href' =>  $url ]],
+            'course'        => $course,
+            'sections'      => $sections,
+            'breadcrumbs'   => [['label' => __('app.label.learn'), 'href' => $url]],
         ]);
     }
 
     public function storeLecture(Request $request, Course $course)
-{
-    $request->validate([
-        'title' => 'required|string',
-        'section_id' => 'required|exists:sections,id',
-        'video_url' => 'required|url',
-        'duration' => 'required|numeric',
-    ]);
+    {
+        $request->validate([
+            'title' => 'required|string',
+            'section_id' => 'required|exists:sections,id',
+            'video_url' => 'required|url',
+            'duration' => 'required|numeric',
+        ]);
 
+        $lecture = new Lecture([
+            'title' => $request->input('title'),
+            'section_id' => $request->input('section_id'),
+            'course_id' => $course->id, // استخدام معرف الكورس من المعامل
+            'video_url' => $request->input('video_url'),
+            'duration' => $request->input('duration'),
+        ]);
 
-    $lecture = new Lecture();
-    $lecture->title = $request->input('title');
-    $lecture->section_id = $request->input('section_id');
-    $lecture->course_id = $request->input('course_id');
-    $lecture->video_url = $request->input('video_url');
-    $lecture->duration = $request->input('duration');
-    $lecture->save();
+        $lecture->save();
 
-    return redirect()->route('course.show', ['course' => $course->id]);
-}
+        return redirect()->route('course.details', ['id' => $course->id, 'courseSlug' => $course->slug])
+            ->with('success', 'تم إضافة المحاضرة بنجاح');
+    }
 
 
 
 public function storeSection(Request $request, Course $course)
 {
     $request->validate([
-        'title'     => 'required|string',
-        'order'     => 'required',
-        'description'   =>'required',
-
+        'title'       => 'required|string',
+        'order'       => 'required',
+        'description' => 'required',
     ]);
 
-    $Section = new Section();
-    $Section->title = $request->input('title');
-    $Section->order = $request->input('order');
-    $Section->description = $request->input('description');
-    $Section->course_id =$course->id;
-    $Section->save();
-    return back()->with('success', __('app.label.created_successfully', ['name' => $course->name]));
+    $section = new Section([
+        'title' => $request->input('title'),
+        'order' => $request->input('order'),
+        'description' => $request->input('description'),
+        'course_id' => $course->id,
+    ]);
+
+    $section->save();
+
+    return back()->with('success', __('app.label.created_successfully', ['name' => $course->title]));
 }
 
     /**
@@ -101,7 +142,7 @@ public function storeSection(Request $request, Course $course)
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store1(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
@@ -361,27 +402,26 @@ private function getCourseWithLectureData($courseId, $courseSlug, $lectureID = n
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  \App\Models\Course  $course
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Course $Course)
+    public function destroy(Course $course)
     {
         try {
-            $Course->delete();
-            return back()->with('success', __('app.label.deleted_successfully', ['name' => $Course->name]));
-        } catch (\Throwable $th) {
-            return back()->with('error', __('app.label.deleted_error', ['name' => $Course->name]) . $th->getMessage());
+            $course->delete();
+            return back()->with('success', __('app.label.deleted_successfully', ['name' => $course->title]));
+        } catch (\Exception $e) {
+            return back()->with('error', __('app.label.deleted_error', ['name' => $course->title]) . $e->getMessage());
         }
     }
 
     public function destroyBulk(Request $request)
     {
         try {
-            $Course = Course::whereIn('id', $request->id);
-            $Course->delete();
-            return back()->with('success', __('app.label.deleted_successfully', ['name' => count($request->id) . ' ' . __('app.label.user')]));
-        } catch (\Throwable $th) {
-            return back()->with('error', __('app.label.deleted_error', ['name' => count($request->id) . ' ' . __('app.label.user')]) . $th->getMessage());
+            Course::whereIn('id', $request->id)->delete();
+            return back()->with('success', __('app.label.deleted_successfully', ['name' => count($request->id) . ' ' . __('app.label.courses')]));
+        } catch (\Exception $e) {
+            return back()->with('error', __('app.label.deleted_error', ['name' => count($request->id) . ' ' . __('app.label.courses')]) . $e->getMessage());
         }
     }
 
