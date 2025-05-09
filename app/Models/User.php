@@ -7,6 +7,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -48,7 +49,7 @@ class User extends Authenticatable
 
     public function getEmailVerifiedAtAttribute()
     {
-        return $this->attributes['email_verified_at'] == null ? null:date('d-m-Y H:i', strtotime($this->attributes['email_verified_at']));
+        return $this->attributes['email_verified_at'] == null ? null : date('d-m-Y H:i', strtotime($this->attributes['email_verified_at']));
     }
 
     public function getPermissionArray()
@@ -57,13 +58,14 @@ class User extends Authenticatable
             return [$pr['name'] => true];
         });
     }
-    
-    public function enrollments()
+
+    public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
     }
-    public function lectureProgress()
-{
-    return $this->hasMany(LectureUserProgress::class);
-}
+
+    public function lectureProgress(): HasMany
+    {
+        return $this->hasMany(LectureUserProgress::class);
+    }
 }
