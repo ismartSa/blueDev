@@ -1,30 +1,35 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head } from "@inertiajs/vue3";
-import Breadcrumb from "@/Components/Breadcrumb.vue";
-import TextInput from "@/Components/TextInput.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import InfoButton from "@/Components/InfoButton.vue";
-import SelectInput from "@/Components/SelectInput.vue";
-import { reactive, watch } from "vue";
-import DangerButton from "@/Components/DangerButton.vue";
+import { Head, usePage, router } from "@inertiajs/vue3";
+import { reactive, watch, computed } from "vue";
 import pkg from "lodash";
-import { router } from "@inertiajs/vue3";
-import Pagination from "@/Components/Pagination.vue";
 import {
     CheckBadgeIcon,
     ChevronUpDownIcon,
     PencilIcon,
     TrashIcon,
 } from "@heroicons/vue/24/solid";
-import Create from "@/Pages/User/Create.vue";
-import Edit from "@/Pages/User/Edit.vue";
-import Delete from "@/Pages/User/Delete.vue";
-import DeleteBulk from "@/Pages/User/DeleteBulk.vue";
-import Checkbox from "@/Components/Checkbox.vue";
-import { usePage } from "@inertiajs/vue3";
+import {
+    Breadcrumb,
+    TextInput,
+    PrimaryButton,
+    InfoButton,
+    SelectInput,
+    DangerButton,
+    Pagination,
+    Checkbox
+} from "@/Components";
+import {
+    Create,
+    Edit,
+    Delete,
+    DeleteBulk
+} from "@/Pages/User";
 
-const { _, debounce, pickBy } = pkg;
+// تبسيط استخراج الدوال من lodash
+const { debounce, pickBy, cloneDeep } = pkg;
+
+// تعريف Props
 const props = defineProps({
     title: String,
     filters: Object,
@@ -33,6 +38,8 @@ const props = defineProps({
     breadcrumbs: Object,
     perPage: Number,
 });
+
+// تعريف حالة البيانات
 const data = reactive({
     params: {
         search: props.filters.search,
@@ -50,16 +57,93 @@ const data = reactive({
     dataSet: usePage().props.app.perpage,
 });
 
-const order = (field) => {
-    data.params.field = field;
-    data.params.order = data.params.order === "asc" ? "desc" : "asc";
+// إضافة حالة التحميل
+const loading = ref(false);
+
+// إضافة معالجة الأخطاء
+const handleError = (error) => {
+    console.error(error);
 };
 
+// دالة الترتيب المحسنة
+const order = async (field) => {
+    try {
+        loading.value = true;
+        data.params.field = field;
+        data.params.order = data.params.order === "asc" ? "desc" : "asc";
+        await router.get(route("user.index"), pickBy(data.params), {
+            replace: true,
+            preserveState: true,
+            preserveScroll: true,
+        });
+    } catch (error) {
+        handleError(error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+// دالة التحديد المتعدد المحسنة
+const handleSelectAll = (event) => {
+    try {
+        if (!props.users?.data) return;
+        data.selectedId = event.target.checked ? props.users.data.map(user => user.id) : [];
+        data.multipleSelect = event.target.checked;
+    } catch (error) {
+        handleError(error);
+    }
+};
+
+const select = () => {
+    data.multipleSelect = props.users?.data.length === data.selectedId.length;
+};
+
+// الترجمات
+const translations = computed(() => ({
+    label: {
+        name: 'الاسم',
+        email: 'البريد الإلكتروني',
+        role: 'الدور',
+        created: 'تاريخ الإنشاء',
+        updated: 'تاريخ التحديث',
+        data: 'البيانات',
+        access: 'الصلاحيات',
+        courses: 'الدورات',
+        action: 'الإجراءات'
+    },
+    button: {
+        add: 'إضافة',
+        edit: 'تعديل',
+        delete: 'حذف',
+        save: 'حفظ',
+        cancel: 'إلغاء'
+    },
+    tooltip: {
+        edit: 'تعديل',
+        delete: 'حذف',
+        delete_selected: 'حذف المحدد'
+    },
+    placeholder: {
+        search: 'بحث...'
+    },
+    message: {
+        not_selected: 'غير محدد'
+    }
+}));
+
+const lang = () => translations.value;
+
+// التحقق من الصلاحيات
+const can = (permissions) => {
+    const userPermissions = usePage().props.auth?.user?.permissions || [];
+    return permissions.some(permission => userPermissions.includes(permission));
+};
+
+// مراقبة تغييرات البحث والترتيب
 watch(
-    () => _.cloneDeep(data.params),
+    () => cloneDeep(data.params),
     debounce(() => {
-        let params = pickBy(data.params);
-        router.get(route("user.index"), params, {
+        router.get(route("user.index"), pickBy(data.params), {
             replace: true,
             preserveState: true,
             preserveScroll: true,
@@ -67,28 +151,28 @@ watch(
     }, 150)
 );
 
+// تحسين دالة التحديد المتعدد
 const selectAll = (event) => {
-    if (event.target.checked === false) {
-        data.selectedId = [];
-    } else {
-        props.users?.data.forEach((user) => {
-            data.selectedId.push(user.id);
-        });
-    }
-};
-const select = () => {
-    if (props.users?.data.length == data.selectedId.length) {
-        data.multipleSelect = true;
-    } else {
-        data.multipleSelect = false;
+    try {
+        if (!props.users?.data) return;
+        data.selectedId = event.target.checked ? props.users.data.map(user => user.id) : [];
+        data.multipleSelect = event.target.checked;
+    } catch (error) {
+        handleError(error);
     }
 };
 
+// إضافة التحقق من البيانات
+const validateData = (userData) => {
+    const errors = [];
+    if (!userData.name) errors.push('الاسم مطلوب');
+    if (!userData.email) errors.push('البريد الإلكتروني مطلوب');
+    return errors;
+};
 </script>
 
 <template>
     <Head :title="props.title" />
-
     <AuthenticatedLayout>
         <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
         <div class="space-y-4">
@@ -316,6 +400,16 @@ const select = () => {
                     <Pagination :links="props.users" :filters="data.params" />
                 </div>
             </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div v-if="loading" class="flex justify-center items-center p-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+
+        <!-- No data message -->
+        <div v-if="!props.users?.data?.length" class="text-center p-4">
+            {{ lang().message.no_data || 'لا توجد بيانات' }}
         </div>
     </AuthenticatedLayout>
 </template>

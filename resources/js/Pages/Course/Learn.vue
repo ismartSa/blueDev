@@ -1,7 +1,6 @@
-    <template>
-        <Head title="تفاصيل الدورة" />
-
-        <AuthenticatedLayout>
+<template>
+    <Head title="تفاصيل الدورة" />
+    <AuthenticatedLayout>
         <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
         <div class="space-y-4">
             <div class="px-4 sm:px-0">
@@ -66,33 +65,30 @@
                 </li>
                 </ul>
                 <!-- Sections and Lectures -->
-                <h3 class="text-lg font-bold mt-4">Course Content</h3>
-               <div v-for="section in sections.sort((a, b) => a.order - b.order)" :key="section.id" class="mt-8">
-                <Section :section="section" :lectures="lectures.filter(lecture => lecture.section_id === section.id)" />
-            </div>
-            </div>
+                <div class="mt-8">
+                    <div v-for="section in sortedSections" :key="section.id">
+                        <Section
+                            :section="section"
+                            :lectures="filteredLectures(section.id)"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
+    </AuthenticatedLayout>
+</template>
 
-        <AddSectionModal
-            v-if="data.addSectionOpen"
-             @close="data.addSectionOpen = false"
-             @add-section="addSection" :courseId="course.id"
-             />
-        </AuthenticatedLayout>
-    </template>
-
-    <script setup>
-    import { Head, Link } from "@inertiajs/vue3";
-    import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-    import Breadcrumb from "@/Components/Breadcrumb.vue";
-    import PrimaryButton from "@/Components/PrimaryButton.vue";
-    import { usePage } from "@inertiajs/vue3";
-    import {reactive, ref } from "vue";
-    import Section from '@/Pages/Course/Section.vue';
-    import Lecture from '@/Pages/Course/Lecture.vue';
-    import AddSectionModal from '@/Pages/Course/AddSectionModal.vue';
-    import Add from '@/Pages/Course/Add.vue';
+<script setup>
+import { Head, Link } from "@inertiajs/vue3";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import { usePage } from "@inertiajs/vue3";
+import {reactive, ref } from "vue";
+import Section from '@/Pages/Course/Section.vue';
+import Lecture from '@/Pages/Course/Lecture.vue';
+import AddSectionModal from '@/Pages/Course/AddSectionModal.vue';
+import Add from '@/Pages/Course/Add.vue';
 
 
 const props = defineProps({
@@ -135,4 +131,11 @@ const enroll = async () => {
     }
     };
 
+    const sortedSections = computed(() => {
+        return [...props.sections].sort((a, b) => a.order - b.order)
+    })
+
+    const filteredLectures = (sectionId) => {
+        return props.lectures.filter(lecture => lecture.section_id === sectionId)
+    }
     </script>

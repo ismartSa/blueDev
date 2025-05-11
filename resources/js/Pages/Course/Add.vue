@@ -27,7 +27,12 @@ const form = useForm({
     title: "",
     order: "",
     description: "",
-
+    // يمكن إضافة التحقق من الصحة:
+    rules: {
+        title: ['required', 'string', 'max:255'],
+        order: ['required', 'numeric'],
+        description: ['required', 'string']
+    }
 });
 
 const create = () => {

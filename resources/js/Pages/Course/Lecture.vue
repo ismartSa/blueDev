@@ -1,20 +1,29 @@
+<script setup>
+defineProps({
+  lecture: {
+    type: Object,
+    required: true,
+    validator: (lecture) => {
+      return lecture.id && lecture.title
+    }
+  }
+})
+</script>
+
 <template>
-    <div class="lecture">
-      <h3 class="text-lg font-bold mt-4">{{ lecture.title }}</h3>
-      <p class="text-gray-600">{{ lecture.description }}</p>
-
-      <a :href="lecture.video_url" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        شاهد الفيديو
-      </a>
-
-      <p class="text-gray-600 mt-2">مدة الفيديو: {{ lecture.duration }} دقيقة</p>
+  <div class="lecture-card">
+    <div class="lecture bg-gray-50 p-4 rounded-lg">
+        <div class="flex justify-between items-center">
+            <h4 class="text-lg font-semibold">{{ lecture.title }}</h4>
+            <span class="text-sm text-gray-500">{{ lecture.duration }} دقيقة</span>
+        </div>
+        <p class="text-gray-600 mt-2">{{ lecture.description }}</p>
+        <a
+            :href="lecture.video_url"
+            target="_blank"
+            class="mt-3 inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+        >
+            شاهد الفيديو
+        </a>
     </div>
-  </template>
-
-  <script setup>
-  import { defineProps } from 'vue';
-
-  const props = defineProps({
-    lecture: Object,
-  });
-  </script>
+</template>

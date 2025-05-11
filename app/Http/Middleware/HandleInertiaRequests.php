@@ -28,7 +28,7 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
-    public function share(Request $request)
+    public function share(Request $request): array
     {
         return array_merge(parent::share($request), [
             'flash' => [
@@ -51,7 +51,7 @@ class HandleInertiaRequests extends Middleware
                     ['label' => '100', 'value' => 100],
                 ],
             ],
-            'locale' => function () {                
+            'locale' => function () {
                 if(session()->has('locale')) {
                     app()->setLocale(session('locale'));
                 }
@@ -64,6 +64,9 @@ class HandleInertiaRequests extends Middleware
             'ziggy' => function () use ($request) {
                 return array_merge((new Ziggy)->toArray(), [
                     'location' => $request->url(),
+                    'translations' => [
+                        'messages' => trans('messages')
+                    ],
                 ]);
             },
         ]);

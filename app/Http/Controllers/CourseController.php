@@ -27,7 +27,7 @@ class CourseController extends Controller
     {
         $this->courseService = $courseService;
         $this->courseRepository = $courseRepository;
-        $this->middleware('permission:view courses', ['only' => ['index', 'show']]);
+    //    $this->middleware('permission:view courses', ['only' => ['index', 'show']]);
         $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
         $this->middleware('permission:edit courses', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete courses', ['only' => ['destroy']]);
@@ -36,28 +36,25 @@ class CourseController extends Controller
     public function index()
     {
         $courses = $this->courseRepository->getActiveCourses();
-        return inertia('Courses/Index', [
-            'courses' => CourseResource::collection($courses)
+        return inertia('Course/Index', [
+            'courses' => CourseResource::collection($courses),
+            'filters' => request()->only(['search']),
+            'title' => __('courses.title'),
+            'breadcrumbs' => [
+                ['label' => __('common.dashboard'), 'href' => route('dashboard')],
+                ['label' => __('courses.list'), 'href' => route('courses.index')]  // Changed from course.index to courses.index
+            ]
         ]);
     }
 
-    /**
-     * Store a newly created course in storage.
-     *
-     * @param  \App\Http\Requests\CourseStoreRequest  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(CourseStoreRequest $request)
     {
         try {
-            // If using the service approach
             if (method_exists($this->courseService, 'create')) {
                 $course = $this->courseService->create($request->validated());
-                return redirect()->route('courses.show', $course)
-                    ->with('success', 'تم إنشاء الدورة بنجاح');
-            }
-            // Fallback to direct creation if service method doesn't exist
-            else {
+                return redirect()->route('course.show', $course)
+                    ->with('success', __('courses.created_success'));
+            } else {
                 $course = new Course($request->except('image'));
                 $course->slug = Str::slug($request->title);
 
@@ -67,14 +64,14 @@ class CourseController extends Controller
                 }
 
                 $course->save();
-                Log::info('Course created successfully', ['course_id' => $course->id]);
+                Log::info(__('courses.log.created_success'), ['course_id' => $course->id]);
 
-                return redirect()->route('courses.index')
-                    ->with('success', 'Course created successfully.');
+                return redirect()->route('course.index')
+                    ->with('success', __('courses.created_success'));
             }
         } catch (\Exception $e) {
-            Log::error('Error creating course', ['error' => $e->getMessage()]);
-            return back()->with('error', 'An error occurred while creating the course: ' . $e->getMessage());
+            Log::error(__('courses.log.creation_error'), ['error' => $e->getMessage()]);
+            return back()->with('error', __('courses.creation_error') . $e->getMessage());
         }
     }
 
@@ -103,7 +100,7 @@ class CourseController extends Controller
         $lecture = new Lecture([
             'title' => $request->input('title'),
             'section_id' => $request->input('section_id'),
-            'course_id' => $course->id, // استخدام معرف الكورس من المعامل
+            'course_id' => $course->id,
             'video_url' => $request->input('video_url'),
             'duration' => $request->input('duration'),
         ]);
@@ -111,7 +108,7 @@ class CourseController extends Controller
         $lecture->save();
 
         return redirect()->route('course.details', ['id' => $course->id, 'courseSlug' => $course->slug])
-            ->with('success', 'تم إضافة المحاضرة بنجاح');
+            ->with('success', __('lectures.created_success'));
     }
 
 

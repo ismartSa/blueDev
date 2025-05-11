@@ -1,18 +1,27 @@
 <script setup>
-import ApplicationLogo from "@/Components/ApplicationLogo.vue";
-import Dropdown from "@/Components/Dropdown.vue";
-import DropdownLink from "@/Components/DropdownLink.vue";
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import {
     Bars3CenterLeftIcon,
-    CheckBadgeIcon,
-    ChevronDownIcon,
     UserIcon,
 } from "@heroicons/vue/24/solid";
-import SwitchDarkModeNavbar from "@/Components/SwitchDarkModeNavbar.vue";
+import ApplicationLogo from "@/Components/ApplicationLogo.vue";
+import Dropdown from "@/Components/Dropdown.vue";
 import SwitchLangNavbar from "@/Components/SwitchLangNavbar.vue";
+import SwitchDarkModeNavbar from "@/Components/SwitchDarkModeNavbar.vue";
+import { computed } from 'vue';
 
-const emit = defineEmits(["open"]);
+const page = usePage();
+const user = computed(() => page.props.auth?.user);
+
+// Add translations
+const translations = computed(() => ({
+    profile: {
+        profile: 'Profile',
+        logout: 'Log Out'
+    }
+}));
+
+const lang = () => translations.value;
 </script>
 
 <template>
@@ -62,28 +71,28 @@ const emit = defineEmits(["open"]);
                                         </button>
                                         <button
                                             type="button"
-                                            class="hover:text-slate-400 hover:bg-slate-900 focus:bg-slate-900 focus:text-slate-400 items-center justify-center p-2 rounded-md lg:hover:text-slate-500 dark:hover:text-slate-400 lg:hover:bg-slate-100 dark:hover:bg-slate-900 focus:outline-none lg:focus:bg-slate-100 dark:focus:bg-slate-900 lg:focus:text-slate-500 dark:focus:text-slate-400 transition duration-150 ease-in-out truncate w-fit hidden sm:inline-flex"
-                                        >
-                                            <span
-                                                class="flex justify-between items-center"
-                                            >
-                                                {{
-                                                    $page.props.auth.user.name.split(
-                                                        " "
-                                                    )[0]
-                                                }}
-                                                <CheckBadgeIcon
-                                                    class="ml-[2px] w-4 h-4 text-white dark:text-white lg:text-primary"
-                                                    v-show="
-                                                        $page.props.auth.user
-                                                            .email_verified_at
-                                                    "
-                                                />
-                                            </span>
-                                            <ChevronDownIcon
-                                                class="ml-2 h-5 w-5 fill-current"
-                                            />
+                                            class="hover:text-slate-400 hover:bg-slate-900 focus:bg-slate-900 focus:text-slate-400 items-center justify-center p-2 rounded-md lg:hover:text-slate-500 dark:hover:text-slate-400 lg:hover:bg-slate-100 dark:hover:bg-slate-900 focus:outline-none lg:focus:bg-slate-100 dark:focus:bg-slate-900 lg:focus:text-slate-500 dark:focus:text-slate-400 transition duration-150 ease-in-out truncate w-fit hidden sm:inline-flex">
+                                            <span>{{ user?.name }}</span>
                                         </button>
+                                        <span
+                                            class="flex justify-between items-center"
+                                        >
+                                            {{
+                                                $page.props.auth.user.name.split(
+                                                    " "
+                                                )[0]
+                                            }}
+                                            <CheckBadgeIcon
+                                                class="ml-[2px] w-4 h-4 text-white dark:text-white lg:text-primary"
+                                                v-show="
+                                                    $page.props.auth.user
+                                                        .email_verified_at
+                                                "
+                                            />
+                                        </span>
+                                        <ChevronDownIcon
+                                            class="ml-2 h-5 w-5 fill-current"
+                                        />
                                     </span>
                                 </template>
 
@@ -112,14 +121,10 @@ const emit = defineEmits(["open"]);
                                         >
                                     </div>
                                     <DropdownLink :href="route('profile.edit')">
-                                        {{ lang().label.profile }}
+                                        {{ lang().profile.profile }}
                                     </DropdownLink>
-                                    <DropdownLink
-                                        :href="route('logout')"
-                                        method="post"
-                                        as="button"
-                                    >
-                                        {{ lang().label.logout }}
+                                    <DropdownLink :href="route('logout')" method="post" as="button">
+                                        {{ lang().profile.logout }}
                                     </DropdownLink>
                                 </template>
                             </Dropdown>

@@ -2,65 +2,39 @@
 
 namespace App\Policies;
 
-use App\Models\Lecture;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\Lecture;
+use App\Models\Enrollment;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class LecturePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
-    {
-        //
-    }
+    use HandlesAuthorization;
 
     /**
-     * Determine whether the user can view the model.
+     * تحديد ما إذا كان يمكن للمستخدم عرض المحاضرة
      */
     public function view(User $user, Lecture $lecture): bool
     {
-        //
+        // التحقق من وجود تسجيل نشط في الدورة
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $lecture->course_id)
+            ->where('enrollment_status', 'confirmed')
+            ->first();
+
+        return $enrollment !== null || $user->hasRole('admin');
     }
 
     /**
-     * Determine whether the user can create models.
+     * تحديد ما إذا كان يمكن للمستخدم تحديث تقدمه في المحاضرة
      */
-    public function create(User $user): bool
+    public function updateProgress(User $user, Lecture $lecture): bool
     {
-        //
-    }
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $lecture->course_id)
+            ->where('enrollment_status', 'confirmed')
+            ->first();
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Lecture $lecture): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Lecture $lecture): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Lecture $lecture): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Lecture $lecture): bool
-    {
-        //
+        return $enrollment !== null;
     }
 }
