@@ -3,64 +3,57 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\section;
-use Illuminate\Auth\Access\Response;
+use App\Models\Section;
+use App\Models\Enrollment;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class SectionPolicy
 {
+    use HandlesAuthorization;
+
     /**
-     * Determine whether the user can view any models.
+     * تحديد ما إذا كان يمكن للمستخدم عرض القسم
      */
-    public function viewAny(User $user): bool
+    public function view(User $user, Section $section): bool
     {
-        //
+        // التحقق من وجود تسجيل نشط في الدورة
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $section->course_id)
+            ->where('enrollment_status', 'confirmed')
+            ->first();
+
+        return $enrollment !== null || $user->hasRole('admin');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * تحديد ما إذا كان يمكن للمستخدم الوصول إلى محتوى القسم
      */
-    public function view(User $user, section $section): bool
+    public function access(User $user, Section $section): bool
     {
-        //
-    }
+        if ($user->hasRole('admin')) {
+            return true;
+        }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
-    {
-        //
-    }
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $section->course_id)
+            ->where('enrollment_status', 'confirmed')
+            ->first();
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, section $section): bool
-    {
-        //
-    }
+        if (!$enrollment) {
+            return false;
+        }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, section $section): bool
-    {
-        //
-    }
+        // التحقق من إكمال الأقسام السابقة
+        $previousSections = Section::where('course_id', $section->course_id)
+            ->where('order', '<', $section->order)
+            ->get();
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, section $section): bool
-    {
-        //
-    }
+        foreach ($previousSections as $prevSection) {
+            if (!$user->hasCompletedSection($prevSection->id)) {
+                return false;
+            }
+        }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, section $section): bool
-    {
-        //
+        return true;
     }
 }

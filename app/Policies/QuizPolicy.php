@@ -2,65 +2,44 @@
 
 namespace App\Policies;
 
-use App\Models\Quiz;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\Quiz;
+use App\Models\Enrollment;
+use App\Models\QuizAttempt;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class QuizPolicy
 {
+    use HandlesAuthorization;
+
     /**
-     * Determine whether the user can view any models.
+     * تحديد ما إذا كان يمكن للمستخدم بدء الاختبار
      */
-    public function viewAny(User $user): bool
+    public function attempt(User $user, Quiz $quiz): bool
     {
-        //
+        // التحقق من وجود تسجيل نشط
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $quiz->course_id)
+            ->where('enrollment_status', 'confirmed')
+            ->first();
+
+        if (!$enrollment) {
+            return false;
+        }
+
+        // التحقق من عدد المحاولات السابقة
+        $attempts = QuizAttempt::where('user_id', $user->id)
+            ->where('quiz_id', $quiz->id)
+            ->count();
+
+        return $attempts < 3; // السماح بثلاث محاولات كحد أقصى
     }
 
     /**
-     * Determine whether the user can view the model.
+     * تحديد ما إذا كان يمكن للمستخدم عرض نتائج الاختبار
      */
-    public function view(User $user, Quiz $quiz): bool
+    public function viewResults(User $user, Quiz $quiz): bool
     {
-        //
-    }
-
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Quiz $quiz): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Quiz $quiz): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Quiz $quiz): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Quiz $quiz): bool
-    {
-        //
+        return $user->id === $quiz->course->user_id || $user->hasRole('admin');
     }
 }

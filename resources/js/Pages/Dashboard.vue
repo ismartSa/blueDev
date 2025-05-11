@@ -7,7 +7,12 @@ import {
     ShieldCheckIcon,
     UserIcon,
 } from "@heroicons/vue/24/solid";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, usePage } from "@inertiajs/vue3";
+
+const page = usePage();
+const translations = computed(() => page.props.translations.messages);
+
+const lang = () => translations.value;
 
 const props = defineProps({
     users: Number,

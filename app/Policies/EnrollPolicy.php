@@ -2,65 +2,41 @@
 
 namespace App\Policies;
 
-use App\Models\Enroll;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\Course;
+use App\Models\Enrollment;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class EnrollPolicy
 {
+    use HandlesAuthorization;
+
     /**
-     * Determine whether the user can view any models.
+     * تحديد ما إذا كان يمكن للمستخدم التسجيل في الدورة
      */
-    public function viewAny(User $user): bool
+    public function enroll(User $user, Course $course): bool
     {
-        //
+        // التحقق من عدم وجود تسجيل سابق
+        $existingEnrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->first();
+
+        return !$existingEnrollment && $course->status;
     }
 
     /**
-     * Determine whether the user can view the model.
+     * تحديد ما إذا كان يمكن للمستخدم إلغاء التسجيل
      */
-    public function view(User $user, Enroll $enroll): bool
+    public function unenroll(User $user, Enrollment $enrollment): bool
     {
-        //
+        return $user->id === $enrollment->user_id;
     }
 
     /**
-     * Determine whether the user can create models.
+     * تحديد ما إذا كان يمكن للمستخدم عرض تقدمه
      */
-    public function create(User $user): bool
+    public function viewProgress(User $user, Enrollment $enrollment): bool
     {
-        //
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Enroll $enroll): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Enroll $enroll): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Enroll $enroll): bool
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Enroll $enroll): bool
-    {
-        //
+        return $user->id === $enrollment->user_id || $user->hasRole('admin');
     }
 }

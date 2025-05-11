@@ -24,6 +24,11 @@ const form = useForm({
     password: "",
     password_confirmation: "",
     role: "",
+    // يمكن إضافة حقول خاصة بالدورة مثل:
+    title: "",
+    description: "",
+    price: 0,
+    image: ""
 });
 
 const update = () => {

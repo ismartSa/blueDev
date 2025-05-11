@@ -8,42 +8,76 @@ use Illuminate\Support\Str;
 class LectureObserver
 {
     /**
-     * Handle the Lecture "created" event.
+     * معالجة slug المحاضرة
+     *
+     * @param Lecture $lecture
+     * @return void
+     */
+    private function handleSlug(Lecture $lecture): void
+    {
+        // إنشاء slug من عنوان المحاضرة إذا كان العنوان موجودًا
+        if ($lecture->title) {
+            $lecture->slug = Str::slug($lecture->title);
+            $lecture->saveQuietly(); // حفظ التغييرات بدون تشغيل المراقب مرة أخرى
+        }
+    }
+
+    /**
+     * معالجة حدث إنشاء المحاضرة
+     *
+     * @param Lecture $lecture
+     * @return void
      */
     public function created(Lecture $lecture): void
     {
-        $lecture->slug = Str::slug($lecture->title);
+        $this->handleSlug($lecture);
     }
 
     /**
-     * Handle the Lecture "updated" event.
+     * معالجة حدث تحديث المحاضرة
+     *
+     * @param Lecture $lecture
+     * @return void
      */
     public function updated(Lecture $lecture): void
     {
-        $lecture->slug = Str::slug($lecture->title);
+        // تحديث slug فقط إذا تغير العنوان
+        if ($lecture->isDirty('title')) {
+            $this->handleSlug($lecture);
+        }
     }
 
     /**
-     * Handle the Lecture "deleted" event.
+     * معالجة حدث حذف المحاضرة
+     *
+     * @param Lecture $lecture
+     * @return void
      */
     public function deleted(Lecture $lecture): void
     {
-        //
+        // يمكن إضافة منطق لتنظيف أي بيانات مرتبطة بالمحاضرة
+        // مثل حذف ملفات الفيديو أو تحديث سجلات التقدم
     }
 
     /**
-     * Handle the Lecture "restored" event.
+     * معالجة حدث استعادة المحاضرة
+     *
+     * @param Lecture $lecture
+     * @return void
      */
     public function restored(Lecture $lecture): void
     {
-        //
+        // يمكن إضافة منطق لاستعادة أي بيانات مرتبطة بالمحاضرة
     }
 
     /**
-     * Handle the Lecture "force deleted" event.
+     * معالجة حدث الحذف النهائي للمحاضرة
+     *
+     * @param Lecture $lecture
+     * @return void
      */
     public function forceDeleted(Lecture $lecture): void
     {
-        //
+        // يمكن إضافة منطق للحذف النهائي لأي بيانات مرتبطة بالمحاضرة
     }
 }
