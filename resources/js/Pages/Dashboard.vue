@@ -7,18 +7,12 @@ import {
     ShieldCheckIcon,
     UserIcon,
 } from "@heroicons/vue/24/solid";
-import { Head, Link, usePage } from "@inertiajs/vue3";
-
-const page = usePage();
-const translations = computed(() => page.props.translations.messages);
-
-const lang = () => translations.value;
+import { Head, Link } from "@inertiajs/vue3";
 
 const props = defineProps({
     users: Number,
     roles: Number,
     permissions: Number,
-    courses: Number,
 });
 </script>
 
@@ -37,7 +31,7 @@ const props = defineProps({
                         <div class="flex flex-col">
                             <p class="text-4xl font-bold">{{ props.users }}</p>
                             <p class="text-md md:text-lg uppercase">
-                                {{ lang().label.user }}
+                                Users
                             </p>
                         </div>
                         <div>
@@ -51,7 +45,7 @@ const props = defineProps({
                             :href="route('user.index')"
                             class="flex justify-between items-center"
                         >
-                            <p>{{ lang().label.more }}</p>
+                            <p>More</p>
                             <ChevronRightIcon class="w-5 h-5" />
                         </Link>
                     </div>
@@ -63,7 +57,7 @@ const props = defineProps({
                         <div class="flex flex-col">
                             <p class="text-4xl font-bold">{{ props.roles }}</p>
                             <p class="text-md md:text-lg uppercase">
-                                {{ lang().label.role }}
+                                Roles
                             </p>
                         </div>
                         <div>
@@ -77,7 +71,7 @@ const props = defineProps({
                             :href="route('role.index')"
                             class="flex justify-between items-center"
                         >
-                            <p>{{ lang().label.more }}</p>
+                            <p>More</p>
                             <ChevronRightIcon class="w-5 h-5" />
                         </Link>
                     </div>
@@ -91,7 +85,7 @@ const props = defineProps({
                                 {{ props.permissions }}
                             </p>
                             <p class="text-md md:text-lg uppercase">
-                                {{ lang().label.permission }}
+                                Permissions
                             </p>
                         </div>
                         <div>
@@ -105,35 +99,7 @@ const props = defineProps({
                             :href="route('permission.index')"
                             class="flex justify-between items-center"
                         >
-                            <p>{{ lang().label.more }}</p>
-                            <ChevronRightIcon class="w-5 h-5" />
-                        </Link>
-                    </div>
-                </div>
-                <div>
-                    <div
-                        class="rounded-t-none sm:rounded-t-lg px-4 py-6 flex justify-between bg-cyan-300/70 dark:bg-bg-cyan-300/80 items-center overflow-hidden"
-                    >
-                        <div class="flex flex-col">
-                            <p class="text-4xl font-bold">
-                                {{ props.courses }}
-                            </p>
-                            <p class="text-md md:text-lg uppercase">
-                                {{ lang().label.courses }}
-                            </p>
-                        </div>
-                        <div>
-                            <ShieldCheckIcon class="w-16 h-auto" />
-                        </div>
-                    </div>
-                    <div
-                        class="bg-cyan-300/90 dark:bg-cyan-300/90 rounded-b-none sm:rounded-b-lg p-2 overflow-hidden hover:bg-cyan-300/90 dark:hover:bg-cyan-300/70"
-                    >
-                        <Link
-                            :href="route('courses.index')"
-                            class="flex justify-between items-center"
-                        >
-                            <p>{{ lang().label.more }}</p>
+                            <p>More</p>
                             <ChevronRightIcon class="w-5 h-5" />
                         </Link>
                     </div>

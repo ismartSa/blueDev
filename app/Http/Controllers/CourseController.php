@@ -66,7 +66,7 @@ class CourseController extends Controller
                 $course->save();
                 Log::info(__('courses.log.created_success'), ['course_id' => $course->id]);
 
-                return redirect()->route('course.index')
+                return redirect()->route('courses.index') // Changed from course.index to courses.index
                     ->with('success', __('courses.created_success'));
             }
         } catch (\Exception $e) {
@@ -447,4 +447,33 @@ private function getCourseWithLectureData($courseId, $courseSlug, $lectureID = n
             'quizHistory' => $quizHistory,
         ]);
     }
+
+
+/**
+ * Display the details of the specified course.
+ *
+ * @param  int  $id
+ * @return \Inertia\Response
+ */
+public function details($id, $courseSlug): \Inertia\Response
+{
+    $course = Course::findOrFail($id);
+
+    // Check if user is enrolled in this course
+    $isEnrolled = false;
+    if (auth()->check()) {
+        $isEnrolled = Enrollment::where('user_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->exists();
+    }
+
+    return Inertia::render('Course/Details', [
+        'course' => $course,
+        'isEnrolled' => $isEnrolled,
+        'breadcrumbs' => [
+            ['label' => 'Courses', 'href' => route('courses.index')], // Changed from course.index to courses.index
+            ['label' => $course->title, 'href' => route('course.details', $course->id)]
+        ]
+    ]);
+}
 }
