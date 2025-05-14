@@ -64,14 +64,18 @@ Route::prefix('courses')->name('courses.')->group(function () {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard', [
-            'users' => (int) User::count(),
-            'roles' => (int) Role::count(),
-            'permissions' => (int) Permission::count(),
-            'courses' => (int) Course::count(),
-        ]);
-    })->name('dashboard');
+Route::get('/dashboard', function () {
+    $stats = Cache::remember('dashboard_stats', 60*60, function () {
+        return [
+            'users' => (int) DB::table('users')->count(),
+            'roles' => (int) DB::table('roles')->count(),
+            'permissions' => (int) DB::table('permissions')->count(),
+            'courses' => (int) DB::table('courses')->count(),
+        ];
+    });
+
+    return Inertia::render('Dashboard', $stats);
+})->name('dashboard');
 
     /*
     |--------------------------------------------------------------------------
@@ -191,7 +195,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/template/download', [QuizController::class, 'downloadTemplate'])->name('template.download');
         });
 });
-Route::get('/course/{id}/{courseSlug}', [CourseController::class, 'details'])->name('course.details');
+// Course routes
+Route::get('/courses/{id}/{courseSlug?}', [CourseController::class, 'details'])->name('course.details');
 /*
 |--------------------------------------------------------------------------
 | Admin Dashboard Routes

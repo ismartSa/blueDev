@@ -32,6 +32,8 @@
 <script setup>
 import CourseInfoCard from '@/Components/Course/CourseInfoCard.vue'
 import CourseDetailsContent from '@/Components/Course/CourseDetailsContent.vue'
+import { Head } from "@inertiajs/vue3";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
 
 const props = defineProps({
   course: Object,
@@ -42,3 +44,33 @@ const enrollCourse = () => {
   // Implement enrollment logic here
 };
 </script>
+
+<script setup>
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { Head } from "@inertiajs/vue3";
+import Breadcrumb from "@/Components/Breadcrumb.vue";
+
+const props = defineProps({
+    course: Object,
+    breadcrumbs: Array,
+});
+</script>
+
+<template>
+    <Head :title="course.title" />
+    <AuthenticatedLayout>
+        <Breadcrumb :title="course.title" :breadcrumbs="breadcrumbs" />
+
+        <div class="space-y-4">
+            <div class="bg-white dark:bg-slate-800 shadow sm:rounded-lg p-6">
+                <h1 class="text-2xl font-bold mb-4">{{ course.title }}</h1>
+
+                <div class="prose dark:prose-invert max-w-none">
+                    <div v-html="course.description"></div>
+                </div>
+
+                <!-- Add more course details here as needed -->
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>
