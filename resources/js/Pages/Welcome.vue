@@ -16,20 +16,6 @@ defineProps({
         default: () => []
     }
 });
-
-// تعريف الترجمات
-const translations = computed(() => ({
-    label: {
-        welcome: 'مرحباً بك',
-        dashboard: 'لوحة التحكم',
-        login: 'تسجيل الدخول',
-        register: 'تسجيل جديد',
-        explore_courses: 'استكشف الدورات',
-        view_details: 'عرض التفاصيل'
-    }
-}));
-
-const lang = () => translations.value;
 </script>
 
 <template>
