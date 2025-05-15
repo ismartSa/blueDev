@@ -10,9 +10,18 @@ import {
 import { Head, Link } from "@inertiajs/vue3";
 
 const props = defineProps({
-    users: Number,
-    roles: Number,
-    permissions: Number,
+    users: {
+        type: Number,
+        default: 0
+    },
+    roles: {
+        type: Number,
+        default: 0
+    },
+    permissions: {
+        type: Number,
+        default: 0
+    }
 });
 </script>
 

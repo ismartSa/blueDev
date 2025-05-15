@@ -1,83 +1,82 @@
 <template>
+  <Head :title="`Take Quiz - ${quiz.title}`" />
   <AuthenticatedLayout>
     <template #header>
-      <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        {{ quizCompleted ? 'Quiz Result' : 'Taking: ' + quiz.title }}
-      </h2>
+      <Breadcrumb :title="`Take Quiz - ${quiz.title}`" :breadcrumbs="breadcrumbs" />
     </template>
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 bg-white border-b border-gray-200">
-            <div v-if="!quizCompleted">
-              <div v-if="currentQuestion" class="mb-6">
-                <h3 class="text-lg font-semibold mb-2">
-                  Question {{ currentQuestionIndex + 1 }} of {{ quiz.questions.length }}:
-                  {{ currentQuestion.question_title }}
-                </h3>
-                <div v-for="answer in currentQuestion.answers" :key="answer.id" class="mb-2">
-                  <label class="inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      :value="answer.id"
-                      v-model="userAnswers[currentQuestion.id]"
-                      class="form-checkbox"
-                      :disabled="timeRemaining <= 0"
-                    >
-                    <span class="ml-2">{{ answer.answer }}</span>
-                  </label>
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="p-6">
+            <!-- Quiz Header -->
+            <div class="mb-8">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                  {{ quiz.title }}
+                </h2>
+                <div class="text-lg font-medium text-gray-900 dark:text-white">
+                  Time Remaining: {{ formatTime(timeRemaining) }}
                 </div>
               </div>
-              <div class="mt-6 flex justify-between items-center">
-                <button
-                  @click="previousQuestion"
-                  class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                  :disabled="currentQuestionIndex === 0"
-                >
-                  Previous
-                </button>
-                <div>
-                  <p>Time remaining: {{ formatTime(timeRemaining) }}</p>
-                  <p>Progress: {{ currentQuestionIndex + 1 }} / {{ quiz.questions.length }}</p>
+              <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5">
+                <div class="bg-indigo-600 h-2.5 rounded-full"
+                     :style="{ width: `${progress}%` }">
                 </div>
-                <button
-                  v-if="currentQuestionIndex < quiz.questions.length - 1"
-                  @click="nextQuestion"
-                  class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                  :disabled="timeRemaining <= 0"
-                >
-                  Next
-                </button>
-                <button
-                  v-else
-                  @click="submitQuiz"
-                  class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                  :disabled="timeRemaining <= 0"
-                >
-                  Submit Quiz
-                </button>
               </div>
             </div>
-            <div v-else class="text-center">
-              <h3 class="text-2xl font-semibold mb-4">Quiz Completed</h3>
-              <p v-if="quizScore !== null" class="text-xl mb-2">
-                Your score: {{ quizScore.toFixed(2) }}%
+
+            <!-- Question -->
+            <div v-if="currentQuestion" class="mb-8">
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Question {{ currentQuestionIndex + 1 }} of {{ quiz.questions.length }}
+              </h3>
+              <p class="text-gray-700 dark:text-gray-300 mb-6">
+                {{ currentQuestion.text }}
               </p>
-              <p v-else class="text-xl mb-2">Score is being calculated...</p>
-              <p class="text-lg mb-4">Passing score: {{ quiz.passing_score }}%</p>
-              <p v-if="quizScore !== null && quizScore >= quiz.passing_score" class="text-green-600 text-xl mb-6">
-                Congratulations! You passed the quiz.
-              </p>
-              <p v-else-if="quizScore !== null" class="text-red-600 text-xl mb-6">
-                Unfortunately, you did not pass the quiz. You can try again later.
-              </p>
-              <button 
-                @click="returnToQuizPage" 
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              <div class="space-y-4">
+                <div v-for="answer in currentQuestion.answers"
+                     :key="answer.id"
+                     class="flex items-center p-4 border rounded-lg cursor-pointer transition-colors"
+                     :class="{
+                         'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/50': form.answers.find(a => a.question_id === currentQuestion.id && a.answer_id === answer.id),
+                         'border-gray-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500': !form.answers.find(a => a.question_id === currentQuestion.id && a.answer_id === answer.id)
+                     }"
+                     @click="selectAnswer(answer.id)">
+                  <div class="flex-1">
+                    <p class="text-gray-900 dark:text-white">
+                      {{ answer.text }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between">
+              <PrimaryButton
+                v-if="currentQuestionIndex > 0"
+                @click="previousQuestion"
+                class="bg-gray-600 hover:bg-gray-700"
               >
-                Return to Quiz Page
-              </button>
+                Previous Question
+              </PrimaryButton>
+              <div v-else class="w-32"></div>
+
+              <PrimaryButton
+                v-if="currentQuestionIndex < quiz.questions.length - 1"
+                @click="nextQuestion"
+              >
+                Next Question
+              </PrimaryButton>
+              <PrimaryButton
+                v-else
+                @click="submitQuiz"
+                :disabled="isSubmitting"
+                :class="{ 'opacity-50': isSubmitting }"
+              >
+                Submit Quiz
+              </PrimaryButton>
             </div>
           </div>
         </div>
@@ -86,106 +85,102 @@
   </AuthenticatedLayout>
 </template>
 
-<script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Head, useForm } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Breadcrumb from '@/Components/Breadcrumb.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
+import { calculateScore, formatTime, calculateRemainingTime } from '@/Pages/Quizzes/utils/quizHelpers'
 
-export default {
-  components: {
-    AuthenticatedLayout,
-  },
-  props: {
-    quiz: Object,
-    attempt: Object,
-    score: {
-      type: Number,
-      default: null
+const props = defineProps({
+    quiz: {
+        type: Object,
+        required: true
     },
-  },
-  setup(props) {
-    const userAnswers = ref({})
-    
-    // تهيئة userAnswers لكل سؤال كمصفوفة فارغة
-    props.quiz.questions.forEach(question => {
-        userAnswers.value[question.id] = []
-    })
-
-    const quizCompleted = ref(false)
-    const quizScore = ref(props.score !== null ? props.score : null)
-    const timeRemaining = ref(props.quiz.time_limit * 60) // Convert minutes to seconds
-    const currentQuestionIndex = ref(0)
-
-    const currentQuestion = computed(() => props.quiz.questions[currentQuestionIndex.value])
-
-    const form = useForm({
-      answers: {},
-    })
-
-    const formatTime = (seconds) => {
-      const minutes = Math.floor(seconds / 60)
-      const remainingSeconds = seconds % 60
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+    course: {
+        type: Object,
+        required: true
+    },
+    breadcrumbs: {
+        type: Array,
+        required: true
     }
+})
 
-    const submitQuiz = () => {
-      form.answers = userAnswers.value
-      form.post(route('quizzes.submit', [props.quiz.id, props.attempt.id]), {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: (response) => {
-          quizCompleted.value = true
-          if (response.props.score !== undefined) {
-            quizScore.value = response.props.score
-          }
-        },
-      })
-    }
+const form = useForm({
+    answers: []
+})
 
-    const nextQuestion = () => {
-      if (currentQuestionIndex.value < props.quiz.questions.length - 1) {
-        currentQuestionIndex.value++
-      }
-    }
+const currentQuestionIndex = ref(0)
+const timeRemaining = ref(calculateRemainingTime(props.quiz.time_limit, 0))
+const timer = ref(null)
+const isSubmitting = ref(false)
 
-    const previousQuestion = () => {
-      if (currentQuestionIndex.value > 0) {
-        currentQuestionIndex.value--
-      }
-    }
+const currentQuestion = computed(() => props.quiz.questions[currentQuestionIndex.value])
 
-    const returnToQuizPage = () => {
-      window.location.href = route('quizzes.show', props.quiz.id)
-    }
+const progress = computed(() => {
+    return Math.round((currentQuestionIndex.value / props.quiz.questions.length) * 100)
+})
 
-    let timer
-    onMounted(() => {
-      timer = setInterval(() => {
-        if (timeRemaining.value > 0) {
-          timeRemaining.value--
-        } else {
-          submitQuiz()
+const startTimer = () => {
+    timer.value = setInterval(() => {
+        timeRemaining.value = Math.max(0, timeRemaining.value - 1)
+        if (timeRemaining.value === 0) {
+            submitQuiz()
         }
-      }, 1000)
-    })
-
-    onUnmounted(() => {
-      clearInterval(timer)
-    })
-
-    return {
-      userAnswers,
-      quizCompleted,
-      quizScore,
-      timeRemaining,
-      currentQuestionIndex,
-      currentQuestion,
-      formatTime,
-      submitQuiz,
-      nextQuestion,
-      previousQuestion,
-      returnToQuizPage,
-    }
-  },
+    }, 1000)
 }
+
+const stopTimer = () => {
+    if (timer.value) {
+        clearInterval(timer.value)
+    }
+}
+
+const selectAnswer = (answerId) => {
+    const questionId = currentQuestion.value.id
+    const existingAnswerIndex = form.answers.findIndex(a => a.question_id === questionId)
+
+    if (existingAnswerIndex !== -1) {
+        form.answers[existingAnswerIndex].answer_id = answerId
+    } else {
+        form.answers.push({
+            question_id: questionId,
+            answer_id: answerId
+        })
+    }
+}
+
+const nextQuestion = () => {
+    if (currentQuestionIndex.value < props.quiz.questions.length - 1) {
+        currentQuestionIndex.value++
+    }
+}
+
+const previousQuestion = () => {
+    if (currentQuestionIndex.value > 0) {
+        currentQuestionIndex.value--
+    }
+}
+
+const submitQuiz = () => {
+    if (isSubmitting.value) return
+
+    isSubmitting.value = true
+    stopTimer()
+
+    form.post(route('quizzes.submit', {
+        quizId: props.quiz.id,
+        courseId: props.course.id
+    }))
+}
+
+onMounted(() => {
+    startTimer()
+})
+
+onUnmounted(() => {
+    stopTimer()
+})
 </script>

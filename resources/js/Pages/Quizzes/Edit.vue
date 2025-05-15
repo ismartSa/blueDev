@@ -1,187 +1,220 @@
 <script setup>
-import InputError from "@/Components/InputError.vue";
-import InputLabel from "@/Components/InputLabel.vue";
-import Modal from "@/Components/Modal.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import SecondaryButton from "@/Components/SecondaryButton.vue";
-import TextInput from "@/Components/TextInput.vue";
-import { useForm } from "@inertiajs/vue3";
-import { watchEffect } from "vue";
+import { watchEffect } from 'vue'
+import { useForm } from '@inertiajs/vue3'
+import Modal from '@/Components/Modal.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import InputError from '@/Components/InputError.vue'
+import TextInput from '@/Components/TextInput.vue'
+import Select from '@/Components/Select.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
+import SecondaryButton from '@/Components/SecondaryButton.vue'
 
 const props = defineProps({
-    show: Boolean,
-    title: String,
-    courses: Array,
-    sections: Array,
-    quiz: Object,
-});
+    show: {
+        type: Boolean,
+        required: true
+    },
+    quiz: {
+        type: Object,
+        required: true
+    },
+    courses: {
+        type: Array,
+        required: true
+    },
+    sections: {
+        type: Array,
+        required: true
+    }
+})
 
-const emit = defineEmits(["close"]);
+const emit = defineEmits(['close'])
 
 const form = useForm({
-    title: "",
-    description: "",
-    time_limit: "",
-    passing_score: "",
-    course_id: "",
-    section_id: "",
-});
+    title: '',
+    description: '',
+    time_limit: '',
+    passing_score: '',
+    course_id: '',
+    section_id: '',
+    allow_retake: true,
+    show_correct_answers: true,
+    randomize_questions: false
+})
 
 const update = () => {
-    form.put(route("quiz.update", props.quiz?.id), {
+    form.put(route('quizzes.update', props.quiz.id), {
         preserveScroll: true,
         onSuccess: () => {
-            emit("close");
-            form.reset();
-        },
-        onError: () => null,
-        onFinish: () => null,
-    });
-};
+            emit('close')
+            form.reset()
+        }
+    })
+}
 
 watchEffect(() => {
-    if (props.show) {
-        form.errors = {};
-        form.title = props.quiz?.title;
-        form.description = props.quiz?.description;
-        form.time_limit = props.quiz?.time_limit;
-        form.passing_score = props.quiz?.passing_score;
-        form.course_id = props.quiz?.course_id;
-        form.section_id = props.quiz?.section_id;
+    if (props.show && props.quiz) {
+        form.errors = {}
+        form.title = props.quiz.title
+        form.description = props.quiz.description
+        form.time_limit = props.quiz.time_limit
+        form.passing_score = props.quiz.passing_score
+        form.course_id = props.quiz.course_id
+        form.section_id = props.quiz.section_id
+        form.allow_retake = props.quiz.allow_retake
+        form.show_correct_answers = props.quiz.show_correct_answers
+        form.randomize_questions = props.quiz.randomize_questions
     }
-});
+})
 </script>
 
 <template>
-    <section class="space-y-6">
-        <Modal :show="props.show" @close="emit('close')">
-            <form class="p-6" @submit.prevent="update">
-                <h2
-                    class="text-lg font-medium text-slate-900 dark:text-slate-100"
-                >
-                    {{ lang().label.edit }} {{ props.title }}
-                </h2>
-                <div class="my-6 space-y-4">
+    <Modal :show="show" @close="emit('close')">
+        <form class="p-6" @submit.prevent="update">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                Edit Quiz
+            </h2>
+
+            <div class="mt-6 space-y-6">
+                <!-- Basic Information -->
+                <div>
+                    <InputLabel for="title" value="Quiz Title" />
+                    <TextInput
+                        id="title"
+                        v-model="form.title"
+                        type="text"
+                        class="mt-1 block w-full"
+                        required
+                    />
+                    <InputError :message="form.errors.title" class="mt-2" />
+                </div>
+
+                <div>
+                    <InputLabel for="description" value="Description" />
+                    <TextInput
+                        id="description"
+                        v-model="form.description"
+                        type="textarea"
+                        class="mt-1 block w-full"
+                        required
+                    />
+                    <InputError :message="form.errors.description" class="mt-2" />
+                </div>
+
+                <!-- Quiz Settings -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <InputLabel for="title" :value="lang().label.title" />
+                        <InputLabel for="time_limit" value="Time Limit (minutes)" />
                         <TextInput
-                            id="title"
-                            type="text"
+                            id="time_limit"
+                            v-model="form.time_limit"
+                            type="number"
+                            min="1"
                             class="mt-1 block w-full"
-                            v-model="form.title"
                             required
-                            :placeholder="lang().placeholder.title"
-                            :error="form.errors.title"
                         />
-                        <InputError class="mt-2" :message="form.errors.title" />
+                        <InputError :message="form.errors.time_limit" class="mt-2" />
+                    </div>
+
+                    <div>
+                        <InputLabel for="passing_score" value="Passing Score (%)" />
+                        <TextInput
+                            id="passing_score"
+                            v-model="form.passing_score"
+                            type="number"
+                            min="0"
+                            max="100"
+                            class="mt-1 block w-full"
+                            required
+                        />
+                        <InputError :message="form.errors.passing_score" class="mt-2" />
                     </div>
                 </div>
 
-                <div class="my-6 space-y-4">
+                <!-- Course and Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <InputLabel for="description" :value="lang().label.description" />
-                        <TextInput
-                            id="description"
-                            type="text"
-                            class="mt-1 block w-full"
-                            v-model="form.description"
-                            required
-                            :placeholder="lang().placeholder.description"
-                            :error="form.errors.description"
-                        />
-                        <InputError class="mt-2" :message="form.errors.description" />
-                    </div>
-                </div>
-                <!-- Time Limit -->
-                <div class="my-6 space-y-4">
-                    <div>
-                        <InputLabel for="time_limit" :value="lang().label.time_limit" />
-                        <TextInput
-                            id="time_limit"
-                            type="number"
-                            class="mt-1 block w-full"
-                            v-model="form.time_limit"
-                            required
-                            :placeholder="lang().placeholder.time_limit"
-                            :error="form.errors.time_limit"
-                        />
-                        <InputError class="mt-2" :message="form.errors.time_limit" />
-                    </div>
-                </div>
-                <!-- Passing Score -->
-                <div class="my-6 space-y-4">
-                    <div>
-                        <InputLabel for="passing_score" :value="lang().label.passing_score" />
-                        <TextInput
-                            id="passing_score"
-                            type="number"
-                            class="mt-1 block w-full"
-                            v-model="form.passing_score"
-                            required
-                            :placeholder="lang().placeholder.passing_score"
-                            :error="form.errors.passing_score"
-                        />
-                        <InputError class="mt-2" :message="form.errors.passing_score" />
-                    </div>
-                </div>
-                <!-- Course -->
-                <div class="my-6 space-y-4">
-                    <div>
-                        <InputLabel for="course_id" :value="lang().label.course" />
+                        <InputLabel for="course_id" value="Course" />
                         <Select
                             id="course_id"
                             v-model="form.course_id"
+                            class="mt-1 block w-full"
                             required
-                            :placeholder="lang().placeholder.course"
-                            :error="form.errors.course_id"
                         >
-                            <option v-for="course in props.courses" :key="course.id" :value="course.id">
-                                {{ course.name }}
+                            <option value="">Select a course</option>
+                            <option v-for="course in courses" :key="course.id" :value="course.id">
+                                {{ course.title }}
                             </option>
                         </Select>
-                        <InputError class="mt-2" :message="form.errors.course_id" />
+                        <InputError :message="form.errors.course_id" class="mt-2" />
                     </div>
-                </div>
-                <!-- Section -->
-                <div class="my-6 space-y-4">
+
                     <div>
-                        <InputLabel for="section_id" :value="lang().label.section" />
+                        <InputLabel for="section_id" value="Section" />
                         <Select
                             id="section_id"
                             v-model="form.section_id"
-                            required
-                            :placeholder="lang().placeholder.section"
-                            :error="form.errors.section_id"
+                            class="mt-1 block w-full"
                         >
-                            <option v-for="section in props.sections" :key="section.id" :value="section.id">
-                                {{ section.name }}
+                            <option value="">Select a section (optional)</option>
+                            <option v-for="section in sections" :key="section.id" :value="section.id">
+                                {{ section.title }}
                             </option>
                         </Select>
-                        <InputError class="mt-2" :message="form.errors.section_id" />
+                        <InputError :message="form.errors.section_id" class="mt-2" />
                     </div>
                 </div>
 
-                <div class="flex justify-end">
-                    <SecondaryButton
-                        :disabled="form.processing"
-                        @click="emit('close')"
-                    >
-                        {{ lang().button.close }}
-                    </SecondaryButton>
-                    <PrimaryButton
-                        class="ml-3"
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
-                        @click="update"
-                    >
-                        {{
-                            form.processing
-                                ? lang().button.save + "..."
-                                : lang().button.save
-                        }}
-                    </PrimaryButton>
+                <!-- Additional Settings -->
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <input
+                            id="allow_retake"
+                            v-model="form.allow_retake"
+                            type="checkbox"
+                            class="rounded border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800"
+                        >
+                        <InputLabel for="allow_retake" value="Allow Retake" class="ml-2" />
+                    </div>
+
+                    <div class="flex items-center">
+                        <input
+                            id="show_correct_answers"
+                            v-model="form.show_correct_answers"
+                            type="checkbox"
+                            class="rounded border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800"
+                        >
+                        <InputLabel for="show_correct_answers" value="Show Correct Answers After Submission" class="ml-2" />
+                    </div>
+
+                    <div class="flex items-center">
+                        <input
+                            id="randomize_questions"
+                            v-model="form.randomize_questions"
+                            type="checkbox"
+                            class="rounded border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800"
+                        >
+                        <InputLabel for="randomize_questions" value="Randomize Questions" class="ml-2" />
+                    </div>
                 </div>
-            </form>
-        </Modal>
-    </section>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+                <SecondaryButton
+                    @click="emit('close')"
+                    :disabled="form.processing"
+                >
+                    Cancel
+                </SecondaryButton>
+
+                <PrimaryButton
+                    @click="update"
+                    :disabled="form.processing"
+                    :class="{ 'opacity-25': form.processing }"
+                >
+                    {{ form.processing ? 'Saving...' : 'Save Changes' }}
+                </PrimaryButton>
+            </div>
+        </form>
+    </Modal>
 </template>

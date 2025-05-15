@@ -52,9 +52,16 @@ Route::prefix('auth/google')->group(function () {
 | Public Course Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('courses')->name('courses.')->group(function () {
-    Route::get('/', [CourseController::class, 'index'])->name('index');
-    Route::get('/{id}/details/{courseSlug}', [CourseController::class, 'show'])->name('details');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::prefix('courses')->name('courses.')->group(function () {
+        Route::get('/', [CourseController::class, 'index'])->name('index');
+        Route::get('/{id}/details/{courseSlug}', [CourseController::class, 'show'])->name('details');
+        Route::get('/{courseId}/learn/{courseSlug}', [CourseController::class, 'learn'])->name('learn');
+        Route::post('/{courseId}/enroll', [EnrollmentController::class, 'enroll'])->name('enroll');
+        Route::get('/{courseId}/player/{courseSlug}', [CourseController::class, 'coursePlayer'])->name('player');
+        Route::get('/{courseId}/player/{courseSlug}/watch/{lectureID}', [CourseController::class, 'watchLecture'])->name('watch');
+        Route::post('/lectures/mark-completed', [CourseController::class, 'markLectureAsCompleted'])->name('lecture.complete');
+    });
 });
 
 /*
@@ -195,8 +202,7 @@ Route::get('/dashboard', function () {
             Route::get('/template/download', [QuizController::class, 'downloadTemplate'])->name('template.download');
         });
 });
-// Course routes
-Route::get('/courses/{id}/{courseSlug?}', [CourseController::class, 'details'])->name('course.details');
+
 /*
 |--------------------------------------------------------------------------
 | Admin Dashboard Routes
