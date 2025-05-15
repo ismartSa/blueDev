@@ -476,4 +476,33 @@ public function details($id, $courseSlug): \Inertia\Response
         ]
     ]);
 }
+
+public function learn($courseId, $courseSlug)
+{
+    $course = Course::with(['sections.lectures', 'instructor'])->findOrFail($courseId);
+    $user = auth()->user();
+
+    // التحقق من تسجيل المستخدم في الدورة
+    $isEnrolled = $user ? $user->enrollments()->where('course_id', $courseId)->exists() : false;
+
+    if (!$isEnrolled) {
+        return redirect()->route('course.details', ['id' => $courseId, 'courseSlug' => $courseSlug])
+            ->with('error', 'You must enroll in this course first.');
+    }
+
+    return Inertia::render('Course/Learn', [
+        'title' => $course->title,
+        'course' => $course,
+        'sections' => $course->sections,
+        'lectures' => $course->sections->flatMap->lectures,
+        'enrolled' => $isEnrolled,
+        'user' => $user,
+        'breadcrumbs' => [
+            ['label' => 'Dashboard', 'href' => route('dashboard')],
+            ['label' => 'Courses', 'href' => route('courses.index')],
+            ['label' => $course->title, 'href' => route('course.details', ['id' => $courseId, 'courseSlug' => $courseSlug])],
+            ['label' => 'Learn', 'href' => '#'],
+        ]
+    ]);
+}
 }

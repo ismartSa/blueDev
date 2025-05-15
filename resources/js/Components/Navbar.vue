@@ -3,12 +3,18 @@ import { Link, usePage } from "@inertiajs/vue3";
 import {
     Bars3CenterLeftIcon,
     UserIcon,
+    ChevronDownIcon,
+    CheckBadgeIcon
 } from "@heroicons/vue/24/solid";
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import Dropdown from "@/Components/Dropdown.vue";
+import DropdownLink from "@/Components/DropdownLink.vue";
 import SwitchLangNavbar from "@/Components/SwitchLangNavbar.vue";
 import SwitchDarkModeNavbar from "@/Components/SwitchDarkModeNavbar.vue";
 import { computed } from 'vue';
+
+// Define emits
+const emit = defineEmits(['open']);
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -48,9 +54,9 @@ const lang = () => translations.value;
                             class="flex items-center space-x-2"
                         >
                             <ApplicationLogo
-                                class="hidden md:block h-5 w-auto fill-current"
+                                class="h-5 w-auto fill-current"
                             />
-                            <p>{{ $page.props.app.name }}</p>
+                            <p class="hidden md:block">{{ $page.props.app.name }}</p>
                         </Link>
                     </div>
                 </div>
@@ -65,7 +71,7 @@ const lang = () => translations.value;
                                     <span class="inline-flex rounded-md">
                                         <button
                                             type="button"
-                                            class="hover:text-slate-400 hover:bg-slate-900 focus:bg-slate-900 focus:text-slate-400 inline-flex items-center justify-center p-2 rounded-md lg:hover:text-slate-500 dark:hover:text-slate-400 lg:hover:bg-slate-100 dark:hover:bg-slate-900 focus:outline-none lg:focus:bg-slate-100 dark:focus:bg-slate-900 lg:focus:text-slate-500 dark:focus:text-slate-400 transition duration-150 ease-in-out sm:hidden"
+                                            class="hover:text-slate-400 hover:bg-slate-900 focus:bg-slate-900 focus:text-slate-400 inline-flex items-center justify-center p-2 rounded-md lg:hover:text-slate-500 dark:hover:text-slate-400 lg:hover:bg-slate-100 dark:hover:bg-slate-900 focus:outline-none lg:focus:bg-slate-100 dark:focus:bg-slate-900 lg:focus:text-slate-500 dark:focus:text-slate-400 transition duration-150 ease-in-out"
                                         >
                                             <UserIcon class="h-5 w-5" />
                                         </button>
@@ -75,7 +81,7 @@ const lang = () => translations.value;
                                             <span>{{ user?.name }}</span>
                                         </button>
                                         <span
-                                            class="flex justify-between items-center"
+                                            class="flex justify-between items-center hidden sm:inline-flex"
                                         >
                                             {{
                                                 $page.props.auth.user.name.split(
@@ -91,7 +97,7 @@ const lang = () => translations.value;
                                             />
                                         </span>
                                         <ChevronDownIcon
-                                            class="ml-2 h-5 w-5 fill-current"
+                                            class="ml-2 h-5 w-5 fill-current hidden sm:inline-flex"
                                         />
                                     </span>
                                 </template>

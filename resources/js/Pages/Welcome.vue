@@ -12,10 +12,24 @@ defineProps({
     laravelVersion: String,
     phpVersion: String,
     courses: {
-        type: Array,
+        type: [Array, Object],
         default: () => []
     }
 });
+
+// تعريف الترجمات
+const translations = computed(() => ({
+    label: {
+        welcome: 'Welcome',
+        dashboard: 'Dashboard',
+        login: 'Login',
+        register: 'Register',
+        explore_courses: 'Explore Our Courses',
+        view_details: 'View Details'
+    }
+}));
+
+const lang = () => translations.value;
 </script>
 
 <template>
@@ -73,7 +87,7 @@ defineProps({
                         </p>
                         <div class="flex items-center justify-between">
                             <span class="text-primary font-bold">{{ course.price }}</span>
-                            <Link :href="route('course.details', { id: course.id, courseSlug: course.slug })"
+                            <Link :href="route('courses.details', { id: course.id, courseSlug: course.slug })"
                                 class="btn-primary">
                                 {{ lang().label.view_details }}
                             </Link>

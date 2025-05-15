@@ -1,17 +1,19 @@
 <template>
+  <Head :title="title" />
   <AuthenticatedLayout>
-       <!-- Breadcrumb component -->
-       <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
     <template #header>
-      <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        Questions for {{ quiz.title }}
-      </h2>
+      <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
     </template>
-<!-- Back to Quizzes List Button -->
-<div class="mb-4">
+
+    <div class="py-12">
+      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="p-6">
+            <!-- Back Button -->
+            <div class="mb-6">
               <Link
                 :href="route('quizzes.index')"
-                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                class="inline-flex items-center px-4 py-2 bg-gray-600 dark:bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 active:bg-gray-900 dark:active:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -19,43 +21,68 @@
                 Back to Quizzes List
               </Link>
             </div>
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 bg-white border-b border-gray-200">
 
-
-            <div class="mb-6">
-              <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ quiz.title }}</h1>
-              <p class="text-gray-600">{{ quiz.description }}</p>
+            <!-- Quiz Info -->
+            <div class="mb-8">
+              <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {{ quiz.title }}
+              </h1>
+              <p class="text-gray-600 dark:text-gray-400">
+                {{ quiz.description }}
+              </p>
             </div>
 
-
-
-            <div class="mb-4 flex justify-between items-center">
-              <button
+            <!-- Controls -->
+            <div class="mb-6 flex justify-between items-center">
+              <PrimaryButton
                 @click="toggleShowAnswers"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                :class="showAnswers ? 'bg-gray-600 hover:bg-gray-700' : ''"
               >
                 {{ showAnswers ? 'Hide Correct Answers' : 'Show Correct Answers' }}
-              </button>
-              <p class="text-gray-600">Total Questions: {{ quiz.questions.length }}</p>
+              </PrimaryButton>
+              <div class="text-gray-600 dark:text-gray-400">
+                Total Questions: {{ quiz.questions.length }}
+              </div>
             </div>
 
-            <div v-if="quiz.questions.length > 0">
-              <div v-for="(question, index) in quiz.questions" :key="question.id" class="mb-6 p-4 bg-gray-100 rounded-lg">
-                <h4 class="font-semibold text-lg">{{ index + 1 }}. {{ question.question_title }}</h4>
-                <p class="text-sm text-gray-600 mt-1">Type: {{ getQuestionTypeName(question.question_type_id) }}</p>
-                <ul class="mt-2 ml-6 list-disc">
-                  <li v-for="answer in question.answers" :key="answer.id"
-                      :class="{'text-green-600 font-semibold': showAnswers && answer.is_correct}">
-                    {{ answer.answer }}
-                    <span v-if="showAnswers && answer.is_correct" class="text-xs ml-2">(Correct)</span>
+            <!-- Questions List -->
+            <div v-if="quiz.questions.length > 0" class="space-y-6">
+              <div v-for="(question, index) in quiz.questions"
+                   :key="question.id"
+                   class="p-6 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      {{ index + 1 }}. {{ question.question_title }}
+                    </h4>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Type: {{ getQuestionTypeName(question.question_type_id) }}
+                    </p>
+                  </div>
+                </div>
+
+                <ul class="mt-4 space-y-2">
+                  <li v-for="answer in question.answers"
+                      :key="answer.id"
+                      class="flex items-center p-3 rounded-md"
+                      :class="{
+                        'bg-green-50 dark:bg-green-900/20': showAnswers && answer.is_correct,
+                        'bg-white dark:bg-slate-600': !showAnswers || !answer.is_correct
+                      }">
+                    <span class="text-gray-900 dark:text-white">
+                      {{ answer.answer }}
+                    </span>
+                    <span v-if="showAnswers && answer.is_correct"
+                          class="ml-2 text-xs font-medium text-green-600 dark:text-green-400">
+                      (Correct)
+                    </span>
                   </li>
                 </ul>
               </div>
             </div>
-            <p v-else class="text-gray-600">No questions added to this quiz yet.</p>
+            <p v-else class="text-gray-600 dark:text-gray-400 text-center py-4">
+              No questions added to this quiz yet.
+            </p>
           </div>
         </div>
       </div>
@@ -63,53 +90,41 @@
   </AuthenticatedLayout>
 </template>
 
-<script>
+<script setup>
 import { ref, computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Breadcrumb from '@/Components/Breadcrumb.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
 
-export default {
-  components: {
-    AuthenticatedLayout,
-    Breadcrumb,
-    Link,
-  },
-  props: {
-    quiz: Object,
-  },
-  setup(props) {
-    const showAnswers = ref(false)
-
-    const title = computed(() => `Questions for ${props.quiz.title}`)
-    const breadcrumbs = computed(() => [
-      { name: 'Dashboard', href: route('dashboard') },
-      { name: 'Quizzes', href: route('quizzes.index') },
-      { name: props.quiz.title, href: route('quizzes.show', props.quiz.id) },
-      { name: 'Questions', href: '#' },
-    ])
-
-    function toggleShowAnswers() {
-      showAnswers.value = !showAnswers.value
+const props = defineProps({
+    quiz: {
+        type: Object,
+        required: true
+    },
+    breadcrumbs: {
+        type: Array,
+        required: true
     }
+})
 
-    function getQuestionTypeName(typeId) {
-      const types = {
+const showAnswers = ref(false)
+
+const title = computed(() => `Questions for ${props.quiz.title}`)
+
+function toggleShowAnswers() {
+    showAnswers.value = !showAnswers.value
+}
+
+function getQuestionTypeName(typeId) {
+    const types = {
         1: 'Multiple Choice',
         2: 'True/False',
         3: 'Short Answer',
-        // Add more types as needed
-      }
-      return types[typeId] || 'Unknown'
+        4: 'Multiple Select',
+        5: 'Matching',
+        6: 'Fill in the Blank'
     }
-
-    return {
-      showAnswers,
-      toggleShowAnswers,
-      getQuestionTypeName,
-      title,
-      breadcrumbs,
-    }
-  },
+    return types[typeId] || 'Unknown'
 }
 </script>

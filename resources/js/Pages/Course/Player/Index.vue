@@ -2,8 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
-
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
 import axios from "axios";
 
 const props = defineProps({
@@ -42,7 +41,6 @@ watch(() => props.firstLecture, (newVal) => {
         updateLecture(newVal);
     }
 });
-</script>
 
 function updateLecture(lecture) {
     currentLecture.value = {
@@ -85,49 +83,43 @@ function goToPreviousLecture() {
         router.push(`/courses/${props.course.id}/player/${props.course.slug}/Watch/${currentLecture.value.previous_lecture_id}`);
     }
 }
-
-
 </script>
 
 <template>
     <AuthenticatedLayout>
-        <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
+        <div :dir="page.props.locale === 'ar' ? 'rtl' : 'ltr'">
+            <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
 
-        <!-- تحسين شريط التقدم -->
-        <div class="mb-6">
-            <ProgressBar :percentage="completionPercentage" />
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- قسم الفيديو -->
-            <div class="lg:col-span-2">
-                <VideoPlayer
-                    :src="currentLecture.video_url"
-                    :title="currentLecture.title"
-                    @ended="onVideoEnded"
-                />
-
-                <NavigationButtons
-                    :previous="currentLecture.previous_lecture_id"
-                    :next="currentLecture.next_lecture_id"
-                    :course="course"
-                />
+            <!-- تحسين شريط التقدم -->
+            <div class="mb-6">
+                <ProgressBar :percentage="completionPercentage" />
             </div>
 
-            <!-- قسم المحتوى -->
-            <div class="lg:col-span-1">
-                <CourseContentAccordion
-                    :sections="sections"
-                    :lectures="lectures"
-                    :course="course"
-                />
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- قسم الفيديو -->
+                <div class="lg:col-span-2">
+                    <VideoPlayer
+                        :src="currentLecture.video_url"
+                        :title="currentLecture.title"
+                        @ended="onVideoEnded"
+                    />
+
+                    <NavigationButtons
+                        :previous="currentLecture.previous_lecture_id"
+                        :next="currentLecture.next_lecture_id"
+                        :course="course"
+                    />
+                </div>
+
+                <!-- قسم المحتوى -->
+                <div class="lg:col-span-1">
+                    <CourseContentAccordion
+                        :sections="sections"
+                        :lectures="lectures"
+                        :course="course"
+                    />
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
-</template>
-
-<template>
-    <div :dir="page.props.locale === 'ar' ? 'rtl' : 'ltr'">
-        <!-- محتوى الواجهة -->
-    </div>
 </template>

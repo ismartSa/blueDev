@@ -1,141 +1,148 @@
 <template>
-    <Head title="تفاصيل الدورة" />
+    <Head title="Course Details" />
     <AuthenticatedLayout>
-        <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
-        <div class="space-y-4">
-            <div class="px-4 sm:px-0">
-            <div class="rounded-lg overflow-hidden w-fit">
-                <!-- Image -->
-                <img :src="course.image" alt="صورة الدورة" class="w-full h-64 object-cover" />
-            </div>
-            </div>
-            <div class="relative bg-white dark:bg-slate-800 shadow sm:rounded-lg">
-            <div class="flex justify-between p-2">
-                <!-- Title -->
-                <h2 class="text-xl font-bold">{{ course.title }}</h2>
-                <!-- Enroll Button -->
-                <PrimaryButton @click="enroll" :disabled="enrolled">
-                {{ enrolled ? 'enrolled' : 'enroll Now' }}
-                </PrimaryButton>
-                <!-- Button ADD-->
-                <div class="px-4 sm:px-0">
-                <div class="rounded-lg overflow-hidden w-fit">
-                    <PrimaryButton
-                        v-show="can(['create course'])"
-                        class="rounded-none"
-                        @click="data.createOpen = true"
-                    >
-                    Add Section
-                    </PrimaryButton>
-                    <Add
-                        :show="data.createOpen"
-                        @close="data.createOpen = false"
-                        :title="props.title"
-                        :courseId="props.course.id"
-                    />
-                </div>
-                </div>
-                <!-- Button end ADD-->
+        <template #header>
+            <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
+        </template>
 
+        <div class="py-12">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="space-y-4">
+                    <div class="px-4 sm:px-0">
+                        <div class="rounded-lg overflow-hidden w-fit">
+                            <img :src="course.image" alt="Course Image" class="w-full h-64 object-cover" />
+                        </div>
+                    </div>
 
-             <!-- Create Lecture Button -->
-          <Link :href="route('course.create.lecture', { courseId: course.id })" class="ml-2">
-            <PrimaryButton>Add Lecture</PrimaryButton>
-          </Link>
-            </div>
-            <div class="p-4">
-                <!-- Description -->
-                <p class="text-gray-600">{{ course.description }}</p>
+                    <div class="relative bg-white dark:bg-slate-800 shadow sm:rounded-lg">
+                        <div class="flex justify-between items-center p-4">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ course.title }}</h2>
 
-                <!-- Instructor -->
-                <h3 class="text-lg font-bold mt-4">Instructor</h3>
-                <p class="text-gray-600">{{ course.name }}</p>
-                <!-- Prerequisites -->
-                <h3 class="text-lg font-bold mt-4">Prerequisites</h3>
-                <ul class="list-disc ml-4">
-                <li v-for="(prerequisite, index) in course.prerequisites" :key="index">
-                    {{ prerequisite }}
-                </li>
-                </ul>
-                <!-- Learning Outcomes -->
-                <h3 class="text-lg font-bold mt-4">Learning Outcomes</h3>
-                <ul class="list-disc ml-4">
-                <li v-for="(outcome, index) in course.learningOutcomes" :key="index">
-                    {{ outcome }}
-                </li>
-                </ul>
-                <!-- Sections and Lectures -->
-                <div class="mt-8">
-                    <div v-for="section in sortedSections" :key="section.id">
-                        <Section
-                            :section="section"
-                            :lectures="filteredLectures(section.id)"
-                        />
+                            <div class="flex items-center space-x-2">
+                                <PrimaryButton
+                                    @click="enroll"
+                                    :disabled="form.processing || enrolled"
+                                    :class="{ 'opacity-25': form.processing }"
+                                >
+                                    {{ enrolled ? 'Enrolled' : 'Enroll Now' }}
+                                </PrimaryButton>
+
+                                <PrimaryButton
+                                    v-if="can(['create course'])"
+                                    @click="data.createOpen = true"
+                                >
+                                    Add Section
+                                </PrimaryButton>
+
+                                <Link
+                                    :href="route('course.create.lecture', { courseId: course.id })"
+                                    class="inline-flex items-center"
+                                >
+                                    <PrimaryButton>Add Lecture</PrimaryButton>
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <p class="text-gray-600 dark:text-gray-300">{{ course.description }}</p>
+
+                            <div class="mt-6">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Instructor</h3>
+                                <p class="text-gray-600 dark:text-gray-300">{{ course.name }}</p>
+                            </div>
+
+                            <div class="mt-6">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Prerequisites</h3>
+                                <ul class="list-disc ml-4 text-gray-600 dark:text-gray-300">
+                                    <li v-for="(prerequisite, index) in course.prerequisites" :key="index">
+                                        {{ prerequisite }}
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-6">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Learning Outcomes</h3>
+                                <ul class="list-disc ml-4 text-gray-600 dark:text-gray-300">
+                                    <li v-for="(outcome, index) in course.learningOutcomes" :key="index">
+                                        {{ outcome }}
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-8">
+                                <div v-for="section in sortedSections" :key="section.id">
+                                    <Section
+                                        :section="section"
+                                        :lectures="filteredLectures(section.id)"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <Add
+            :show="data.createOpen"
+            @close="data.createOpen = false"
+            :title="title"
+            :courseId="course.id"
+        />
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, useForm } from "@inertiajs/vue3";
+import { computed, reactive, ref } from "vue";
+import { usePage } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
-import { usePage } from "@inertiajs/vue3";
-import {reactive, ref } from "vue";
 import Section from '@/Pages/Course/Section.vue';
-import Lecture from '@/Pages/Course/Lecture.vue';
-import AddSectionModal from '@/Pages/Course/AddSectionModal.vue';
 import Add from '@/Pages/Course/Add.vue';
 
-
 const props = defineProps({
-        title: String,
-        course: Object,
-        sections: Array,
-        lectures: Array,
-        breadcrumbs: Object,
-        user: Object,
- });
-
- const enrolled = ref(false);
-const data = reactive({
-    params: {
-
-    },
-  addSectionOpen: false,
-  createOpen:false,
-
+    title: String,
+    course: Object,
+    sections: Array,
+    lectures: Array,
+    breadcrumbs: Object,
+    user: Object,
+    enrolled: {
+        type: Boolean,
+        default: false
+    }
 });
 
-const showAddSectionModal = ref(false);
+const data = reactive({
+    createOpen: false,
+});
 
-const enroll = async () => {
-    try {
-        // 1. Send a POST request to the Laravel endpoint using Inertia.js
-        await usePage().post(`/courses/${props.course.id}/enroll`, {
-            userId: props.user.id,
-        });
+const form = useForm({
+    course_id: props.course.id,
+    user_id: props.user.id
+});
 
-        // 2. Update the enrolled state
-        enrolled.value = true;
+const enroll = () => {
+    form.post(route('courses.enroll', { courseId: props.course.id }), {
+        preserveScroll: true,
+        onSuccess: () => {
+            // يمكنك إضافة رسالة نجاح هنا
+            form.reset();
+        },
+        onError: (errors) => {
+            // يمكنك إضافة رسالة خطأ هنا
+            console.error('Enrollment failed:', errors);
+        }
+    });
+};
 
-        // 3. Optionally, provide feedback to the user
-        // For example, display a success message or update the button text
-    } catch (error) {
-        // Handle errors
-        console.error('Enrollment failed:', error);
-        // Display an error message to the user
-    }
-    };
+const sortedSections = computed(() => {
+    return [...props.sections].sort((a, b) => a.order - b.order);
+});
 
-    const sortedSections = computed(() => {
-        return [...props.sections].sort((a, b) => a.order - b.order)
-    })
-
-    const filteredLectures = (sectionId) => {
-        return props.lectures.filter(lecture => lecture.section_id === sectionId)
-    }
-    </script>
+const filteredLectures = (sectionId) => {
+    return props.lectures.filter(lecture => lecture.section_id === sectionId);
+};
+</script>

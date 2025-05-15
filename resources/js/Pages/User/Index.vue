@@ -1,33 +1,26 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, usePage, router } from "@inertiajs/vue3";
-import { reactive, watch, computed } from "vue";
-import pkg from "lodash";
+import { reactive, watch, computed, ref } from "vue";
+import { debounce, pickBy, cloneDeep } from "lodash";
 import {
     CheckBadgeIcon,
     ChevronUpDownIcon,
     PencilIcon,
     TrashIcon,
 } from "@heroicons/vue/24/solid";
-import {
-    Breadcrumb,
-    TextInput,
-    PrimaryButton,
-    InfoButton,
-    SelectInput,
-    DangerButton,
-    Pagination,
-    Checkbox
-} from "@/Components";
-import {
-    Create,
-    Edit,
-    Delete,
-    DeleteBulk
-} from "@/Pages/User";
-
-// تبسيط استخراج الدوال من lodash
-const { debounce, pickBy, cloneDeep } = pkg;
+import Breadcrumb from "@/Components/Breadcrumb.vue";
+import TextInput from "@/Components/TextInput.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import InfoButton from "@/Components/InfoButton.vue";
+import SelectInput from "@/Components/SelectInput.vue";
+import DangerButton from "@/Components/DangerButton.vue";
+import Pagination from "@/Components/Pagination.vue";
+import Checkbox from "@/Components/Checkbox.vue";
+import Create from "@/Pages/User/Create.vue";
+import Edit from "@/Pages/User/Edit.vue";
+import Delete from "@/Pages/User/Delete.vue";
+import DeleteBulk from "@/Pages/User/DeleteBulk.vue";
 
 // تعريف Props
 const props = defineProps({
@@ -142,8 +135,8 @@ const can = (permissions) => {
 // مراقبة تغييرات البحث والترتيب
 watch(
     () => cloneDeep(data.params),
-    debounce(() => {
-        router.get(route("user.index"), pickBy(data.params), {
+    debounce((newParams) => {
+        router.get(route("user.index"), pickBy(newParams), {
             replace: true,
             preserveState: true,
             preserveScroll: true,

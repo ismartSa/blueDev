@@ -1,70 +1,71 @@
 <template>
+  <Head :title="`Create Quiz - ${course.title}`" />
   <AuthenticatedLayout>
     <template #header>
-      <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        إنشاء كويز جديد
-      </h2>
+      <Breadcrumb :title="`Create Quiz - ${course.title}`" :breadcrumbs="breadcrumbs" />
     </template>
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 bg-white border-b border-gray-200">
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="p-6">
             <form @submit.prevent="submitForm">
               <div class="mb-4">
-                <label for="title" class="block text-gray-700 text-sm font-bold mb-2">عنوان الكويز:</label>
-                <input
+                <InputLabel for="title" value="Quiz Title" />
+                <TextInput
                   id="title"
                   v-model="form.title"
                   type="text"
-                  class="form-input w-full"
+                  class="mt-1 block w-full"
                   required
-                >
+                  autofocus
+                />
+                <InputError :message="form.errors.title" class="mt-2" />
               </div>
 
               <div class="mb-4">
-                <label for="description" class="block text-gray-700 text-sm font-bold mb-2">الوصف:</label>
+                <InputLabel for="description" value="Description" />
                 <textarea
                   id="description"
                   v-model="form.description"
-                  class="form-textarea w-full"
+                  class="mt-1 block w-full border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
                   rows="3"
                 ></textarea>
+                <InputError :message="form.errors.description" class="mt-2" />
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label for="time_limit" class="block text-gray-700 text-sm font-bold mb-2">الوقت المحدد (دقائق):</label>
-                  <input
+                  <InputLabel for="time_limit" value="Time Limit (minutes)" />
+                  <TextInput
                     id="time_limit"
                     v-model.number="form.time_limit"
                     type="number"
                     min="1"
-                    class="form-input w-full"
+                    class="mt-1 block w-full"
                     required
-                  >
+                  />
+                  <InputError :message="form.errors.time_limit" class="mt-2" />
                 </div>
                 <div>
-                  <label for="passing_score" class="block text-gray-700 text-sm font-bold mb-2">درجة النجاح (%):</label>
-                  <input
+                  <InputLabel for="passing_score" value="Passing Score (%)" />
+                  <TextInput
                     id="passing_score"
                     v-model.number="form.passing_score"
                     type="number"
                     min="1"
                     max="100"
-                    class="form-input w-full"
+                    class="mt-1 block w-full"
                     required
-                  >
+                  />
+                  <InputError :message="form.errors.passing_score" class="mt-2" />
                 </div>
               </div>
 
               <div class="flex justify-end">
-                <button
-                  type="submit"
-                  class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  حفظ الكويز
-                </button>
+                <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                  Create Quiz
+                </PrimaryButton>
               </div>
             </form>
           </div>
@@ -76,15 +77,31 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { Head, useForm } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Breadcrumb from '@/Components/Breadcrumb.vue'
+import InputError from '@/Components/InputError.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import TextInput from '@/Components/TextInput.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
+
+const props = defineProps({
+  course: {
+    type: Object,
+    required: true
+  },
+  breadcrumbs: {
+    type: Array,
+    required: true
+  }
+})
 
 const form = useForm({
   title: '',
   description: '',
   time_limit: 10,
   passing_score: 70,
-  course_id: null
+  course_id: props.course.id
 })
 
 const submitForm = () => {
