@@ -180,33 +180,131 @@ public function storeSection(Request $request, Course $course)
      */
     public function show($id, $courseSlug)
     {
-        $course = Course::with(['sections.lectures'])->findOrFail($id);
-        $user = auth()->user();
+        try {
+            // Load course with related data including sections and lectures
+            $course = Course::with([
+                'sections.lectures',
+                'instructor:id,name',
+                'category:id,name'
+            ])->findOrFail($id);
 
-        $sections = $course->sections->first();
-        $firstLecture = $sections?->lectures->first() ?? null;
-        $lecturesCount = $course->sections->sum(fn($section) => $section->lectures->count());
-        $totalDuration = $course->sections->flatMap(fn($section) => $section->lectures)->sum('duration');
+            $user = auth()->user();
+            $sections = $course->sections;
 
-        $enrollmentsCount = Enrollment::where('course_id', $id)->count();
+            // Calculate course statistics
+            $statistics = [
+                'lecturesCount' => $sections->sum(fn($section) => $section->lectures->count()),
+                'totalDuration' => $sections->flatMap(fn($section) => $section->lectures)->sum('duration'),
+                'enrollmentsCount' => Enrollment::where('course_id', $id)->count(),
+                'completionRate' => $this->calculateCompletionRate($course),
+            ];
 
-        $isEnrolled = $user ? $user->enrollments()->where('course_id', $id)->exists() : false;
-        $durationFormatted = $totalDuration ? sprintf('%dh %02dmin', intdiv($totalDuration, 60), $totalDuration % 60) : '0h 00min';
+            // Format duration for display (e.g., "2h 30min")
+            $durationFormatted = $this->formatDuration($statistics['totalDuration']);
 
-        $url = route('course.details', ['id' => $id, 'courseSlug' => $courseSlug]);
+            // Check user enrollment status and progress
+            $enrollmentStatus = $this->getEnrollmentStatus($user, $id);
 
-        return Inertia::render('Course/Details', [
-            'title'             => __('app.label.courses'),
-            'course'            => $course,
-            'sections'          => $sections,
-            'firstLecture'      => $firstLecture,
-            'lectures_count'    => $lecturesCount,
-            'duration'          => $durationFormatted,
-            'enrollments_count' => $enrollmentsCount,
-            'isEnrolled'        => $isEnrolled,
-            'isFree'            => $course->isFree(),
-            'breadcrumbs'       => [['label' => __('app.label.courses'), 'href' => $url ?? '#']],
-        ]);
+            // Return Inertia view with all necessary data
+            return inertia('Course/Show', [
+                'course' => new CourseResource($course),
+                'statistics' => array_merge($statistics, ['durationFormatted' => $durationFormatted]),
+                'enrollmentStatus' => $enrollmentStatus,
+                'progress' => $this->getUserProgress($user, $course),
+                'breadcrumbs' => $this->generateBreadcrumbs($course, $courseSlug),
+                'meta' => [
+                    'title' => $course->title,
+                    'description' => $course->description,
+                    'shareUrl' => route('course.details', ['id' => $id, 'courseSlug' => $courseSlug])
+                ]
+            ]);
+        } catch (\Exception $e) {
+            // Log error and redirect with error message
+            \Log::error('Course display error: ' . $e->getMessage());
+            return redirect()->route('courses.index')
+                ->with('error', 'An error occurred while displaying the course. Please try again.');
+        }
+    }
+
+    /**
+     * Calculate the completion rate for a course
+     * @param Course $course
+     * @return float
+     */
+    private function calculateCompletionRate($course)
+    {
+        $totalEnrollments = $course->enrollments()->count();
+        if (!$totalEnrollments) return 0;
+
+        $completedEnrollments = $course->enrollments()
+            ->where('completion_status', 'completed')
+            ->count();
+
+        return round(($completedEnrollments / $totalEnrollments) * 100);
+    }
+
+    /**
+     * Format minutes into hours and minutes string
+     * @param int $minutes
+     * @return string
+     */
+    private function formatDuration($minutes)
+    {
+        if (!$minutes) return '0h 00min';
+        return sprintf('%dh %02dmin', intdiv($minutes, 60), $minutes % 60);
+    }
+
+    /**
+     * Get user enrollment status for a course
+     * @param User|null $user
+     * @param int $courseId
+     * @return array
+     */
+    private function getEnrollmentStatus($user, $courseId)
+    {
+        if (!$user) return ['enrolled' => false, 'status' => null];
+
+        $enrollment = $user->enrollments()
+            ->where('course_id', $courseId)
+            ->first();
+
+        return [
+            'enrolled' => (bool) $enrollment,
+            'status' => $enrollment?->status,
+            'enrollmentDate' => $enrollment?->created_at
+        ];
+    }
+
+    /**
+     * Get user progress in the course
+     * @param User|null $user
+     * @param Course $course
+     * @return array|null
+     */
+    private function getUserProgress($user, $course)
+    {
+        if (!$user) return null;
+
+        return [
+            'completedLectures' => $this->getCompletedLecturesCount($user, $course),
+            'lastAccessedLecture' => $this->getLastAccessedLecture($user, $course),
+            'certificateEligible' => $this->checkCertificateEligibility($user, $course)
+        ];
+    }
+
+    /**
+     * Generate breadcrumb navigation
+     * @param Course $course
+     * @param string $courseSlug
+     * @return array
+     */
+    private function generateBreadcrumbs($course, $courseSlug)
+    {
+        return [
+            ['title' => __('common.dashboard'), 'url' => route('dashboard')],
+            ['title' => __('courses.list'), 'url' => route('courses.index')],
+            ['title' => $course->title, 'url' => route('course.details', ['id' => $course->id, 'courseSlug' => $courseSlug])]
+        ];
     }
 
 

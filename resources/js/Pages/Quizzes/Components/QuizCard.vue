@@ -44,4 +44,7 @@ defineProps({
 })
 
 defineEmits(['selected'])
+
+// Remove this line if not used
+// import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
 </script>
