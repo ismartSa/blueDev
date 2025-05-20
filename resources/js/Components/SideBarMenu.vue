@@ -2,13 +2,13 @@
 import {
     HomeIcon,
     UserIcon,
-    CheckBadgeIcon,
+    CheckBadgeIcon,  // Ensure this import exists
     KeyIcon,
     ShieldCheckIcon,
     ClipboardIcon,
     PlusCircleIcon,
     ChartBarIcon,
-} from "@heroicons/vue/24/solid";
+} from "@heroicons/vue/24/solid"; // تم التحديث إلى الإصدار 2
 import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from 'vue';
 

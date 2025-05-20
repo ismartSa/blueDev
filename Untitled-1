@@ -1,46 +1,697 @@
-public function enroll($courseId)
-{
-    try {
-        $user = auth()->user();
-        $course = Course::findOrFail($courseId);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Knowledge Base Server</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+        }
+        .knowledge-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #6e8efb;
+        }
+        .knowledge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .file-upload {
+            border: 2px dashed #a777e3;
+            transition: all 0.3s ease;
+        }
+        .file-upload:hover {
+            background-color: rgba(167, 119, 227, 0.1);
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .sidebar-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(110, 142, 251, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(110, 142, 251, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(110, 142, 251, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Flask Server Implementation (would normally be in separate files) -->
+    <script type="text/python">
+        from flask import Flask, request, jsonify, send_from_directory
+        import os
+        import uuid
+        from werkzeug.utils import secure_filename
+        import json
+        from datetime import datetime
+        import threading
+        import hashlib
 
-        // التحقق من حالة الدورة
-        if ($course->status !== 'published') {
-            return back()->with('error', 'هذه الدورة غير متاحة للتسجيل حالياً');
+        app = Flask(__name__)
+        app.config['UPLOAD_FOLDER'] = 'knowledge_base'
+        app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB limit
+        app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'py', 'js', 'html', 'css', 'json', 'md', 'csv', 'ipynb'}
+
+        # Create knowledge base directory if it doesn't exist
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'metadata'))
+            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'embeddings'))
+
+        # Knowledge Base Index
+        KNOWLEDGE_INDEX = os.path.join(app.config['UPLOAD_FOLDER'], 'knowledge_index.json')
+        if not os.path.exists(KNOWLEDGE_INDEX):
+            with open(KNOWLEDGE_INDEX, 'w') as f:
+                json.dump({"files": {}, "categories": {}, "tags": {}}, f)
+
+        def allowed_file(filename):
+            return '.' in filename and \
+                   filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+        def update_knowledge_index(file_data):
+            with open(KNOWLEDGE_INDEX, 'r+') as f:
+                index = json.load(f)
+                index['files'][file_data['id']] = file_data
+
+                # Update categories
+                for category in file_data.get('categories', []):
+                    if category not in index['categories']:
+                        index['categories'][category] = []
+                    if file_data['id'] not in index['categories'][category]:
+                        index['categories'][category].append(file_data['id'])
+
+                # Update tags
+                for tag in file_data.get('tags', []):
+                    if tag not in index['tags']:
+                        index['tags'][tag] = []
+                    if file_data['id'] not in index['tags'][tag]:
+                        index['tags'][tag].append(file_data['id'])
+
+                f.seek(0)
+                json.dump(index, f, indent=2)
+                f.truncate()
+
+        def generate_embeddings(filepath):
+            # This would be replaced with actual embedding generation
+            # For demo purposes, we'll just create a placeholder
+            embedding_id = str(uuid.uuid4())
+            embedding_path = os.path.join(app.config['UPLOAD_FOLDER'], 'embeddings', f"{embedding_id}.json")
+
+            # Simulate embedding generation
+            with open(filepath, 'r') as f:
+                content = f.read()
+                # Simple hash as a placeholder for real embeddings
+                embedding = hashlib.sha256(content.encode()).hexdigest()
+
+            with open(embedding_path, 'w') as f:
+                json.dump({
+                    "id": embedding_id,
+                    "file_id": os.path.basename(filepath),
+                    "embedding": embedding,
+                    "created_at": datetime.now().isoformat()
+                }, f)
+
+            return embedding_id
+
+        @app.route('/api/upload', methods=['POST'])
+        def upload_file():
+            if 'file' not in request.files:
+                return jsonify({"error": "No file part"}), 400
+
+            file = request.files['file']
+            if file.filename == '':
+                return jsonify({"error": "No selected file"}), 400
+
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_id = str(uuid.uuid4())
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
+                file.save(filepath)
+
+                # Extract metadata from form
+                metadata = {
+                    "id": file_id,
+                    "original_filename": filename,
+                    "uploaded_at": datetime.now().isoformat(),
+                    "categories": request.form.get('categories', '').split(','),
+                    "tags": request.form.get('tags', '').split(','),
+                    "description": request.form.get('description', ''),
+                    "file_type": filename.rsplit('.', 1)[1].lower(),
+                    "size": os.path.getsize(filepath)
+                }
+
+                # Save metadata
+                metadata_path = os.path.join(app.config['UPLOAD_FOLDER'], 'metadata', f"{file_id}.json")
+                with open(metadata_path, 'w') as f:
+                    json.dump(metadata, f)
+
+                # Update knowledge index
+                update_knowledge_index(metadata)
+
+                # Generate embeddings in background
+                threading.Thread(target=generate_embeddings, args=(filepath,)).start()
+
+                return jsonify({
+                    "message": "File uploaded successfully",
+                    "file_id": file_id,
+                    "metadata": metadata
+                }), 201
+
+            return jsonify({"error": "File type not allowed"}), 400
+
+        @app.route('/api/knowledge', methods=['GET'])
+        def get_knowledge():
+            with open(KNOWLEDGE_INDEX, 'r') as f:
+                index = json.load(f)
+                return jsonify(index), 200
+
+        @app.route('/api/search', methods=['GET'])
+        def search_knowledge():
+            query = request.args.get('q', '')
+            category = request.args.get('category', '')
+            tag = request.args.get('tag', '')
+
+            with open(KNOWLEDGE_INDEX, 'r') as f:
+                index = json.load(f)
+
+                results = []
+                for file_id, file_data in index['files'].items():
+                    # Simple search - in a real implementation, this would use embeddings
+                    matches = (
+                        query.lower() in file_data['original_filename'].lower() or
+                        query.lower() in file_data.get('description', '').lower() or
+                        any(query.lower() in tag.lower() for tag in file_data.get('tags', []))
+                    )
+
+                    category_match = not category or category in file_data.get('categories', [])
+                    tag_match = not tag or tag in file_data.get('tags', [])
+
+                    if matches and category_match and tag_match:
+                        results.append(file_data)
+
+                return jsonify({"results": results}), 200
+
+        @app.route('/api/train', methods=['POST'])
+        def train_model():
+            # This endpoint would interface with your AI models
+            model_name = request.json.get('model', 'deepseek-v3.1')
+            file_ids = request.json.get('file_ids', [])
+
+            # In a real implementation, this would:
+            # 1. Load the specified model
+            # 2. Retrieve the requested files
+            # 3. Fine-tune the model with the knowledge
+            # 4. Save the improved model
+
+            return jsonify({
+                "message": f"Model {model_name} training initiated with {len(file_ids)} files",
+                "status": "queued",
+                "training_id": str(uuid.uuid4())
+            }), 202
+
+        if __name__ == '__main__':
+            app.run(host='0.0.0.0', port=5000, debug=True)
+    </script>
+
+    <!-- Frontend UI -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar w-64 bg-gray-900 text-white flex flex-col">
+            <div class="p-4 border-b border-gray-700">
+                <h1 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-brain mr-2 text-purple-400"></i>
+                    AI Knowledge Base
+                </h1>
+                <p class="text-gray-400 text-sm mt-1">Your centralized intelligence hub</p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold text-gray-300 mb-2 flex items-center">
+                        <i class="fas fa-folder-open mr-2 text-blue-400"></i>
+                        Categories
+                    </h2>
+                    <ul id="categories-list" class="space-y-1">
+                        <li class="sidebar-item px-3 py-2 rounded cursor-pointer bg-gray-800">
+                            <i class="fas fa-code mr-2 text-green-400"></i>
+                            Code Frameworks
+                        </li>
+                        <li class="sidebar-item px-3 py-2 rounded cursor-pointer">
+                            <i class="fas fa-file-alt mr-2 text-yellow-400"></i>
+                            Documentation
+                        </li>
+                        <li class="sidebar-item px-3 py-2 rounded cursor-pointer">
+                            <i class="fas fa-chart-line mr-2 text-red-400"></i>
+                            Analytics
+                        </li>
+                        <li class="sidebar-item px-3 py-2 rounded cursor-pointer">
+                            <i class="fas fa-project-diagram mr-2 text-purple-400"></i>
+                            Projects
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="p-4 border-t border-gray-700">
+                    <h2 class="text-lg font-semibold text-gray-300 mb-2 flex items-center">
+                        <i class="fas fa-tags mr-2 text-blue-400"></i>
+                        Popular Tags
+                    </h2>
+                    <div id="tags-list" class="flex flex-wrap gap-2">
+                        <span class="sidebar-item px-2 py-1 rounded-full text-xs bg-gray-800 cursor-pointer">
+                            #python
+                        </span>
+                        <span class="sidebar-item px-2 py-1 rounded-full text-xs bg-gray-800 cursor-pointer">
+                            #ai
+                        </span>
+                        <span class="sidebar-item px-2 py-1 rounded-full text-xs bg-gray-800 cursor-pointer">
+                            #flask
+                        </span>
+                        <span class="sidebar-item px-2 py-1 rounded-full text-xs bg-gray-800 cursor-pointer">
+                            #machinelearning
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-gray-700">
+                    <h2 class="text-lg font-semibold text-gray-300 mb-2 flex items-center">
+                        <i class="fas fa-cog mr-2 text-blue-400"></i>
+                        AI Models
+                    </h2>
+                    <ul class="space-y-2">
+                        <li class="sidebar-item px-3 py-2 rounded cursor-pointer flex items-center justify-between">
+                            <div>
+                                <i class="fas fa-robot mr-2 text-green-400"></i>
+                                DeepSeek V3.1
+                            </div>
+                            <span class="text-xs bg-green-500 text-white px-2 py-1 rounded-full">Active</span>
+                        </li>
+                        <li class="sidebar-item px-3 py-2 rounded cursor-pointer flex items-center">
+                            <i class="fas fa-robot mr-2 text-blue-400"></i>
+                            Local LLM
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-700">
+                <button id="upload-btn" class="w-full gradient-bg text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i>
+                    Upload Knowledge
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm z-10">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="relative w-64">
+                            <input type="text" placeholder="Search knowledge base..."
+                                   class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <button class="pulse-animation gradient-bg text-white py-2 px-4 rounded-lg font-medium flex items-center">
+                            <i class="fas fa-bolt mr-2"></i>
+                            Train AI Model
+                        </button>
+                        <div class="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                <div class="mb-6 flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">Knowledge Repository</h2>
+                    <div class="flex space-x-2">
+                        <button class="bg-white border border-gray-300 px-3 py-1 rounded-lg text-sm flex items-center">
+                            <i class="fas fa-filter mr-2 text-gray-500"></i>
+                            Filter
+                        </button>
+                        <button class="bg-white border border-gray-300 px-3 py-1 rounded-lg text-sm flex items-center">
+                            <i class="fas fa-sort mr-2 text-gray-500"></i>
+                            Sort
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Files</p>
+                                <h3 class="text-2xl font-bold">1,248</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-500">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">AI Models</p>
+                                <h3 class="text-2xl font-bold">5</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-500">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Knowledge Used</p>
+                                <h3 class="text-2xl font-bold">87%</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-green-100 text-green-500">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Last Training</p>
+                                <h3 class="text-2xl font-bold">2h ago</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Knowledge Items -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Sample knowledge cards -->
+                    <div class="knowledge-card bg-white rounded-lg shadow p-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center">
+                                <div class="p-2 rounded-lg bg-blue-100 text-blue-500 mr-3">
+                                    <i class="fas fa-code"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">Custom AI Framework</h4>
+                                    <p class="text-gray-500 text-sm">Advanced neural network implementation</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3">Complete implementation of our proprietary AI framework with custom layers and optimization techniques.</p>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full">#python</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full">#tensorflow</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">#ai</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>Updated 3 days ago</span>
+                            <span>1.2 MB</span>
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card bg-white rounded-lg shadow p-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center">
+                                <div class="p-2 rounded-lg bg-purple-100 text-purple-500 mr-3">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">Project Blueprint</h4>
+                                    <p class="text-gray-500 text-sm">Architecture documentation</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3">Detailed system architecture and component interactions for our flagship AI product.</p>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full">#architecture</span>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-600 text-xs rounded-full">#documentation</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">#design</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>Updated 1 week ago</span>
+                            <span>450 KB</span>
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card bg-white rounded-lg shadow p-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center">
+                                <div class="p-2 rounded-lg bg-green-100 text-green-500 mr-3">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold">Performance Metrics</h4>
+                                    <p class="text-gray-500 text-sm">Model evaluation results</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3">Comprehensive evaluation of model performance across different datasets and parameters.</p>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">#analytics</span>
+                            <span class="px-2 py-1 bg-indigo-100 text-indigo-600 text-xs rounded-full">#metrics</span>
+                            <span class="px-2 py-1 bg-pink-100 text-pink-600 text-xs rounded-full">#evaluation</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>Updated yesterday</span>
+                            <span>780 KB</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Upload to Knowledge Base</h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="file-upload p-8 rounded-lg text-center mb-6 cursor-pointer">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-purple-500 mb-3"></i>
+                    <p class="font-medium">Drag & drop files here or click to browse</p>
+                    <p class="text-gray-500 text-sm mt-1">Supports: .py, .js, .html, .css, .pdf, .txt, .md, .ipynb</p>
+                    <input type="file" id="file-input" class="hidden" multiple>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Categories</label>
+                        <input type="text" placeholder="e.g. Frameworks, Documentation"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                        <input type="text" placeholder="e.g. python, ai, flask"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea rows="3" placeholder="Brief description of the knowledge content"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-upload" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button class="gradient-bg text-white px-4 py-2 rounded-md hover:opacity-90">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Knowledge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Modal -->
+    <div id="training-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Train AI Model with Knowledge</h3>
+                <button id="close-training-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select AI Model</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option>DeepSeek V3.1</option>
+                        <option>Local LLM</option>
+                        <option>Custom Fine-tuned Model</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Knowledge to Include</label>
+                    <div class="border border-gray-300 rounded-md p-4 max-h-64 overflow-y-auto">
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="knowledge-1" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                                <label for="knowledge-1" class="ml-2 block text-sm text-gray-700">
+                                    Custom AI Framework (Advanced neural network implementation)
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="knowledge-2" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                                <label for="knowledge-2" class="ml-2 block text-sm text-gray-700">
+                                    Project Blueprint (Architecture documentation)
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="knowledge-3" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                                <label for="knowledge-3" class="ml-2 block text-sm text-gray-700">
+                                    Performance Metrics (Model evaluation results)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Training Parameters</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Epochs</label>
+                            <input type="number" value="10" min="1"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Learning Rate</label>
+                            <input type="number" step="0.0001" value="0.001"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-training" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button class="gradient-bg text-white px-4 py-2 rounded-md hover:opacity-90">
+                        <i class="fas fa-bolt mr-2"></i>
+                        Start Training
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal toggle functionality
+        document.getElementById('upload-btn').addEventListener('click', function() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('close-modal').addEventListener('click', function() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        });
+
+        document.getElementById('cancel-upload').addEventListener('click', function() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        });
+
+        // Training modal
+        document.querySelector('.pulse-animation').addEventListener('click', function() {
+            document.getElementById('training-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('close-training-modal').addEventListener('click', function() {
+            document.getElementById('training-modal').classList.add('hidden');
+        });
+
+        document.getElementById('cancel-training').addEventListener('click', function() {
+            document.getElementById('training-modal').classList.add('hidden');
+        });
+
+        // File upload interaction
+        const fileUpload = document.querySelector('.file-upload');
+        const fileInput = document.getElementById('file-input');
+
+        fileUpload.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        fileUpload.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('border-purple-500', 'bg-purple-50');
+        });
+
+        fileUpload.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-purple-500', 'bg-purple-50');
+        });
+
+        fileUpload.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-purple-500', 'bg-purple-50');
+            // Handle dropped files
+            console.log('Files dropped:', e.dataTransfer.files);
+        });
+
+        // Simulate API calls
+        async function uploadFile(file, metadata) {
+            // In a real implementation, this would call the Flask API
+            console.log('Uploading file:', file.name);
+            console.log('With metadata:', metadata);
+
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            return {
+                success: true,
+                fileId: 'file_' + Math.random().toString(36).substr(2, 9),
+                message: 'File uploaded successfully'
+            };
         }
 
-        // التحقق من التسجيل المسبق
-        $existingEnrollment = Enrollment::where('user_id', $user->id)
-            ->where('course_id', $courseId)
-            ->first();
+        async function trainModel(model, fileIds, params) {
+            // In a real implementation, this would call the Flask API
+            console.log('Training model:', model);
+            console.log('With files:', fileIds);
+            console.log('Parameters:', params);
 
-        if ($existingEnrollment) {
-            return redirect()->route('course.player', [
-                'courseId' => $course->id,
-                'courseSlug' => $course->slug
-            ])->with('info', 'أنت مسجل بالفعل في هذه الدورة');
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            return {
+                success: true,
+                trainingId: 'train_' + Math.random().toString(36).substr(2, 9),
+                message: 'Training initiated'
+            };
         }
-
-        // إنشاء تسجيل جديد
-        Enrollment::create([
-            'user_id' => $user->id,
-            'course_id' => $courseId,
-            'enrollment_status' => 'active',
-            'enrollment_date' => Carbon::now()
-        ]);
-
-        // تسجيل النشاط
-        activity()
-            ->causedBy($user)
-            ->performedOn($course)
-            ->log('تم التسجيل في الدورة');
-
-        return redirect()->route('course.details', [
-            'id' => $course->id,
-            'courseSlug' => $course->slug
-        ])->with('success', 'تم التسجيل في الدورة بنجاح');
-    } catch (\Exception $e) {
-        \Log::error('خطأ في التسجيل بالدورة: ' . $e->getMessage());
-        return back()->with('error', 'حدث خطأ أثناء التسجيل في الدورة، يرجى المحاولة مرة أخرى');
-    }
-}
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - <a href="https://enzostvs-deepsite.hf.space?remix=Barbuuuuuuuu/ai-knowledge-base-good" style="color: #fff;text-decoration: underline;" target="_blank" >🧬 Remix</a></p></body>
+</html>

@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronRightIcon } from "@heroicons/vue/24/solid";
+import { ChevronRightIcon }  from '@heroicons/vue/24/outline'; // تم التحديث إلى الإصدار 2
 import { Link } from "@inertiajs/vue3";
 defineProps({
     title: String,

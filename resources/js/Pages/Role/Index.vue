@@ -15,7 +15,7 @@ import {
     ChevronUpDownIcon,
     PencilIcon,
     TrashIcon,
-} from "@heroicons/vue/24/solid";
+} from "@heroicons/vue/24/outline";
 import Create from "@/Pages/Role/Create.vue";
 import Edit from "@/Pages/Role/Edit.vue";
 import Delete from "@/Pages/Role/Delete.vue";
