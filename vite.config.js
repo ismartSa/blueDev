@@ -22,15 +22,16 @@ export default defineConfig({
     rollupOptions: {
       external: [],
       output: {
-        manualChunks: {
-          lodash: ['lodash'],
-        },
+        manualChunks: {}, // Removed lodash from manualChunks
       },
     },
   },
   plugins: [
     laravel({
-      input: ['resources/js/app.js'],
+      input: [
+        'resources/js/app.js'
+          ],
+      ssr: ['resources/js/ssr.js'],
       refresh: true,
     }),
     vue(),

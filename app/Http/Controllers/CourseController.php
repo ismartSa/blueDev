@@ -235,11 +235,11 @@ public function storeSection(Request $request, Course $course)
     {
         $totalEnrollments = $course->enrollments()->count();
         if (!$totalEnrollments) return 0;
-
+    
         $completedEnrollments = $course->enrollments()
             ->where('completion_status', 'completed')
             ->count();
-
+        
         return round(($completedEnrollments / $totalEnrollments) * 100);
     }
 
@@ -263,11 +263,11 @@ public function storeSection(Request $request, Course $course)
     private function getEnrollmentStatus($user, $courseId)
     {
         if (!$user) return ['enrolled' => false, 'status' => null];
-
+    
         $enrollment = $user->enrollments()
             ->where('course_id', $courseId)
             ->first();
-
+    
         return [
             'enrolled' => (bool) $enrollment,
             'status' => $enrollment?->status,
@@ -284,7 +284,7 @@ public function storeSection(Request $request, Course $course)
     private function getUserProgress($user, $course)
     {
         if (!$user) return null;
-
+    
         return [
             'completedLectures' => $this->getCompletedLecturesCount($user, $course),
             'lastAccessedLecture' => $this->getLastAccessedLecture($user, $course),

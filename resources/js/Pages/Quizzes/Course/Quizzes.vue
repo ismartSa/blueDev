@@ -151,8 +151,6 @@ import {
   ClockIcon,
   CheckCircleIcon,
   DocumentTextIcon,
-  // Remove this line if not used
-  // import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
   PlayIcon
 } from '@heroicons/vue/24/outline'
 

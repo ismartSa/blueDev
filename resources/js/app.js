@@ -9,6 +9,7 @@ import { ZiggyVue } from "../../vendor/tightenco/ziggy/dist/vue.m";
 import FloatingVue from "floating-vue";
 import { usePage } from "@inertiajs/vue3";
 
+
 const appName =
     window.document.getElementsByTagName("title")[0]?.innerText || "Laravel";
 
