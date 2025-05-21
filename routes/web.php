@@ -23,12 +23,10 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+    return Inertia::render('Index/Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-        'courses' => Course::latest()->take(6)->get(),
+        'courses' => Course::latest()->take(3)->get(),
     ]);
 });
 
