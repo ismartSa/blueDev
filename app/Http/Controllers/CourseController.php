@@ -215,7 +215,7 @@ public function storeSection(Request $request, Course $course)
 
             // Check user enrollment status and progress
             $enrollmentStatus = $this->getEnrollmentStatus($user, $id);
-            dd($course);
+
             // Return Inertia view with all necessary data
             return inertia('Course/Show', [
                 'course' => new CourseResource($course),
