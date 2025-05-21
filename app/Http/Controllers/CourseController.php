@@ -35,16 +35,26 @@ class CourseController extends Controller
 
     public function index()
     {
+        // جلب جميع الدورات مع تفاصيلها
         $courses = $this->courseRepository->getActiveCourses();
-        return inertia('Course/Index', [
+
+        // إعداد البيانات للعرض
+        $data = [
             'courses' => CourseResource::collection($courses),
             'filters' => request()->only(['search']),
             'title' => __('courses.title'),
             'breadcrumbs' => [
-                ['label' => __('common.dashboard'), 'href' => route('dashboard')],
-                ['label' => __('courses.list'), 'href' => route('courses.index')]  // Changed from course.index to courses.index
+                ['label' => __('dashboard'), 'href' => route('dashboard')],
+                ['label' => __('courses.list'), 'href' => route('courses.index')]
+            ],
+            'statistics' => [
+                'total_courses' => $courses->count(),
+                'active_courses' => $courses->where('status', 'active')->count(),
+                'draft_courses' => $courses->where('status', 'draft')->count()
             ]
-        ]);
+        ];
+
+        return inertia('Course/Index', $data);
     }
 
     public function store(CourseStoreRequest $request)
@@ -180,6 +190,7 @@ public function storeSection(Request $request, Course $course)
      */
     public function show($id, $courseSlug)
     {
+
         try {
             // Load course with related data including sections and lectures
             $course = Course::with([
@@ -204,7 +215,7 @@ public function storeSection(Request $request, Course $course)
 
             // Check user enrollment status and progress
             $enrollmentStatus = $this->getEnrollmentStatus($user, $id);
-
+            dd($course);
             // Return Inertia view with all necessary data
             return inertia('Course/Show', [
                 'course' => new CourseResource($course),
@@ -221,6 +232,7 @@ public function storeSection(Request $request, Course $course)
         } catch (\Exception $e) {
             // Log error and redirect with error message
             \Log::error('Course display error: ' . $e->getMessage());
+            dd($e->getMessage());
             return redirect()->route('courses.index')
                 ->with('error', 'An error occurred while displaying the course. Please try again.');
         }
@@ -235,11 +247,11 @@ public function storeSection(Request $request, Course $course)
     {
         $totalEnrollments = $course->enrollments()->count();
         if (!$totalEnrollments) return 0;
-    
+
         $completedEnrollments = $course->enrollments()
             ->where('completion_status', 'completed')
             ->count();
-        
+
         return round(($completedEnrollments / $totalEnrollments) * 100);
     }
 
@@ -263,11 +275,11 @@ public function storeSection(Request $request, Course $course)
     private function getEnrollmentStatus($user, $courseId)
     {
         if (!$user) return ['enrolled' => false, 'status' => null];
-    
+
         $enrollment = $user->enrollments()
             ->where('course_id', $courseId)
             ->first();
-    
+
         return [
             'enrolled' => (bool) $enrollment,
             'status' => $enrollment?->status,
@@ -284,7 +296,7 @@ public function storeSection(Request $request, Course $course)
     private function getUserProgress($user, $course)
     {
         if (!$user) return null;
-    
+
         return [
             'completedLectures' => $this->getCompletedLecturesCount($user, $course),
             'lastAccessedLecture' => $this->getLastAccessedLecture($user, $course),
