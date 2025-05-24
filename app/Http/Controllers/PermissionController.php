@@ -115,22 +115,29 @@ class PermissionController extends Controller
         DB::beginTransaction();
 
         try {
-            $superadmin = Role::whereName('superadmin')->first();
-            $superadmin->revokePermissionTo([$permission->name]);
-            $permission->update([
-               'name' => $request->validate(['name' => 'required|string|unique:permissions,name,'.$permission->id])
+            $superadmin = Role::whereName('superadmin')->firstOrFail();
 
+            // Revoke old permission first
+            $superadmin->revokePermissionTo([$permission->name]);
+
+            // Update permission with validation
+            $updated = $permission->update([
+                'name' => $request->name,
             ]);
-            if (!$permission) {
+
+            if (!$updated) {
                 throw new \Exception('Failed to update permission');
             }
+
+            // Grant new permission
             $superadmin->givePermissionTo([$permission->name]);
+
             DB::commit();
 
             return back()->with('success', __('app.label.updated_successfully', ['name' => $permission->name]));
         } catch (\Throwable $th) {
             DB::rollback();
-            return back()->with('error', __('app.label.updated_error', ['name' => $permission->name]) . $th->getMessage());
+            return back()->with('error', __('app.label.updated_error', ['name' => $permission->name]) . ': ' . $th->getMessage());
         }
     }
 
