@@ -14,6 +14,7 @@ import Pagination from "@/Components/Pagination.vue";
 import {
     CheckBadgeIcon,
     ChevronUpDownIcon,
+    LanguageIcon,
     PencilIcon,
     TrashIcon,
 } from "@heroicons/vue/24/solid";
@@ -82,6 +83,22 @@ const select = () => {
     } else {
         data.multipleSelect = false;
     }
+};
+const loginAsUser = (user) => {
+    router.post(route('user.loginAs'), {
+        id: user.id
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            window.location.reload();
+        },
+        onError: (errors) => {
+            console.error('Login as user failed:', errors);
+            // You can also show an error message to the user here
+            // For example using a toast notification:
+             toast.error(lang().label.login_as_user_failed);
+        }
+    });
 };
 </script>
 
@@ -287,6 +304,7 @@ const select = () => {
                                         class="flex justify-center items-center"
                                     >
                                         <div class="rounded-md overflow-hidden">
+
                                             <InfoButton
                                                 v-show="can(['update user'])"
                                                 type="button"
@@ -313,6 +331,16 @@ const select = () => {
                                             >
                                                 <TrashIcon class="w-4 h-4" />
                                             </DangerButton>
+                                                  <!-- زر الدخول بهذا المستخدم -->
+                                        <InfoButton
+                                            v-show="can(['login as user'])"
+                                            type="button"
+                                            @click="loginAsUser(user)"
+                                            class="px-2 py-1.5 rounded-none bg-black text-white hover:bg-gray-800 hover:text-white"
+                                            v-tooltip="lang().tooltip.loginAs"
+                                        >
+                                            <LanguageIcon class="w-4 h-4" />
+                                        </InfoButton>
                                         </div>
                                     </div>
                                 </td>

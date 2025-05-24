@@ -41,7 +41,7 @@ class CourseController extends Controller
         $this->courseHelper = $courseHelper;
         $this->lectureCountService = $lectureCountService;
         $this->courseProgressHelper = $courseProgressHelper;
-      //  $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
+        $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
         $this->middleware('permission:edit courses', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete courses', ['only' => ['destroy']]);
     }
