@@ -139,7 +139,24 @@ const quizItems = [
                     <span class="ml-3">{{ lang().label.courses }}</span>
                 </Link>
             </li>
-                <!--  end courses -->
+            <li
+                v-show="can(['create courses'])"
+                class="text-white rounded-lg hover:bg-primary dark:hover:bg-primary"
+                v-bind:class="
+                    route().current('courses.create')
+                        ? 'bg-primary'
+                        : 'bg-slate-700/40 dark:bg-slate-800/40'
+                "
+            >
+                <Link
+                    :href="route('courses.create')"
+                    class="flex items-center py-2 px-4"
+                >
+                    <PlusCircleIcon class="w-6 h-5" />
+                    <span class="ml-3">{{ lang().label.create_course }}</span>
+                </Link>
+            </li>
+            <!--  end courses -->
 
             <li v-show="can(['read role', 'read permission'])" class="py-2">
                 <p>{{ lang().label.access }}</p>

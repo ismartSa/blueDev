@@ -129,7 +129,9 @@ Route::get('/dashboard', function () {
         ->prefix('courses')
         ->name('courses.')
         ->group(function () {
-            Route::resource('/', CourseController::class)->except(['index', 'show']);
+            Route::get('/create', [CourseController::class, 'create'])->name('create'); // تأكد من وجود هذا المسار
+            Route::post('/', [CourseController::class, 'store'])->name('store'); // تأكد من وجود هذا المسار
+            Route::resource('/', CourseController::class)->except(['index', 'show', 'create', 'store']);
             Route::post('/destroy-bulk', [CourseController::class, 'destroyBulk'])->name('destroy-bulk');
 
             // Lecture and Section Management
