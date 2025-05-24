@@ -52,6 +52,7 @@ watchEffect(() => {
                 <div class="my-6 space-y-4">
                     <div>
                         <InputLabel for="name" :value="lang().label.role" />
+
                         <TextInput
                             id="name"
                             type="text"

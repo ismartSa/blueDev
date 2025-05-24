@@ -113,14 +113,20 @@ class PermissionController extends Controller
     public function update(PermissionUpdateRequest $request, Permission $permission)
     {
         DB::beginTransaction();
+
         try {
             $superadmin = Role::whereName('superadmin')->first();
             $superadmin->revokePermissionTo([$permission->name]);
             $permission->update([
-                'name'          => $request->name
+               'name' => $request->validate(['name' => 'required|string|unique:permissions,name,'.$permission->id])
+
             ]);
+            if (!$permission) {
+                throw new \Exception('Failed to update permission');
+            }
             $superadmin->givePermissionTo([$permission->name]);
             DB::commit();
+
             return back()->with('success', __('app.label.updated_successfully', ['name' => $permission->name]));
         } catch (\Throwable $th) {
             DB::rollback();

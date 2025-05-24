@@ -44,7 +44,8 @@ Route::prefix('auth/google')->group(function () {
     Route::get('/', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
     Route::get('/callback', [GoogleController::class, 'handleGoogleCallback']);
 });
-
+// User Login as Admin
+Route::post('/user/login-as', [UserController::class, 'loginAsUser'])->name('user.loginAs');
 /*
 |--------------------------------------------------------------------------
 | Public Course Routes

@@ -1,7 +1,7 @@
 <template>
   <AuthenticatedLayout>
     <template #header>
-      <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('courses.create_new_course') }}</h2>
+      <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ lang().label.courses_create_new_course }}</h2>
     </template>
 
     <div class="py-12">
@@ -13,10 +13,9 @@
               <div class="flex justify-between mb-1">
                 <span v-for="step in 3" :key="step"
                       :class="{'text-blue-600 font-bold': currentStep >= step, 'text-gray-400': currentStep < step}">
-                  {{ __('courses.step') }} {{ step }}: {{ stepTitles[step-1] }}
+                  {{ lang().label.courses_step }} {{ step }}: {{ stepTitles[step-1] }}
                 </span>
               </div>
-            </div>
               <div class="w-full bg-gray-200 rounded-full h-2.5">
                 <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: `${(currentStep / 3) * 100}%` }"></div>
               </div>
@@ -26,21 +25,21 @@
               <!-- Step 1: Basic Information -->
               <div v-if="currentStep === 1">
                 <div class="mb-4">
-                  <label for="title" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.title') }}:</label>
+                  <label for="title" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_title }}:</label>
                   <input id="title" v-model="form.title" type="text" class="form-input w-full" required>
                   <div v-if="form.errors.title" class="text-red-500 text-sm mt-1">{{ form.errors.title }}</div>
                 </div>
 
                 <div class="mb-4">
-                  <label for="description" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.description') }}:</label>
+                  <label for="description" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_description }}:</label>
                   <textarea id="description" v-model="form.description" class="form-textarea w-full" rows="3" required></textarea>
                   <div v-if="form.errors.description" class="text-red-500 text-sm mt-1">{{ form.errors.description }}</div>
                 </div>
 
                 <div class="mb-4">
-                  <label for="category_id" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.category') }}:</label>
+                  <label for="category_id" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_category }}:</label>
                   <select id="category_id" v-model="form.category_id" class="form-select w-full" required>
-                    <option value="">{{ $t('courses.select_category') }}</option>
+                    <option value="">{{ lang().label.courses_select_category }}</option>
                     <option v-for="category in categories" :key="category.id" :value="category.id">
                       {{ category.name }}
                     </option>
@@ -52,40 +51,40 @@
               <!-- Step 2: Additional Details -->
               <div v-if="currentStep === 2">
                 <div class="mb-4">
-                  <label for="body" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.body') }}:</label>
+                  <label for="body" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_body }}:</label>
                   <textarea id="body" v-model="form.body" class="form-textarea w-full" rows="5"></textarea>
                   <div v-if="form.errors.body" class="text-red-500 text-sm mt-1">{{ form.errors.body }}</div>
                 </div>
 
                 <div class="mb-4">
-                  <label for="duration" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.duration') }} ({{ $t('courses.in_minutes') }}):</label>
+                  <label for="duration" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_duration }} ({{ lang().label.courses_in_minutes }}):</label>
                   <input id="duration" v-model="form.duration" type="number" class="form-input w-full" required>
                   <div v-if="form.errors.duration" class="text-red-500 text-sm mt-1">{{ form.errors.duration }}</div>
                 </div>
 
                 <div class="mb-4">
-                  <label for="price" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.price') }}:</label>
+                  <label for="price" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_price }}:</label>
                   <input id="price" v-model="form.price" type="number" step="0.01" class="form-input w-full" required>
                   <div v-if="form.errors.price" class="text-red-500 text-sm mt-1">{{ form.errors.price }}</div>
                 </div>
 
                 <div class="mb-4">
-                  <label for="image" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.image') }}:</label>
+                  <label for="image" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_image }}:</label>
                   <input id="image" type="file" @input="form.image = $event.target.files[0]" class="form-input w-full">
                   <div v-if="form.errors.image" class="text-red-500 text-sm mt-1">{{ form.errors.image }}</div>
                 </div>
 
                 <div class="mb-4">
-                  <label for="status" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.status') }}:</label>
+                  <label for="status" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_status }}:</label>
                   <select id="status" v-model="form.status" class="form-select w-full" required>
-                    <option value="draft">{{ $t('courses.draft') }}</option>
-                    <option value="active">{{ $t('courses.active') }}</option>
+                    <option value="draft">{{ lang().label.courses_draft }}</option>
+                    <option value="active">{{ lang().label.courses_active }}</option>
                   </select>
                   <div v-if="form.errors.status" class="text-red-500 text-sm mt-1">{{ form.errors.status }}</div>
                 </div>
 
                 <div class="mb-4">
-                  <label for="intro_video" class="block text-gray-700 text-sm font-bold mb-2">{{ $t('courses.intro_video_url') }}:</label>
+                  <label for="intro_video" class="block text-gray-700 text-sm font-bold mb-2">{{ lang().label.courses_intro_video_url }}:</label>
                   <input id="intro_video" v-model="form.intro_video" type="url" class="form-input w-full">
                   <div v-if="form.errors.intro_video" class="text-red-500 text-sm mt-1">{{ form.errors.intro_video }}</div>
                 </div>
@@ -93,18 +92,18 @@
 
               <!-- Step 3: Sections & Lectures Planning -->
               <div v-if="currentStep === 3">
-                <h3 class="text-lg font-semibold mb-4">{{ $t('courses.sections_planning') }}</h3>
+                <h3 class="text-lg font-semibold mb-4">{{ lang().label.courses_sections_planning }}</h3>
 
                 <div class="mb-6">
                   <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-medium">{{ $t('courses.course_sections') }}</h4>
+                    <h4 class="font-medium">{{ lang().label.courses_course_sections }}</h4>
                     <!-- Replace in these buttons: -->
                     <button
                       type="button"
                       @click="addSection"
                       class="bg-blue-500 hover:bg-blue-700 text-white text-sm py-1 px-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      {{ $t('courses.add_section') }}
+                      {{ lang().label.courses_add_section }}
                     </button>
 
                     <!-- And in these navigation buttons: -->
@@ -114,7 +113,7 @@
                       type="button"
                       class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
-                      {{ $t('courses.previous') }}
+                      {{ lang().label.courses_previous }}
                     </button>
 
                     <button
@@ -123,7 +122,7 @@
                       type="button"
                       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      {{ $t('courses.next') }}
+                      {{ lang().label.courses_next }}
                     </button>
 
                     <button
@@ -132,24 +131,24 @@
                       class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                       :disabled="form.processing"
                     >
-                      {{ $t('courses.create_course') }}
+                      {{ lang().label.courses_create_course }}
                     </button>
                   </div>
 
                   <div v-for="(section, index) in sections" :key="index" class="border p-4 mb-4 rounded-lg">
                     <div class="flex justify-between items-center mb-2">
-                      <h5 class="font-medium">{{ $t('courses.section') }} {{ index + 1 }}</h5>
+                      <h5 class="font-medium">{{ lang().label.courses_section }} {{ index + 1 }}</h5>
                       <button
                         type="button"
                         @click="removeSection(index)"
                         class="text-red-500 hover:text-red-700"
                       >
-                        {{ $t('courses.remove') }}
+                        {{ lang().label.courses_remove }}
                       </button>
                     </div>
 
                     <div class="mb-3">
-                      <label :for="`section-title-${index}`" class="block text-gray-700 text-sm font-bold mb-1">{{ $t('courses.title') }}:</label>
+                      <label :for="`section-title-${index}`" class="block text-gray-700 text-sm font-bold mb-1">{{ lang().label.courses_title }}:</label>
                       <input
                         :id="`section-title-${index}`"
                         v-model="section.title"
@@ -160,7 +159,7 @@
                     </div>
 
                     <div class="mb-3">
-                      <label :for="`section-description-${index}`" class="block text-gray-700 text-sm font-bold mb-1">{{ $t('courses.description') }}:</label>
+                      <label :for="`section-description-${index}`" class="block text-gray-700 text-sm font-bold mb-1">{{ lang().label.courses_description }}:</label>
                       <textarea
                         :id="`section-description-${index}`"
                         v-model="section.description"
@@ -171,7 +170,7 @@
                     </div>
 
                     <div class="mb-3">
-                      <label :for="`section-order-${index}`" class="block text-gray-700 text-sm font-bold mb-1">{{ $t('courses.order') }}:</label>
+                      <label :for="`section-order-${index}`" class="block text-gray-700 text-sm font-bold mb-1">{{ lang().label.courses_order }}:</label>
                       <input
                         :id="`section-order-${index}`"
                         v-model="section.order"
@@ -184,16 +183,16 @@
                 </div>
 
                 <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                  <p class="text-sm text-gray-600">{{ $t('courses.sections_note') }}</p>
+                  <p class="text-sm text-gray-600">{{ lang().label.courses_sections_note }}</p>
                 </div>
 
-                <h3 class="text-lg font-semibold mb-4">{{ $t('courses.review_course_info') }}</h3>
+                <h3 class="text-lg font-semibold mb-4">{{ lang().label.courses_review_course_info }}</h3>
                 <div v-for="(value, key) in form" :key="key" class="mb-2" v-if="key !== 'image' && key !== 'processing' && key !== 'errors' && key !== 'recentlySuccessful'">
                   <strong>{{ formatLabel(key) }}:</strong>
                   <span>{{ value }}</span>
                 </div>
                 <div class="mb-2" v-if="form.image">
-                  <strong>{{ $t('courses.image') }}:</strong>
+                  <strong>{{ lang().label.courses_image }}:</strong>
                   <span>{{ form.image.name }}</span>
                 </div>
               </div>
@@ -206,7 +205,7 @@
                   type="button"
                   class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 >
-                  {{ $t('courses.previous') }}
+                  {{ lang().label.courses_previous }}
                 </button>
                 <div v-else></div>
 
@@ -216,7 +215,7 @@
                   type="button"
                   class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 >
-                  {{ $t('courses.next') }}
+                  {{ lang().label.courses_next }}
                 </button>
                 <button
                   v-if="currentStep === 3"
@@ -224,7 +223,7 @@
                   class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                   :disabled="form.processing"
                 >
-                  {{ $t('courses.create_course') }}
+                  {{ lang().label.courses_create_course }}
                 </button>
               </div>
             </form>
@@ -239,6 +238,7 @@
 import { ref, computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import SectionBuilder from '@/Components/Course/SectionBuilder.vue'
 
 const props = defineProps({
   categories: Array,
@@ -300,14 +300,14 @@ const removeSection = (index) => {
 
 const formatLabel = (key) => {
   const labels = {
-    title: 'العنوان',
-    description: 'الوصف',
-    body: 'المحتوى',
-    duration: 'المدة',
-    price: 'السعر',
-    status: 'الحالة',
-    intro_video: 'رابط الفيديو التعريفي',
-    category_id: 'التصنيف'
+    title: lang().label.courses_title,
+    description: lang().label.courses_description,
+    body: lang().label.courses_body,
+    duration: lang().label.courses_duration,
+    price: lang().label.courses_price,
+    status: lang().label.courses_status,
+    intro_video: lang().label.courses_intro_video_url,
+    category_id: lang().label.courses_category
   }
 
   return labels[key] || key

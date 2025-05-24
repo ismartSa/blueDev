@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Auth;
+use App\Models\Role;
+use App\Models\User;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\User\UserIndexRequest;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\User\UserUpdateRequest;
-use App\Models\Role;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
@@ -167,4 +168,18 @@ class UserController extends Controller
             return back()->with('error', __('app.label.deleted_error', ['name' => count($request->id) . ' ' . __('app.label.user')]) . $th->getMessage());
         }
     }
+
+    public function loginAsUser(Request $request)
+{
+
+    $userId = $request->input('id');
+    $user = User::find($userId);
+
+    if ($user) {
+        Auth::login($user);
+        return redirect()->route('dashboard'); // Redirect to a desired route
+    }
+
+    return redirect()->back()->withErrors(['User not found.']);
+}
 }
