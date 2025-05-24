@@ -1,7 +1,6 @@
 <template>
   <div class="course-details">
-    <!-- Header Component -->
-    <Header />
+
 
     <!-- Course Main Info -->
     <div class="course-header bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-8 rounded-lg shadow-lg">
@@ -103,7 +102,6 @@
 </template>
 
 <script>
-import Header from '@/Components/Header.vue'
 import Footer from '@/Pages/Index/Partials/Footer.vue'
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import SwitchDarkMode from "@/Components/SwitchDarkMode.vue";
@@ -112,7 +110,6 @@ import SwitchLangNavbar from "@/Components/SwitchLangNavbar.vue";
 
 export default {
   components: {
-    Header,
     Footer,
     ApplicationLogo,
     SwitchDarkMode,

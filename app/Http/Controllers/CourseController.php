@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt };
-use Illuminate\{Support\Str, Http\Request, Support\Facades\Log};
-use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
+use Carbon\Carbon;
+use Inertia\Inertia;
+use App\Models\Category;
+use App\Helpers\BreadcrumbHelper;
+use App\Models\LectureUserProgress;
+use App\Services\BreadcrumbService;
+use App\Helpers\CourseProgressHelper;
+use App\Services\CourseHelperService;
 use App\Services\LectureCountService;
+use App\Services\LectureProgressService;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\CourseStoreRequest;
-use Inertia\Inertia;
-use Carbon\Carbon;
-use App\Services\CourseHelperService;
-use App\Services\LectureProgressService;
-use App\Services\BreadcrumbService;
-use App\Models\LectureUserProgress;
-use App\Helpers\CourseProgressHelper;
-use App\Helpers\BreadcrumbHelper;
+use Illuminate\{Support\Str, Http\Request, Support\Facades\Log};
+use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt };
+use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
 
 class CourseController extends Controller
 {
@@ -40,7 +41,7 @@ class CourseController extends Controller
         $this->courseHelper = $courseHelper;
         $this->lectureCountService = $lectureCountService;
         $this->courseProgressHelper = $courseProgressHelper;
-        $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
+      //  $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
         $this->middleware('permission:edit courses', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete courses', ['only' => ['destroy']]);
     }
@@ -69,28 +70,49 @@ class CourseController extends Controller
         return inertia('Course/Index', $data);
     }
 
+    public function create()
+    {
+        $categories = Category::all();
+        return Inertia::render('Dashboard/Course/CreateCourse', [
+            'categories' => $categories
+        ]);
+    }
+
     public function store(CourseStoreRequest $request)
     {
         try {
-            if (method_exists($this->courseService, 'create')) {
-                $course = $this->courseService->create($request->validated());
-                return redirect()->route('course.show', $course)
-                    ->with('success', __('courses.created_success'));
-            } else {
-                $course = new Course($request->except('image'));
-                $course->slug = Str::slug($request->title);
+            // إنشاء الكورس
+            $course = new Course($request->except('image', 'sections'));
+            $course->slug = Str::slug($request->title);
+            $course->user_id = auth()->id(); // تعيين المستخدم الحالي كمدرس للكورس
 
-                if ($request->hasFile('image')) {
-                    $imagePath = $request->file('image')->store('course_images', 'public');
-                    $course->image = $imagePath;
-                }
-
-                $course->save();
-                Log::info(__('courses.log.created_success'), ['course_id' => $course->id]);
-
-                return redirect()->route('courses.index')
-                    ->with('success', __('courses.created_success'));
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('course_images', 'public');
+                $course->image = $imagePath;
             }
+
+            $course->save();
+
+            // إنشاء الأقسام إذا وجدت
+            if ($request->has('sections')) {
+                $sections = json_decode($request->sections, true);
+
+                foreach ($sections as $sectionData) {
+                    $section = new Section([
+                        'title' => $sectionData['title'],
+                        'description' => $sectionData['description'],
+                        'order' => $sectionData['order'],
+                        'course_id' => $course->id
+                    ]);
+
+                    $section->save();
+                }
+            }
+
+            Log::info(__('courses.log.created_success'), ['course_id' => $course->id]);
+
+            return redirect()->route('courses.index')
+                ->with('success', __('courses.created_success'));
         } catch (\Exception $e) {
             Log::error(__('courses.log.creation_error'), ['error' => $e->getMessage()]);
             return back()->with('error', __('courses.creation_error') . $e->getMessage());
@@ -178,7 +200,7 @@ class CourseController extends Controller
             $enrollmentStatus = $this->getEnrollmentStatus($user, $id);
 
             // Return Inertia view with all necessary data
-            return inertia('Course/Show', [
+            return inertia('Index/Course/Show', [
                 'course' => new CourseResource($course),
                 'statistics' => array_merge($statistics, ['durationFormatted' => $durationFormatted]),
                 'enrollmentStatus' => $enrollmentStatus,
