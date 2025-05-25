@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'label' => [
+    'courses_create_new_course => 'إنشاء كورس جديد',
+    'courses' => 'الكورسات',
+    'create_new_course' => 'إنشاء كورس جديد',
+    'course_title' => 'عنوان الكورس',
     'title' => 'العنوان',
     'create_new_course' => 'إنشاء كورس جديد',
     'step' => 'الخطوة',
@@ -29,8 +34,9 @@ return [
     'create_course' => 'إنشاء الكورس',
     'created_success' => 'تم إنشاء الكورس بنجاح',
     'creation_error' => 'حدث خطأ أثناء إنشاء الكورس: ',
+    ],
     'log' => [
         'created_success' => 'تم إنشاء كورس جديد بنجاح',
         'creation_error' => 'حدث خطأ أثناء إنشاء الكورس'
-    ],
+    
 ];

@@ -109,14 +109,13 @@ Route::get('/dashboard', function () {
     });
 
     // Role Management
-    Route::prefix('role')->name('role.')->group(function () {
-        Route::resource('/', RoleController::class)->except(['create', 'show', 'edit']);
+    Route::resource('/role', RoleController::class)->except('create', 'show', 'edit');
         Route::post('/destroy-bulk', [RoleController::class, 'destroyBulk'])->name('destroy-bulk');
-    });
+
 
     // Permission Management
     Route::prefix('permission')->name('permission.')->group(function () {
-        Route::resource('/', PermissionController::class)->except(['create', 'show', 'edit']);
+        Route::resource('', PermissionController::class)->except(['create', 'show', 'edit']);
         Route::post('/destroy-bulk', [PermissionController::class, 'destroyBulk'])->name('destroy-bulk');
     });
 
