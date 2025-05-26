@@ -111,15 +111,14 @@ class PermissionController extends Controller
      * @param  \App\Models\Permission  $permission
      * @return \Illuminate\Http\Response
      */
-    public function update(PermissionUpdateRequest $request)
+    public function update(PermissionUpdateRequest $request, $id)
     {
         // Start database transaction to ensure data consistency
         DB::beginTransaction();
 
         try {
-
             // Find permission manually
-            $permission = Permission::find($request->id);
+            $permission = Permission::find($id);
 
             // Verify permission exists
             if (!$permission || !$permission->id) {

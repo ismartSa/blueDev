@@ -32,8 +32,16 @@ Route::get('/', function () {
 
 // Language Switch Routes
 Route::get('/setLang/{locale}', function ($locale) {
+    // Verify the locale is supported
+    if (!in_array($locale, ['en', 'ar'])) {
+        return back()->with('error', 'Language not supported');
+    }
+
+    // Set locale in session and app
     Session::put('locale', $locale);
-    return back();
+    App::setLocale($locale);
+
+    return back()->with('success', 'Language changed successfully');
 })->name('setlang');
 
 // Authentication Routes
@@ -131,7 +139,7 @@ Route::get('/dashboard', function () {
         ->group(function () {
             Route::get('/create', [CourseController::class, 'create'])->name('create'); // تأكد من وجود هذا المسار
             Route::post('/', [CourseController::class, 'store'])->name('store'); // تأكد من وجود هذا المسار
-            Route::resource('/', CourseController::class)->except(['index', 'show', 'create', 'store']);
+            Route::resource('', CourseController::class)->except(['index', 'show', 'create', 'store']);
             Route::post('/destroy-bulk', [CourseController::class, 'destroyBulk'])->name('destroy-bulk');
 
             // Lecture and Section Management
