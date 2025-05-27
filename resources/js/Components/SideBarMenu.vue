@@ -2,63 +2,19 @@
 import {
     HomeIcon,
     UserIcon,
-    CheckBadgeIcon,  // Ensure this import exists
+    CheckBadgeIcon,
     KeyIcon,
     ShieldCheckIcon,
     ClipboardIcon,
     PlusCircleIcon,
     ChartBarIcon,
-} from "@heroicons/vue/24/solid"; // تم التحديث إلى الإصدار 2
+} from "@heroicons/vue/24/solid";
 import { Link, usePage } from "@inertiajs/vue3";
-import { computed } from 'vue';
 
-// استخدام computed للحصول على بيانات المستخدم
+
+// Get the route function from page props
 const page = usePage();
-const user = computed(() => page.props.auth?.user);
-const userInitials = computed(() => {
-    if (!user.value?.name) return '';
-    return user.value.name
-        .match(/(^\S\S?|\b\S)?/g)
-        .join("")
-        .match(/(^\S|\S$)?/g)
-        .join("");
-});
 
-// تعريف الترجمات
-const translations = computed(() => ({
-    label: {
-        dashboard: 'لوحة التحكم',
-        data: 'البيانات',
-        user: 'المستخدمين',
-        courses: 'الدورات',
-        access: 'الصلاحيات',
-        role: 'الأدوار',
-        permission: 'الصلاحيات',
-        quizzes: 'الاختبارات',
-        assessmentsList: 'قائمة التقييمات',
-        createAssessment: 'إنشاء تقييم',
-        assessmentReports: 'تقارير التقييمات',
-        quizzesList: 'قائمة الاختبارات',
-        createQuiz: 'إنشاء اختبار',
-        quizReports: 'تقارير الاختبارات',
-        more: 'المزيد'
-    }
-}));
-
-const lang = () => translations.value;
-
-// تعريف عناصر القائمة
-const assessmentItems = [
-    { route: 'assessments.index', icon: ClipboardIcon, label: 'assessmentsList', permission: 'read assessment' },
-    { route: 'assessments.create', icon: PlusCircleIcon, label: 'createAssessment', permission: 'create assessment' },
-    { route: 'assessments.reports', icon: ChartBarIcon, label: 'assessmentReports', permission: 'view assessment reports' }
-];
-
-const quizItems = [
-    { route: 'quizzes.index', icon: ClipboardIcon, label: 'quizzesList', permission: 'read quiz' },
-    { route: 'quizzes.create', icon: PlusCircleIcon, label: 'createQuiz', permission: 'create quiz' },
-    { route: 'quizzes.reports', icon: ChartBarIcon, label: 'quizReports', permission: 'view quiz reports' }
-];
 </script>
 <template>
     <div class="text-slate-300 pt-5 pb-20">

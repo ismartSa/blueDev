@@ -13,6 +13,7 @@ use App\Http\Controllers\{
     QuizController,
     QuestionController
 };
+use App\Http\Controllers\Opt\OptController;
 use Illuminate\Support\Facades\{Route, Session};
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
@@ -127,6 +128,7 @@ Route::get('/dashboard', function () {
         Route::post('/destroy-bulk', [PermissionController::class, 'destroyBulk'])->name('destroy-bulk');
     });
 
+
     /*
     |--------------------------------------------------------------------------
     | Course Management Routes
@@ -139,8 +141,10 @@ Route::get('/dashboard', function () {
         ->group(function () {
             Route::get('/create', [CourseController::class, 'create'])->name('create'); // تأكد من وجود هذا المسار
             Route::post('/', [CourseController::class, 'store'])->name('store'); // تأكد من وجود هذا المسار
-            Route::resource('', CourseController::class)->except(['index', 'show', 'create', 'store']);
+           // Route::resource('', CourseController::class)->except(['index', 'show', 'create', 'store']);
             Route::post('/destroy-bulk', [CourseController::class, 'destroyBulk'])->name('destroy-bulk');
+            Route::get('{courseId}/details/', [CourseController::class, 'details'])->name('details.show');
+            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
 
             // Lecture and Section Management
             Route::prefix('{course}')->group(function () {
@@ -229,3 +233,38 @@ Route::middleware(['auth', 'admin'])
             Route::get('/reports', [QuizController::class, 'reports'])->name('reports');
         });
     });
+
+
+    // Main Opt Routes
+Route::prefix('opt')->name('opt.')->group(function () {
+
+    // Dashboard
+    Route::get('/', [OptController::class, 'index'])->name('index');
+
+    // Upload JSON
+    Route::get('/upload', [OptController::class, 'showUploadForm'])->name('upload.form');
+    Route::post('/upload-json', [OptController::class, 'uploadJson'])->name('upload.json');
+
+    // View Data
+    Route::get('/data-viewer', [OptController::class, 'showDataViewer'])->name('data.viewer');
+    Route::post('/get-data', [OptController::class, 'getData'])->name('get.data');
+
+    // Execute Query
+    Route::get('/query-executor', [OptController::class, 'showQueryExecutor'])->name('query.executor');
+    Route::post('/execute-query', [OptController::class, 'executeQuery'])->name('execute.query');
+
+    // Test Connection
+    Route::post('/test-connection', [OptController::class, 'testConnection'])->name('test.connection');
+
+    // Get Tables (AJAX)
+    Route::post('/get-tables', [OptController::class, 'getTables'])->name('get.tables');
+
+    // Get PostgreSQL Info (AJAX)
+    Route::post('/get-postgresql-info', [OptController::class, 'getPostgresqlInfo'])->name('get.postgresql.info');
+
+    // Export Data
+    Route::get('/export', [OptController::class, 'showExportForm'])->name('export.form');
+    Route::post('/export-json', [OptController::class, 'exportToJson'])->name('export.json');
+    Route::get('/download/{filename}', [OptController::class, 'downloadFile'])->name('download.file');
+
+});

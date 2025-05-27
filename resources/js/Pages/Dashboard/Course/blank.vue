@@ -190,23 +190,6 @@ const clearSelection = () => {
     data.selectedIds = [];
 };
 
-// Navigation method for course details
-const goToCourseDetails = (course) => {
-    try {
-        if (course.slug) {
-            router.visit(route('courses.details.show', { id: course.slug }));
-        } else if (course.id) {
-            router.visit(route('courses.details.show', { id: course.id }));
-        } else {
-            throw new Error('Course missing required slug or id parameter');
-        }
-    } catch (error) {
-        console.error('Navigation error:', error);
-        // Optionally show error to user
-        data.error = 'Failed to navigate to course details';
-    }
-};
-
 // Modal methods
 const openCreateModal = () => {
     createForm.reset();
@@ -243,6 +226,10 @@ const openDeleteModal = (course) => {
 const openBulkDeleteModal = () => {
     bulkDeleteForm.ids = [...data.selectedIds];
     data.deleteBulkOpen = true;
+};
+
+const goToCourseDetails = (course) => {
+    router.visit(route('courses.details', course.id));
 };
 
 const closeModals = () => {
@@ -593,15 +580,8 @@ const cleanup = () => {
                                     {{ getTableIndex(index) }}
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="text-sm font-medium">
-                                        <button
-                                            @click="goToCourseDetails(course)"
-                                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors text-left"
-                                            :title="`View details for ${course.title}`"
-                                            :aria-label="`View details for course: ${course.title}`"
-                                        >
-                                            {{ course.title }}
-                                        </button>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {{ course.title }}
                                     </div>
                                     <div v-if="course.description" class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
                                         {{ course.description }}

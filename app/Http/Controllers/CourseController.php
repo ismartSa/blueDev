@@ -14,7 +14,7 @@ use App\Services\LectureCountService;
 use App\Services\LectureProgressService;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\CourseStoreRequest;
-use Illuminate\{Support\Str, Http\Request, Support\Facades\Log};
+use Illuminate\{Support\Str, Http\Request, Support\Facades\Log, Support\Facades\Storage, Support\Facades\DB};
 use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt };
 use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
 
@@ -113,7 +113,7 @@ class CourseController extends Controller
             ['name' => 'Courses', 'url' => null],
         ];
 
-        return Inertia::render('Dashboard/Course/IndexX', [
+        return Inertia::render('Dashboard/Course/Index', [
             'title' => 'Courses Management',
             'courses' => $courses,
             'categories' => $categories,
@@ -133,28 +133,21 @@ class CourseController extends Controller
     }
 
 
-    public function  homepage()
+    public function details($id)
     {
-        // جلب جميع الدورات مع تفاصيلها
-        $courses = $this->courseRepository->getActiveCourses();
+        $course = Course::with(['sections.lectures', 'instructor:id,name', 'category:id,name'])
+            ->findOrFail($id);
 
-        // إعداد البيانات للعرض
         $data = [
-            'courses' => CourseResource::collection($courses),
-            'filters' => request()->only(['search']),
+            'course' => new CourseResource($course),
+            'lessons' => $course->sections->flatMap->lectures,
             'title' => __('courses.title'),
             'breadcrumbs' => [
                 ['label' => __('dashboard'), 'href' => route('dashboard')],
-                ['label' => __('courses.list'), 'href' => route('courses.index')]
             ],
-            'statistics' => [
-                'total_courses' => $courses->count(),
-                'active_courses' => $courses->where('status', 'active')->count(),
-                'draft_courses' => $courses->where('status', 'draft')->count()
-            ]
         ];
 
-        return inertia('Course/Index', $data);
+        return inertia('Dashboard/Course/DetailsCourse', $data);
     }
 
     public function create()
@@ -348,6 +341,151 @@ class CourseController extends Controller
             DB::rollback();
             return back()->with('error', __('app.label.updated_error', ['name' => $user->name]) . $th->getMessage());
         }
+  }
+
+    /**
+     * Display a listing of the courses.
+     */
+    public function indexcourse(Request $request)
+    {
+        $query = Course::with(['category', 'lessons'])
+            ->withCount(['lessons', 'enrollments'])
+            ->latest();
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $query->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by category
+        if ($request->has('category') && $request->category) {
+            $query->where('category_id', $request->category);
+        }
+
+        $courses = $query->paginate(12);
+        $categories = Category::all();
+
+        return Inertia::render('Courses/Index', [
+            'courses' => $courses,
+            'categories' => $categories,
+            'filters' => $request->only(['search', 'status', 'category']),
+        ]);
+    }
+
+    /**
+     * Store a newly created course in storage.
+     */
+    public function storecourse(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
+            'category_id' => 'nullable|exists:categories,id',
+            'status' => 'required|in:draft,active,inactive',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'level' => 'nullable|in:beginner,intermediate,advanced',
+            'duration' => 'nullable|integer|min:1',
+        ]);
+
+        // Handle thumbnail upload
+        if ($request->hasFile('thumbnail')) {
+            $validated['thumbnail'] = $request->file('thumbnail')->store('courses/thumbnails', 'public');
+        }
+
+        // Add creator
+        $validated['instructor_id'] = auth()->id();
+
+        $course = Course::create($validated);
+
+        return Redirect::route('courses.show', $course->id)
+            ->with('success', 'تم إنشاء الكورس بنجاح!');
+    }
+
+    /**
+     * Display the specified course.
+     */
+    public function showcourse(Course $course)
+    {
+        $course->load([
+            'category',
+            'instructor',
+            'lessons' => function ($query) {
+                $query->orderBy('order')->orderBy('created_at');
+            }
+        ]);
+
+        // Get course statistics
+        $stats = [
+            'enrolled_students' => $course->enrollments()->count(),
+            'total_views' => $course->lessons()->sum('views'),
+            'completion_rate' => $this->calculateCompletionRate($course),
+            'total_duration' => $course->lessons()->sum('duration'),
+            'free_lessons' => $course->lessons()->where('is_free', true)->count(),
+            'paid_lessons' => $course->lessons()->where('is_free', false)->count(),
+        ];
+
+        // Get lessons with pagination
+        $lessons = $course->lessons()
+            ->orderBy('order')
+            ->orderBy('created_at')
+            ->paginate(20);
+
+        return Inertia::render('Courses/Show', [
+            'course' => $course,
+            'lessons' => $lessons,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified course.
+     */
+    public function editcourse(Course $course)
+    {
+        $categories = Category::all();
+
+        return Inertia::render('Courses/Edit', [
+            'course' => $course,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Update the specified course in storage.
+     */
+    public function updatecourse(Request $request, Course $course)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
+            'category_id' => 'nullable|exists:categories,id',
+            'status' => 'required|in:draft,active,inactive',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'level' => 'nullable|in:beginner,intermediate,advanced',
+            'duration' => 'nullable|integer|min:1',
+        ]);
+
+        // Handle thumbnail upload
+        if ($request->hasFile('thumbnail')) {
+            // Delete old thumbnail
+            if ($course->thumbnail) {
+                Storage::disk('public')->delete($course->thumbnail);
+            }
+            $validated['thumbnail'] = $request->file('thumbnail')->store('courses/thumbnails', 'public');
+        }
+
+        $course->update($validated);
+
+        return Redirect::route('courses.show', $course->id)
+            ->with('success', 'تم تحديث الكورس بنجاح!');
     }
 
     public function destroy(Course $course)
@@ -399,17 +537,6 @@ class CourseController extends Controller
         ]);
     }
 
-    private function calculateCompletionRate($course)
-    {
-        $totalEnrollments = $course->enrollments()->count();
-        if (!$totalEnrollments) return 0;
-
-        $completedEnrollments = $course->enrollments()
-            ->where('completion_status', 'completed')
-            ->count();
-
-        return round(($completedEnrollments / $totalEnrollments) * 100);
-    }
 
 
 
@@ -569,192 +696,85 @@ class CourseController extends Controller
     }
 
 
-        /**
+/*         /**
          * Display a listing of the courses.
          */
-        public function indexcourse(Request $request)
-        {
-            $query = Course::with(['category', 'lessons'])
-                ->withCount(['lessons', 'enrollments'])
-                ->latest();
+      //  public function indexcourse(Request $request)
+      //  {
+            // $query = Course::with(['category', 'lessons'])
+            //     ->withCount(['lessons', 'enrollments'])
+            //     ->latest();
 
-            // Search functionality
-            if ($request->has('search') && $request->search) {
-                $query->where('title', 'like', '%' . $request->search . '%')
-                      ->orWhere('description', 'like', '%' . $request->search . '%');
-            }
+            // // Search functionality
+            // if ($request->has('search') && $request->search) {
+            //     $query->where('title', 'like', '%' . $request->search . '%')
+            //           ->orWhere('description', 'like', '%' . $request->search . '%');
+            // }
 
-            // Filter by status
-            if ($request->has('status') && $request->status) {
-                $query->where('status', $request->status);
-            }
+            // // Filter by status
+            // if ($request->has('status') && $request->status) {
+            //     $query->where('status', $request->status);
+            // }
 
-            // Filter by category
-            if ($request->has('category') && $request->category) {
-                $query->where('category_id', $request->category);
-            }
+            // // Filter by category
+            // if ($request->has('category') && $request->category) {
+            //     $query->where('category_id', $request->category);
+            // }
 
-            $courses = $query->paginate(12);
-            $categories = Category::all();
+            // $courses = $query->paginate(12);
+            // $categories = Category::all();
 
-            return Inertia::render('Courses/Index', [
-                'courses' => $courses,
-                'categories' => $categories,
-                'filters' => $request->only(['search', 'status', 'category']),
-            ]);
-        }
+            // return Inertia::render('Courses/Index', [
+            //     'courses' => $courses,
+            //     'categories' => $categories,
+            //     'filters' => $request->only(['search', 'status', 'category']),
+            // ]);
+       // }
+
 
         /**
          * Show the form for creating a new course.
          */
 
 
-        /**
-         * Store a newly created course in storage.
-         */
-        public function storecourse(Request $request)
-        {
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'price' => 'nullable|numeric|min:0',
-                'category_id' => 'nullable|exists:categories,id',
-                'status' => 'required|in:draft,active,inactive',
-                'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'level' => 'nullable|in:beginner,intermediate,advanced',
-                'duration' => 'nullable|integer|min:1',
-            ]);
 
-            // Handle thumbnail upload
-            if ($request->hasFile('thumbnail')) {
-                $validated['thumbnail'] = $request->file('thumbnail')->store('courses/thumbnails', 'public');
-            }
-
-            // Add creator
-            $validated['instructor_id'] = auth()->id();
-
-            $course = Course::create($validated);
-
-            return Redirect::route('courses.show', $course->id)
-                ->with('success', 'تم إنشاء الكورس بنجاح!');
-        }
-
-        /**
-         * Display the specified course.
-         */
-        public function showcourse(Course $course)
-        {
-            $course->load([
-                'category',
-                'instructor',
-                'lessons' => function ($query) {
-                    $query->orderBy('order')->orderBy('created_at');
-                }
-            ]);
-
-            // Get course statistics
-            $stats = [
-                'enrolled_students' => $course->enrollments()->count(),
-                'total_views' => $course->lessons()->sum('views'),
-                'completion_rate' => $this->calculateCompletionRate($course),
-                'total_duration' => $course->lessons()->sum('duration'),
-                'free_lessons' => $course->lessons()->where('is_free', true)->count(),
-                'paid_lessons' => $course->lessons()->where('is_free', false)->count(),
-            ];
-
-            // Get lessons with pagination
-            $lessons = $course->lessons()
-                ->orderBy('order')
-                ->orderBy('created_at')
-                ->paginate(20);
-
-            return Inertia::render('Courses/Show', [
-                'course' => $course,
-                'lessons' => $lessons,
-                'stats' => $stats,
-            ]);
-        }
-
-        /**
-         * Show the form for editing the specified course.
-         */
-        public function editcourse(Course $course)
-        {
-            $categories = Category::all();
-
-            return Inertia::render('Courses/Edit', [
-                'course' => $course,
-                'categories' => $categories,
-            ]);
-        }
-
-        /**
-         * Update the specified course in storage.
-         */
-        public function updatecourse(Request $request, Course $course)
-        {
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'price' => 'nullable|numeric|min:0',
-                'category_id' => 'nullable|exists:categories,id',
-                'status' => 'required|in:draft,active,inactive',
-                'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'level' => 'nullable|in:beginner,intermediate,advanced',
-                'duration' => 'nullable|integer|min:1',
-            ]);
-
-            // Handle thumbnail upload
-            if ($request->hasFile('thumbnail')) {
-                // Delete old thumbnail
-                if ($course->thumbnail) {
-                    Storage::disk('public')->delete($course->thumbnail);
-                }
-                $validated['thumbnail'] = $request->file('thumbnail')->store('courses/thumbnails', 'public');
-            }
-
-            $course->update($validated);
-
-            return Redirect::route('courses.show', $course->id)
-                ->with('success', 'تم تحديث الكورس بنجاح!');
-        }
 
         /**
          * Remove the specified course from storage.
          */
-        public function destroy(Course $course)
-        {
-            try {
-                DB::beginTransaction();
+        // public function destroy(Course $course)
+        // {
+        //     try {
+        //         DB::beginTransaction();
 
-                // Delete associated lessons
-                foreach ($course->lessons as $lesson) {
-                    if ($lesson->video_file) {
-                        Storage::disk('public')->delete($lesson->video_file);
-                    }
-                    $lesson->delete();
-                }
+        //         // Delete associated lessons
+        //         foreach ($course->lessons as $lesson) {
+        //             if ($lesson->video_file) {
+        //                 Storage::disk('public')->delete($lesson->video_file);
+        //             }
+        //             $lesson->delete();
+        //         }
 
-                // Delete thumbnail
-                if ($course->thumbnail) {
-                    Storage::disk('public')->delete($course->thumbnail);
-                }
+        //         // Delete thumbnail
+        //         if ($course->thumbnail) {
+        //             Storage::disk('public')->delete($course->thumbnail);
+        //         }
 
-                // Delete course
-                $course->delete();
+        //         // Delete course
+        //         $course->delete();
 
-                DB::commit();
+        //         DB::commit();
 
-                return Redirect::route('courses.index')
-                    ->with('success', 'تم حذف الكورس بنجاح!');
+        //         return Redirect::route('courses.index')
+        //             ->with('success', 'تم حذف الكورس بنجاح!');
 
-            } catch (\Exception $e) {
-                DB::rollBack();
+        //     } catch (\Exception $e) {
+        //         DB::rollBack();
 
-                return Redirect::back()
-                    ->with('error', 'حدث خطأ أثناء حذف الكورس. يرجى المحاولة مرة أخرى.');
-            }
-        }
+        //         return Redirect::back()
+        //             ->with('error', 'حدث خطأ أثناء حذف الكورس. يرجى المحاولة مرة أخرى.');
+        //     }
+        // }
 
         /**
          * Duplicate a course with all its lessons.
@@ -836,7 +856,7 @@ class CourseController extends Controller
                     'total_students' => $course->enrollments()->count(),
                     'total_lessons' => $course->lessons()->count(),
                     'total_duration' => $course->lessons()->sum('duration'),
-                    'completion_rate' => $this->calculateCompletionRate($course),
+                 //   'completion_rate' => $this->calculateCompletionRate($course),
                 ]
             ];
 
@@ -1034,7 +1054,7 @@ class CourseController extends Controller
         }
     }
 
-}
+
 
 
 
