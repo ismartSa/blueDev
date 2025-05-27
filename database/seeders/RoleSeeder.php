@@ -57,5 +57,27 @@ class RoleSeeder extends Seeder
             'read role',
             'read permission',
         ]);
+        $instructor = Role::create([
+            'name' => 'instructor'
+        ]);
+        
+        $instructor->givePermissionTo([
+            'create course',
+            'update course',
+            'read course',
+            'read quiz',
+            'create quiz',
+            'view quiz reports'
+        ]);
+
+        // Student role
+        $student = Role::create([
+            'name' => 'student'
+        ]);
+        $student->givePermissionTo([
+            'read course',
+            'read quiz'
+        ]);
+        
     }
 }
