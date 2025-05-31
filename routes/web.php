@@ -236,35 +236,6 @@ Route::middleware(['auth', 'admin'])
 
 
     // Main Opt Routes
-Route::prefix('opt')->name('opt.')->group(function () {
+    Route::get('/opt', [OptController::class, 'index'])->name('opt.index');
+Route::post('/opt/convert', [OptController::class, 'convertToSql'])->name('opt.convert');
 
-    // Dashboard
-    Route::get('/', [OptController::class, 'index'])->name('index');
-
-    // Upload JSON
-    Route::get('/upload', [OptController::class, 'showUploadForm'])->name('upload.form');
-    Route::post('/upload-json', [OptController::class, 'uploadJson'])->name('upload.json');
-
-    // View Data
-    Route::get('/data-viewer', [OptController::class, 'showDataViewer'])->name('data.viewer');
-    Route::post('/get-data', [OptController::class, 'getData'])->name('get.data');
-
-    // Execute Query
-    Route::get('/query-executor', [OptController::class, 'showQueryExecutor'])->name('query.executor');
-    Route::post('/execute-query', [OptController::class, 'executeQuery'])->name('execute.query');
-
-    // Test Connection
-    Route::post('/test-connection', [OptController::class, 'testConnection'])->name('test.connection');
-
-    // Get Tables (AJAX)
-    Route::post('/get-tables', [OptController::class, 'getTables'])->name('get.tables');
-
-    // Get PostgreSQL Info (AJAX)
-    Route::post('/get-postgresql-info', [OptController::class, 'getPostgresqlInfo'])->name('get.postgresql.info');
-
-    // Export Data
-    Route::get('/export', [OptController::class, 'showExportForm'])->name('export.form');
-    Route::post('/export-json', [OptController::class, 'exportToJson'])->name('export.json');
-    Route::get('/download/{filename}', [OptController::class, 'downloadFile'])->name('download.file');
-
-});
