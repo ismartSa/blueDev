@@ -9,6 +9,12 @@ import Breadcrumb from "@/Components/Breadcrumb.vue";
 defineProps({
     mustVerifyEmail: Boolean,
     status: String,
+    breadcrumbs: {
+        type: Array,
+        default: () => [
+            { label: 'Profile', href: route('profile.edit') }
+        ]
+    }
 });
 </script>
 
@@ -16,7 +22,7 @@ defineProps({
     <Head :title="lang().label.profile" />
 
     <AuthenticatedLayout>
-        <Breadcrumb :title="'Profile'" :breadcrumbs="[]" />
+        <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
 
         <div class="space-y-4">
             <div

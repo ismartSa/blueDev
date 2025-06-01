@@ -13,15 +13,12 @@ return new class extends Migration
     {
         Schema::create('enrollments', function (Blueprint $table) {
             $table->id();
-
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('course_id');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('course_id')->constrained()->onDelete('cascade');
             $table->timestamp('enrollment_date')->useCurrent(); // تاريخ التسجيل
             $table->enum('enrollment_status', ['pending', 'confirmed', 'cancelled'])->default('pending'); // حالة التسجيل
-
-            // Define foreign keys
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
+            $table->timestamp('completion_date')->nullable();
+            $table->integer('progress_percentage')->default(0);
             $table->timestamps();
         });
     }
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('enrolls');
+        Schema::dropIfExists('enrollments');
     }
 };

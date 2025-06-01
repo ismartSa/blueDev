@@ -7,20 +7,22 @@
     "devDependencies": {
         "@inertiajs/vue3": "^1.2.0",
         "@tailwindcss/forms": "^0.5.3",
-        "@vitejs/plugin-vue": "^4.0.0",
+        "@vitejs/plugin-legacy": "^6.1.1",
+        "@vitejs/plugin-vue": "^5.2.4",
+        "@vue/compiler-sfc": "^3.5.14",
         "@vue/server-renderer": "^3.2.31",
         "autoprefixer": "^10.4.20",
         "axios": "^1.1.2",
-        "laravel-vite-plugin": "^0.7.2",
-        "lodash": "^4.17.19",
+        "laravel-vite-plugin": "^1.2.0",
+        "lodash": "^4.17.21",
         "postcss": "^8.4.18",
         "tailwindcss": "^3.2.1",
-        "vite": "^4.0.0",
-        "vue": "^3.2.41"
+        "vite": "^6.3.5",
+        "vue": "^3.5.14"
     },
     "dependencies": {
         "@headlessui/vue": "^1.7.9",
-        "@heroicons/vue": "^2.0.15",
+        "@heroicons/vue": "^2.2.0",
         "@vueuse/core": "^9.12.0",
         "floating-vue": "^2.0.0",
         "vue-circular-progress": "^1.0.0",

@@ -5,7 +5,7 @@
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
-        "php": "^8.2.0",
+        "php": "^8.3",
         "guzzlehttp/guzzle": "^7.2",
         "inertiajs/inertia-laravel": "^1.0",
         "laravel/framework": "^11.0",
@@ -13,11 +13,12 @@
         "laravel/socialite": "^5.15",
         "laravel/tinker": "^2.7",
         "maatwebsite/excel": "^3.1",
-        "opcodesio/log-viewer": "^3.11",
+        "opcodesio/log-viewer": "^3.17",
         "spatie/laravel-permission": "^6.0",
         "tightenco/ziggy": "^1.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.15",
         "fakerphp/faker": "^1.9.1",
         "laravel/breeze": "^2.0",
         "laravel/pint": "^1.0",

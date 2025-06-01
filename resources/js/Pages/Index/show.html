@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .progress-bar {
+            height: 6px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+        }
+        .progress-value {
+            height: 100%;
+            border-radius: 3px;
+            background-color: #4f46e5;
+            transition: width 0.3s ease;
+        }
+        .module-item:hover {
+            transform: translateX(5px);
+            transition: transform 0.2s ease;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumbs -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="#" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+                        <i class="fas fa-home mr-2"></i>
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                        <a href="#" class="ml-1 text-sm font-medium text-gray-700 hover:text-indigo-600 md:ml-2">Courses</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                        <span class="ml-1 text-sm font-medium text-indigo-600 md:ml-2">Advanced Web Development</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Course Header -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+            <div class="md:flex">
+                <div class="md:w-2/3 p-8">
+                    <div class="flex items-center mb-2">
+                        <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded">Premium</span>
+                        <span class="ml-2 text-sm text-gray-500"><i class="fas fa-star text-yellow-400"></i> 4.9 (1,245 reviews)</span>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-4">Advanced Web Development with React & Node.js</h1>
+                    <p class="text-gray-600 mb-6">Master full-stack development by building real-world applications with React, Node.js, Express, and MongoDB. Learn industry best practices and advanced techniques.</p>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="flex -space-x-2">
+                            <img class="w-8 h-8 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/women/44.jpg" alt="">
+                            <img class="w-8 h-8 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/men/32.jpg" alt="">
+                            <img class="w-8 h-8 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/women/68.jpg" alt="">
+                        </div>
+                        <span class="ml-3 text-sm text-gray-500">+12 instructors</span>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-clock mr-2 text-indigo-500"></i>
+                            <span>32 hours</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-layer-group mr-2 text-indigo-500"></i>
+                            <span>5 modules</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-certificate mr-2 text-indigo-500"></i>
+                            <span>Certificate</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-language mr-2 text-indigo-500"></i>
+                            <span>English</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-1/3 bg-gray-50 p-8 border-l border-gray-200">
+                    <div class="sticky top-8">
+                        <div class="video-container mb-6 rounded-lg overflow-hidden">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                        
+                        <div class="bg-indigo-50 p-4 rounded-lg mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Course Progress</span>
+                                <span class="text-sm font-medium text-indigo-600">25%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-value" style="width: 25%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-2xl font-bold text-gray-900">$89.99</span>
+                                <span class="text-sm text-gray-500 line-through">$129.99</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mb-4">30% discount ends in 2 days</p>
+                            <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                                Enroll Now
+                            </button>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4">
+                            <h3 class="text-sm font-medium text-gray-700 mb-3">This course includes:</h3>
+                            <ul class="space-y-2">
+                                <li class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-video mr-3 text-indigo-500"></i>
+                                    <span>32 hours on-demand video</span>
+                                </li>
+                                <li class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-file-alt mr-3 text-indigo-500"></i>
+                                    <span>15 downloadable resources</span>
+                                </li>
+                                <li class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-mobile-alt mr-3 text-indigo-500"></i>
+                                    <span>Access on mobile and TV</span>
+                                </li>
+                                <li class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-infinity mr-3 text-indigo-500"></i>
+                                    <span>Full lifetime access</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Tabs -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <button onclick="openTab(event, 'overview')" class="tab-button py-4 px-6 text-sm font-medium text-center border-b-2 border-indigo-500 text-indigo-600">
+                        Overview
+                    </button>
+                    <button onclick="openTab(event, 'curriculum')" class="tab-button py-4 px-6 text-sm font-medium text-center border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
+                        Curriculum
+                    </button>
+                    <button onclick="openTab(event, 'instructors')" class="tab-button py-4 px-6 text-sm font-medium text-center border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
+                        Instructors
+                    </button>
+                    <button onclick="openTab(event, 'reviews')" class="tab-button py-4 px-6 text-sm font-medium text-center border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300">
+                        Reviews
+                    </button>
+                </nav>
+            </div>
+            
+            <!-- Tab Contents -->
+            <div class="p-8">
+                <!-- Overview Tab -->
+                <div id="overview" class="tab-content active">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">About This Course</h2>
+                    <p class="text-gray-600 mb-6">This comprehensive course will take you from beginner to advanced level in full-stack web development. You'll learn to build modern web applications using React for the frontend and Node.js with Express for the backend, connected to a MongoDB database.</p>
+                    
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">What You'll Learn</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">Build full-stack applications with React, Node.js, Express and MongoDB</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">Implement authentication and authorization</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">Create RESTful APIs with Node.js</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">Use React hooks and context API</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">Deploy applications to production</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">Optimize performance and security</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Course Requirements</h3>
+                        <ul class="list-disc list-inside text-gray-600 space-y-2">
+                            <li>Basic understanding of HTML, CSS and JavaScript</li>
+                            <li>Familiarity with ES6+ JavaScript features</li>
+                            <li>Node.js installed on your computer</li>
+                            <li>A code editor like VS Code</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Who This Course is For</h3>
+                        <p class="text-gray-600 mb-4">This course is perfect for:</p>
+                        <ul class="list-disc list-inside text-gray-600 space-y-2">
+                            <li>Frontend developers who want to learn backend development</li>
+                            <li>Backend developers who want to learn modern frontend with React</li>
+                            <li>JavaScript developers who want to become full-stack developers</li>
+                            <li>Anyone who wants to build complete web applications from scratch</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Curriculum Tab -->
+                <div id="curriculum" class="tab-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Course Curriculum</h2>
+                        <div class="text-sm text-gray-500">5 modules • 42 lessons • 32 hours</div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <!-- Module 1 -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <button class="module-toggle w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100">
+                                <div class="flex items-center">
+                                    <i class="fas fa-folder-open text-indigo-500 mr-3"></i>
+                                    <span class="font-medium">Module 1: React Fundamentals</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm text-gray-500 mr-4">8 lessons • 5h 20m</span>
+                                    <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"></i>
+                                </div>
+                            </button>
+                            <div class="module-content hidden">
+                                <div class="divide-y divide-gray-200">
+                                    <div class="module-item p-4 hover:bg-indigo-50 cursor-pointer flex items-center">
+                                        <i class="fas fa-play-circle text-indigo-500 mr-4"></i>
+                                        <div class="flex-grow">
+                                            <div class="flex justify-between">
+                                                <span>Introduction to React</span>
+                                                <span class="text-sm text-gray-500">32:15</span>
+                                            </div>
+                                            <div class="text-sm text-gray-500 mt-1">Free preview</div>
+                                        </div>
+                                    </div>
+                                    <div class="module-item p-4 hover:bg-indigo-50 cursor-pointer flex items-center">
+                                        <i class="fas fa-play-circle text-indigo-500 mr-4"></i>
+                                        <div class="flex-grow">
+                                            <div class="flex justify-between">
+                                                <span>JSX and Components</span>
+                                                <span class="text-sm text-gray-500">45:20</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="module-item p-4 hover:bg-indigo-50 cursor-pointer flex items-center">
+                                        <i class="fas fa-play-circle text-indigo-500 mr-4"></i>
+                                        <div class="flex-grow">
+                                            <div class="flex justify-between">
+                                                <span>State and Props</span>
+                                                <span class="text-sm text-gray-500">1:08:42</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="module-item p-4 hover:bg-indigo-50 cursor-pointer flex items-center">
+                                        <i class="fas fa-lock text-gray-400 mr-4"></i>
+                                        <div class="flex-grow">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">React Hooks</span>
+                                                <span class="text-sm text-gray-400">1:15:30</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Module 2 -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <button class="module-toggle w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100">
+                                <div class="flex items-center">
+                                    <i class="fas fa-folder-open text-indigo-500 mr-3"></i>
+                                    <span class="font-medium">Module 2: Advanced React Concepts</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm text-gray-500 mr-4">10 lessons • 7h 45m</span>
+                                    <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"></i>
+                                </div>
+                            </button>
+                            <div class="module-content hidden">
+                                <!-- Module content would go here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Module 3 -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <button class="module-toggle w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100">
+                                <div class="flex items-center">
+                                    <i class="fas fa-folder-open text-indigo-500 mr-3"></i>
+                                    <span class="font-medium">Module 3: Node.js & Express Fundamentals</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm text-gray-500 mr-4">8 lessons • 6h 10m</span>
+                                    <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"></i>
+                                </div>
+                            </button>
+                            <div class="module-content hidden">
+                                <!-- Module content would go here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Instructors Tab -->
+                <div id="instructors" class="tab-content">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Meet Your Instructors</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <!-- Instructor 1 -->
+                        <div class="flex items-start">
+                            <img class="w-16 h-16 rounded-full object-cover mr-4" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Johnson">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Sarah Johnson</h3>
+                                <p class="text-sm text-indigo-600 mb-2">Senior Frontend Developer at TechCorp</p>
+                                <p class="text-gray-600 text-sm">Sarah has over 8 years of experience building complex web applications with React. She specializes in performance optimization and state management.</p>
+                                <div class="flex mt-3">
+                                    <a href="#" class="text-gray-400 hover:text-indigo-500 mr-4">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                    <a href="#" class="text-gray-400 hover:text-indigo-500 mr-4">
+                                        <i class="fab fa-twitter"></i>
+                                    </a>
+                                    <a href="#" class="text-gray-400 hover:text-indigo-500">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Instructor 2 -->
+                        <div class="flex items-start">
+                            <img class="w-16 h-16 rounded-full object-cover mr-4" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Michael Chen">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Michael Chen</h3>
+                                <p class="text-sm text-indigo-600 mb-2">Backend Architect at DevSolutions</p>
+                                <p class="text-gray-600 text-sm">Michael is a Node.js expert with 10+ years of experience. He has built scalable backend systems for Fortune 500 companies and startups alike.</p>
+                                <div class="flex mt-3">
+                                    <a href="#" class="text-gray-400 hover:text-indigo-500 mr-4">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                    <a href="#" class="text-gray-400 hover:text-indigo-500 mr-4">
+                                        <i class="fab fa-twitter"></i>
+                                    </a>
+                                    <a href="#" class="text-gray-400 hover:text-indigo-500">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reviews Tab -->
+                <div id="reviews" class="tab-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Student Reviews</h2>
+                            <div class="flex items-center mt-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                </div>
+                                <span class="ml-2 text-sm text-gray-500">4.9 out of 5 (1,245 reviews)</span>
+                            </div>
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                            Write a Review
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Review 1 -->
+                        <div class="border-b border-gray-200 pb-6">
+                            <div class="flex justify-between mb-2">
+                                <div class="flex items-center">
+                                    <img class="w-10 h-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Emma Wilson">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Emma Wilson</h4>
+                                        <div class="flex items-center">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                            </div>
+                                            <span class="ml-2 text-xs text-gray-500">2 weeks ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                                    Verified Student
+                                </div>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-2">Best course for full-stack development</h4>
+                            <p class="text-gray-600">This course exceeded my expectations. The instructors explain complex concepts in a way that's easy to understand. The projects are practical and helped me build a portfolio that landed me a job!</p>
+                            <div class="flex mt-3">
+                                <button class="flex items-center text-sm text-gray-500 hover:text-indigo-600 mr-4">
+                                    <i class="far fa-thumbs-up mr-1"></i>
+                                    <span>Helpful (42)</span>
+                                </button>
+                                <button class="flex items-center text-sm text-gray-500 hover:text-indigo-600">
+                                    <i class="far fa-comment mr-1"></i>
+                                    <span>Comment</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Review 2 -->
+                        <div class="border-b border-gray-200 pb-6">
+                            <div class="flex justify-between mb-2">
+                                <div class="flex items-center">
+                                    <img class="w-10 h-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/men/75.jpg" alt="David Kim">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">David Kim</h4>
+                                        <div class="flex items-center">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                            </div>
+                                            <span class="ml-2 text-xs text-gray-500">1 month ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                                    Verified Student
+                                </div>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-2">Comprehensive and well-structured</h4>
+                            <p class="text-gray-600">As someone transitioning from frontend to full-stack, this course was perfect. The Node.js section was particularly thorough. The only suggestion would be to include more real-time features with Socket.io.</p>
+                            <div class="flex mt-3">
+                                <button class="flex items-center text-sm text-gray-500 hover:text-indigo-600 mr-4">
+                                    <i class="far fa-thumbs-up mr-1"></i>
+                                    <span>Helpful (28)</span>
+                                </button>
+                                <button class="flex items-center text-sm text-gray-500 hover:text-indigo-600">
+                                    <i class="far fa-comment mr-1"></i>
+                                    <span>Comment</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="mt-6 w-full border border-gray-300 rounded-lg py-3 px-4 text-indigo-600 font-medium hover:bg-gray-50 transition duration-200">
+                        Load More Reviews
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Courses -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">You May Also Like</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Course 1 -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition duration-200">
+                    <img class="w-full h-40 object-cover" src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="JavaScript Course">
+                    <div class="p-6">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Beginner</span>
+                            <span class="ml-2 text-sm text-gray-500"><i class="fas fa-star text-yellow-400"></i> 4.7</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Modern JavaScript From Scratch</h3>
+                        <p class="text-gray-600 text-sm mb-4">Master JavaScript fundamentals and ES6+ features with hands-on projects.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500"><i class="fas fa-clock mr-1"></i> 24 hours</span>
+                            <span class="text-lg font-bold text-gray-900">$49.99</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Course 2 -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition duration-200">
+                    <img class="w-full h-40 object-cover" src="https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Python Course">
+                    <div class="p-6">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Intermediate</span>
+                            <span class="ml-2 text-sm text-gray-500"><i class="fas fa-star text-yellow-400"></i> 4.8</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Python for Data Science</h3>
+                        <p class="text-gray-600 text-sm mb-4">Learn data analysis, visualization, and machine learning with Python.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500"><i class="fas fa-clock mr-1"></i> 36 hours</span>
+                            <span class="text-lg font-bold text-gray-900">$69.99</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Course 3 -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition duration-200">
+                    <img class="w-full h-40 object-cover" src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="UI/UX Course">
+                    <div class="p-6">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">Beginner</span>
+                            <span class="ml-2 text-sm text-gray-500"><i class="fas fa-star text-yellow-400"></i> 4.9</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">UI/UX Design Fundamentals</h3>
+                        <p class="text-gray-600 text-sm mb-4">Learn design principles, prototyping, and user research techniques.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500"><i class="fas fa-clock mr-1"></i> 18 hours</span>
+                            <span class="text-lg font-bold text-gray-900">$59.99</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            
+            const tabButtons = document.getElementsByClassName("tab-button");
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("border-indigo-500", "text-indigo-600");
+                tabButtons[i].classList.add("border-transparent");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("border-indigo-500", "text-indigo-600");
+            evt.currentTarget.classList.remove("border-transparent");
+        }
+        
+        // Module accordion functionality
+        document.querySelectorAll('.module-toggle').forEach(button => {
+            button.addEventListener('click', () => {
+                const moduleContent = button.nextElementSibling;
+                const icon = button.querySelector('.fa-chevron-down');
+                
+                moduleContent.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
+        });
+        
+        // Simulate course progress update
+        setInterval(() => {
+            const progressValue = document.querySelector('.progress-value');
+            let width = parseInt(progressValue.style.width);
+            if (width < 100) {
+                width += 1;
+                progressValue.style.width = width + '%';
+                document.querySelector('.bg-indigo-50 span:last-child').textContent = width + '%';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

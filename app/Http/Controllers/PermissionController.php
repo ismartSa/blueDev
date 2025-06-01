@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
+use Inertia\Inertia;
+use App\Models\Permission;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // استخدام فاصل Log الصحيح
 use App\Http\Requests\Permission\PermissionIndexRequest;
 use App\Http\Requests\Permission\PermissionStoreRequest;
 use App\Http\Requests\Permission\PermissionUpdateRequest;
-use App\Models\Permission;
-use App\Models\Role;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
 
 class PermissionController extends Controller
 {
@@ -110,21 +111,80 @@ class PermissionController extends Controller
      * @param  \App\Models\Permission  $permission
      * @return \Illuminate\Http\Response
      */
-    public function update(PermissionUpdateRequest $request, Permission $permission)
+    public function update(PermissionUpdateRequest $request, $id)
     {
+        // Start database transaction to ensure data consistency
         DB::beginTransaction();
+
         try {
-            $superadmin = Role::whereName('superadmin')->first();
-            $superadmin->revokePermissionTo([$permission->name]);
-            $permission->update([
-                'name'          => $request->name
+            // Find permission manually
+            $permission = Permission::find($id);
+
+            // Verify permission exists
+            if (!$permission || !$permission->id) {
+                throw new \Exception('Permission not found or invalid');
+            }
+
+            // Log the request data for debugging
+            Log::debug('Permission update request data', [
+                'request_data' => $request->all(),
+                'permission_id' => $permission->id
             ]);
-            $superadmin->givePermissionTo([$permission->name]);
+
+            // Verify request has name
+            if (!$request->has('name') || empty($request->name)) {
+                throw new \Exception('Permission name is required');
+            }
+
+            // Get the superadmin role or fail if not found
+            $superadmin = Role::whereName('superadmin')->firstOrFail();
+
+            // Store old permission name before updating
+            $oldPermissionName = $permission->name;
+            // fund permission by id
+
+            // Update permission if name has change
+            // Only update if name has changed
+            if ($oldPermissionName !== $request->name) {
+                // Update permission with validation
+                $updated = $permission->update([
+                    'name' => $request->name,
+                ]);
+
+                // Log update result
+                Log::debug('Permission update result', ['success' => $updated]);
+
+                // Throw exception if update failed
+                if (!$updated) {
+                    throw new \Exception('Permission update failed');
+                }
+
+                // Revoke old permission and grant new one
+                $superadmin->revokePermissionTo([$oldPermissionName]);
+                $superadmin->givePermissionTo([$permission->name]);
+            } else {
+                Log::debug('No changes to permission name, skipping update');
+            }
+
+            // Commit transaction if everything succeeded
             DB::commit();
+
+            // Return success response
             return back()->with('success', __('app.label.updated_successfully', ['name' => $permission->name]));
         } catch (\Throwable $th) {
+            // Rollback transaction on error
             DB::rollback();
-            return back()->with('error', __('app.label.updated_error', ['name' => $permission->name]) . $th->getMessage());
+
+            // Log error for debugging
+            Log::error('Permission update error', [
+                'message' => $th->getMessage(),
+                'permission_id' => $permission->id ?? null,
+                'permission_name' => $permission->name ?? null,
+                'request_data' => $request->all()
+            ]);
+
+            // Return error response
+            return back()->with('error', __('app.label.updated_error', ['name' => $permission->name ?? 'unknown']) . ': ' . $th->getMessage());
         }
     }
 

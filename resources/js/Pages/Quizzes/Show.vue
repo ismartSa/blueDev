@@ -54,10 +54,25 @@
             <!-- Import Questions Component -->
             <QuizImport v-if="showImportQuestions" :quizId="quiz.id" />
 
+            <!-- Edit Quiz Button -->
+            <QuizEdit
+                :show="showEditQuiz"
+                @close="showEditQuiz = false"
+                :quiz="quiz"
+                :title="quiz.title"
+                :description="quiz.description"
+                :time_limit="quiz.time_limit"
+                :passing_score="quiz.passing_score"
+                :course_id="quiz.course_id"
+                :section_id="quiz.section_id"
+            />
+            
+
           </div>
         </div>
       </div>
     </div>
+    <!-- End of Quiz -->
   </AuthenticatedLayout>
 </template>
 
@@ -66,12 +81,14 @@ import { ref } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import QuizImport from './QuizImport.vue'
+import QuizEdit from './Edit.vue'
 
 export default {
   components: {
     AuthenticatedLayout,
     Link,
     QuizImport,
+    QuizEdit,
   },
   props: {
     quiz: Object,
@@ -79,7 +96,7 @@ export default {
   setup(props) {
     const form = useForm({})
     const showImportQuestions = ref(false)
-
+    const showEditQuiz = ref(false)
     function startQuiz() {
       if (props.quiz.questions.length === 0) {
         alert('This quiz has no questions. Unable to start the quiz.')
@@ -107,6 +124,7 @@ export default {
       showImportQuestions,
       toggleImportQuestions,
       getQuestionTypeName,
+      showEditQuiz,
     }
   },
 }

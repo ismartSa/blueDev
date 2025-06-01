@@ -1,9 +1,19 @@
 <script setup>
 import { MoonIcon, SunIcon } from "@heroicons/vue/24/solid";
 import { useDark, useToggle } from "@vueuse/core";
+import { computed } from 'vue';
 
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
+
+// Define translations
+const translations = computed(() => ({
+    tooltip: {
+        dark_mode: 'Toggle Dark Mode'
+    }
+}));
+
+const lang = () => translations.value;
 </script>
 
 <template>

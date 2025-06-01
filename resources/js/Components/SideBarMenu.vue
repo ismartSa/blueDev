@@ -9,51 +9,33 @@ import {
     PlusCircleIcon,
     ChartBarIcon,
 } from "@heroicons/vue/24/solid";
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 
-const assessmentItems = [
-    { route: 'assessments.index', icon: ClipboardIcon, label: 'assessmentsList', permission: 'read assessment' },
-    { route: 'assessments.create', icon: PlusCircleIcon, label: 'createAssessment', permission: 'create assessment' },
-    { route: 'assessments.reports', icon: ChartBarIcon, label: 'assessmentReports', permission: 'view assessment reports' }
-];
 
-const quizItems = [
-    { route: 'quizzes.index', icon: ClipboardIcon, label: 'quizzesList', permission: 'read quiz' },
-    { route: 'quizzes.create', icon: PlusCircleIcon, label: 'createQuiz', permission: 'create quiz' },
-    { route: 'quizzes.reports', icon: ChartBarIcon, label: 'quizReports', permission: 'view quiz reports' }
-];
+// Get the route function from page props
+const page = usePage();
 
 </script>
 <template>
     <div class="text-slate-300 pt-5 pb-20">
         <div class="flex justify-center">
-            <div
-                class="rounded-full flex items-center justify-center bg-primary text-slate-300 w-24 h-24 text-4xl uppercase"
-            >
-                {{
-                    $page.props.auth.user.name
-                        .match(/(^\S\S?|\b\S)?/g)
-                        .join("")
-                        .match(/(^\S|\S$)?/g)
-                        .join("")
-                }}
+            <div class="rounded-full flex items-center justify-center bg-primary text-slate-300 w-24 h-24 text-4xl uppercase">
+                {{ userInitials }}
             </div>
         </div>
-        <div
-            class="text-center py-3 px-4 border-b border-slate-700 dark:border-slate-800"
-        >
+        <div class="text-center py-3 px-4 border-b border-slate-700 dark:border-slate-800">
             <span class="flex items-center justify-center">
-                <p class="truncate text-md">{{ $page.props.auth.user.name }}</p>
+                <p class="truncate text-md">{{ user?.name }}</p>
                 <div>
                     <CheckBadgeIcon
                         class="ml-[2px] w-4 h-4"
-                        v-show="$page.props.auth.user.email_verified_at"
+                        v-show="user?.email_verified_at"
                     />
                 </div>
             </span>
-            <span class="block text-sm font-medium truncate">{{
-                $page.props.auth.user.roles[0].name
-            }}</span>
+            <span class="block text-sm font-medium truncate">
+                {{ user?.roles?.[0]?.name || '' }}
+            </span>
         </div>
         <ul class="space-y-2 my-4">
             <li
@@ -113,7 +95,24 @@ const quizItems = [
                     <span class="ml-3">{{ lang().label.courses }}</span>
                 </Link>
             </li>
-                <!--  end courses -->
+            <li
+                v-show="can(['create courses'])"
+                class="text-white rounded-lg hover:bg-primary dark:hover:bg-primary"
+                v-bind:class="
+                    route().current('courses.create')
+                        ? 'bg-primary'
+                        : 'bg-slate-700/40 dark:bg-slate-800/40'
+                "
+            >
+                <Link
+                    :href="route('courses.create')"
+                    class="flex items-center py-2 px-4"
+                >
+                    <PlusCircleIcon class="w-6 h-5" />
+                    <span class="ml-3">{{ lang().label.create_course }}</span>
+                </Link>
+            </li>
+            <!--  end courses -->
 
             <li v-show="can(['read role', 'read permission'])" class="py-2">
                 <p>{{ lang().label.access }}</p>
