@@ -239,3 +239,31 @@ Route::middleware(['auth', 'admin'])
     Route::get('/opt', [OptController::class, 'index'])->name('opt.index');
 Route::post('/opt/convert', [OptController::class, 'convertToSql'])->name('opt.convert');
 
+
+// Course Management Routes
+Route::prefix('courses')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'index'])->name('courses.index');
+    Route::get('/create', [\App\Http\Controllers\Course\CourseManagementController::class, 'create'])->name('courses.create');
+    Route::post('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'store'])->name('courses.store');
+
+    // Course Content Routes
+    Route::prefix('{course}')->group(function () {
+        Route::post('/sections', [\App\Http\Controllers\Course\CourseContentController::class, 'storeSection']);
+        Route::post('/lectures', [\App\Http\Controllers\Course\CourseContentController::class, 'storeLecture']);
+    });
+
+    // Enrollment Routes
+    Route::post('/{course}/enroll', [\App\Http\Controllers\Course\CourseEnrollmentController::class, 'enroll'])->name('courses.enroll');
+});
+
+// Quiz routes
+Route::get('/courses/{course}/quizzes', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuizzes'])->name('course.quizzes');
+Route::get('/courses/{course}/quiz/{quiz}', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuiz'])->name('course.quiz.show');
+Route::post('/quiz/{quiz}/submit', [\App\Http\Controllers\Course\CourseContentController::class, 'submitQuiz'])->name('quiz.submit');
+
+// Quiz management routes
+Route::post('/courses/{course}/quiz/create', [CourseContentController::class, 'createQuiz'])->name('course.quiz.create');
+Route::post('/quiz/{quiz}/question', [CourseContentController::class, 'storeQuestion'])->name('quiz.question.store');
+// Add this route for course updates
+Route::put('/courses/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'update'])->name('courses.update');
+
