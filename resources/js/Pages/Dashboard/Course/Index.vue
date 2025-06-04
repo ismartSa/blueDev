@@ -202,7 +202,6 @@ const goToCourseDetails = (course) => {
         }
     } catch (error) {
         console.error('Navigation error:', error);
-        // Optionally show error to user
         data.error = 'Failed to navigate to course details';
     }
 };

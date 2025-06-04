@@ -16,7 +16,11 @@ class Quiz extends Model
         'passing_score',
         'is_active',
         'course_id',
-        'section_id', // تأكد من إضافة هذا السطر
+        'section_id',
+        'domain', // New field for organizing quizzes
+        'chapter', // New field for chapter organization
+        'quiz_type', // e.g., 'practice', 'final', 'chapter_test'
+        'order', // For ordering quizzes within a domain/chapter
     ];
 
     public function questions()
@@ -24,7 +28,6 @@ class Quiz extends Model
         return $this->hasMany(Question::class);
     }
 
-    // إضافة العلاقة مع الدورة
     public function course()
     {
         return $this->belongsTo(Course::class);
@@ -33,5 +36,22 @@ class Quiz extends Model
     public function section()
     {
         return $this->belongsTo(Section::class);
+    }
+
+    public function attempts()
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
+    // Scope for filtering by domain
+    public function scopeByDomain($query, $domain)
+    {
+        return $query->where('domain', $domain);
+    }
+
+    // Scope for filtering by chapter
+    public function scopeByChapter($query, $chapter)
+    {
+        return $query->where('chapter', $chapter);
     }
 }
