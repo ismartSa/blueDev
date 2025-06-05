@@ -3,7 +3,10 @@ import { ChevronRightIcon }  from '@heroicons/vue/24/outline'; // تم التح�
 import { Link } from "@inertiajs/vue3";
 defineProps({
     title: String,
-    breadcrumbs: Object,
+    breadcrumbs: {
+        type: Array,
+        default: () => []
+    },
 });
 </script>
 
@@ -13,7 +16,7 @@ defineProps({
     >
         <p>{{ title }}</p>
         <div class="hidden sm:flex space-x-2 items-center">
-            <Link :href="route('dashboard')" v-show="breadcrumbs.length != 0">
+            <Link :href="route('dashboard')" v-show="breadcrumbs && breadcrumbs.length > 0">
                 Dashboard
             </Link>
             <div
