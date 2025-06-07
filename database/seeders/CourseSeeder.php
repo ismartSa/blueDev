@@ -47,18 +47,7 @@ class CourseSeeder extends Seeder
         $this->createCoursesWithSections($courses);
 
         // إنشاء دورات إضافية باستخدام المصنع
-        Course::factory(3)->create()->each(function ($course) {
-            // إنشاء 2-4 أقسام لكل دورة
-            $sectionCount = rand(2, 4);
-            for ($i = 1; $i <= $sectionCount; $i++) {
-                Section::create([
-                    'course_id' => $course->id,
-                    'title' => "Section $i for " . $course->title,
-                    'description' => "This section covers important topics related to " . $course->title,
-                    'order' => $i,
-                ]);
-            }
-        });
+        Course::factory()->count(10)->create();
     }
 
     /**
@@ -67,19 +56,7 @@ class CourseSeeder extends Seeder
     private function createCoursesWithSections(array $coursesData): void
     {
         foreach ($coursesData as $courseData) {
-            $course = Course::create([
-                'title' => $courseData['title'],
-                'name' => $courseData['title'],
-                'slug' => Str::slug($courseData['title']),
-                'description' => $courseData['description'],
-                'body' => $courseData['body'],
-                'duration' => $courseData['duration'],
-                'image' => 'https://via.placeholder.com/640x480.png/005588?text=' . urlencode($courseData['title']),
-                'status' => $courseData['status'],
-                'intro_video' => $courseData['intro_video'],
-                'price' => $courseData['price'] ?? 0,
-            ]);
-
+            $course = Course::factory()->create($courseData);
             // إنشاء أقسام لكل دورة
             $sectionCount = rand(2, 4);
             for ($i = 1; $i <= $sectionCount; $i++) {
