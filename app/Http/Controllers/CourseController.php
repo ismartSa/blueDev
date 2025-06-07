@@ -54,19 +54,22 @@ class CourseController extends Controller
 
     public function details($id)
     {
-        $course = Course::with(['sections.lectures', 'instructor:id,name', 'category:id,name'])
-            ->findOrFail($id);
+        $course = Course::with([
+            'sections.lectures',
+            'instructor:id,name',
+            'category:id,name'
+        ])->findOrFail($id);
 
-        $data = [
+        // تأكد من تحميل العلاقات
+        $course->load(['category', 'instructor']);
+        return inertia('Dashboard/Course/DetailsCourse',[
             'course' => new CourseResource($course),
             'lessons' => $course->sections->flatMap->lectures,
             'title' => __('courses.title'),
             'breadcrumbs' => [
                 ['label' => __('dashboard'), 'href' => route('dashboard')],
             ],
-        ];
-
-        return inertia('Dashboard/Course/DetailsCourse', $data);
+        ]);
     }
 
     public function create()

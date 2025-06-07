@@ -16,6 +16,8 @@ const props = defineProps({
     lesson: { type: Object, default: null },
     course: { type: Object, required: true }
 });
+// show course details consol log
+console.log('Courser' , props.course.data);
 
 const emit = defineEmits(['close', 'success']);
 
@@ -60,8 +62,8 @@ watch(() => props.show, (show) => {
 
 const submit = () => {
     const url = props.lesson
-        ? route('courses.lessons.update', { course: props.course.id, lesson: props.lesson.id })
-        : route('courses.lessons.store', { course: props.course.id });
+        ? route('courses.lectures.update', { course: props.course.id, lesson: props.lesson.id })
+        : route('courses.lectures.store', { course: props.course.id });
 
     const method = props.lesson ? 'put' : 'post';
 

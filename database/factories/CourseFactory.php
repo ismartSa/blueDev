@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User; // Add this line
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,7 @@ class CourseFactory extends Factory
     {
         $title = $this->faker->sentence;
         return [
+            'user_id' => User::factory(), // Add this line to associate a user
             'title' => $title,
             'name' => $this->faker->name,
             'slug' => Str::slug($title),
