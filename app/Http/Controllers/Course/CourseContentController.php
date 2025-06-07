@@ -22,7 +22,20 @@ class CourseContentController extends Controller
 
     public function storeLecture(Request $request, Course $course)
     {
-        // ... existing storeLecture method code ...
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'section_id' => 'required|exists:sections,id',
+        ]);
+
+        $lecture = Lecture::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'section_id' => $validated['section_id'],
+            'course_id' => $course->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Lecture created successfully!');
     }
 
     public function showQuizzes(Course $course)

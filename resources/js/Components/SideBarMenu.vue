@@ -9,13 +9,29 @@ import {
     PlusCircleIcon,
     ChartBarIcon,
 } from "@heroicons/vue/24/solid";
-import { Link, usePage } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3"; // Keep this one
+import { computed } from 'vue'; // Import computed
+// import { usePage } from "@inertiajs/vue3"; // Remove this duplicate line
 
-
-// Get the route function from page props
 const page = usePage();
+const user = computed(() => page.props.auth.user);
 
+const userInitials = computed(() => {
+    if (user.value && user.value.name) {
+        const names = user.value.name.split(' ');
+        let initials = names[0].substring(0, 1).toUpperCase();
+        if (names.length > 1) {
+            initials += names[names.length - 1].substring(0, 1).toUpperCase();
+        }
+        return initials;
+    }
+    return '';
+});
+
+// Define quizItems here if you haven't already
+// const quizItems = ref([...]);
 </script>
+
 <template>
     <div class="text-slate-300 pt-5 pb-20">
         <div class="flex justify-center">

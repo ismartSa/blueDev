@@ -5,7 +5,11 @@ import { UsersIcon, EyeIcon, ClockIcon, BookOpenIcon, StarIcon, AcademicCapIcon,
 const props = defineProps({
     course: { type: Object, required: true },
     stats: { type: Object, default: () => ({}) },
+    courseProgress: { type: Number, default: 0 },
+    lessonsCount: { type: Number, default: 0 }
 });
+
+
 
 const formatDate = (date) => {
     if (!date) return 'N/A';
@@ -67,7 +71,7 @@ const getCourseImage = () => {
                                 <span class="text-sm text-gray-500 dark:text-gray-400">{{ course.category?.name || 'Course' }}</span>
                             </div>
                             <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-3">{{ course.title }}</h1>
-                            <p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                            <p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
                                 {{ course.description || 'Comprehensive course designed to enhance your skills and knowledge.' }}
                             </p>
                         </div>
@@ -88,7 +92,7 @@ const getCourseImage = () => {
             </div>
         </div>
 
-        <!-- Quick Actions Section - Moved to Top -->
+        <!-- Quick Actions Section -->
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <ChartBarIcon class="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -111,6 +115,43 @@ const getCourseImage = () => {
                     <AcademicCapIcon class="h-5 w-5" />
                     Course Settings
                 </button>
+            </div>
+        </div>
+
+        <!-- Course Progress Section - Shortened -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-lg">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <ChartBarIcon class="h-5 w-5 text-blue-600" />
+                Course Progress
+            </h3>
+
+            <!-- Compact Stats -->
+            <div class="flex justify-between mb-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ props.courseProgress }}%</div>
+                    <div class="text-xs text-gray-500">Complete</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ props.lessonsCount }}</div>
+                    <div class="text-xs text-gray-500">Lessons</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ Math.ceil((props.lessonsCount * props.courseProgress) / 100) }}</div>
+                    <div class="text-xs text-gray-500">Done</div>
+                </div>
+            </div>
+
+            <!-- Simple Progress Bar -->
+            <div class="bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-3">
+                <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" :style="{ width: `${props.courseProgress}%` }"></div>
+            </div>
+
+            <!-- Compact Achievements -->
+            <div class="flex gap-1 text-xs">
+                <span v-if="props.courseProgress >= 25" class="bg-blue-100 text-blue-800 px-2 py-1 rounded">🌟</span>
+                <span v-if="props.courseProgress >= 50" class="bg-green-100 text-green-800 px-2 py-1 rounded">🔥</span>
+                <span v-if="props.courseProgress >= 75" class="bg-purple-100 text-purple-800 px-2 py-1 rounded">💪</span>
+                <span v-if="props.courseProgress >= 100" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">🏆</span>
             </div>
         </div>
 
@@ -195,17 +236,17 @@ const getCourseImage = () => {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Course Information -->
             <div class="lg:col-span-3 space-y-6">
-                <!-- Course Details Card -->
+
                 <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                         <AcademicCapIcon class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        تفاصيل الدورة
+                        Course Details
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-4">
                             <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-                                <span class="text-gray-600 dark:text-gray-400 font-medium">Course ID</span>
-                                <span class="text-gray-900 dark:text-white font-semibold">{{ course.id }}</span>
+                                <span class="text-gray-600 dark:text-gray-400 font-medium">Description </span>
+                                <span class="text-gray-900 dark:text-white font-semibold">{{  course.description || 'Comprehensive course designed to enhance your skills and knowledge.'  }}</span>
                             </div>
                             <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
                                 <span class="text-gray-600 dark:text-gray-400 font-medium">Category</span>
@@ -234,6 +275,8 @@ const getCourseImage = () => {
                         </div>
                     </div>
                 </div>
+
+
             </div>
         </div>
     </div>

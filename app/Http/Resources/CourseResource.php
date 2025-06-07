@@ -19,18 +19,14 @@ class CourseResource extends JsonResource
             'slug' => $this->slug,
             'image' => $this->image,
             'thumbnail' => $this->thumbnail,
-            'category' => $this->whenLoaded('category', function() {
-                return [
-                    'id' => $this->category->id,
-                    'name' => $this->category->name,
-                ];
-            }),
-            'instructor' => $this->whenLoaded('instructor', function() {
-                return [
-                    'id' => $this->instructor->id,
-                    'name' => $this->instructor->name,
-                ];
-            }),
+            'category' => $this->category ? [
+                'id' => $this->category->id,
+                'name' => $this->category->name,
+            ] : null,
+            'instructor' => $this->instructor ? [
+                'id' => $this->instructor->id,
+                'name' => $this->instructor->name,
+            ] : null,
             'sections' => $this->whenLoaded('sections', function() {
                 return SectionResource::collection($this->sections)->additional([
                     'total_count' => $this->sections->count(),

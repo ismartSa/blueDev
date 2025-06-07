@@ -13,6 +13,7 @@ use App\Http\Controllers\{
     QuizController,
     QuestionController
 };
+use App\Http\Controllers\Course\CourseContentController;
 use App\Http\Controllers\Opt\OptController;
 use Illuminate\Support\Facades\{Route, Session};
 use Illuminate\Foundation\Application;
@@ -139,16 +140,16 @@ Route::get('/dashboard', function () {
         ->prefix('courses')
         ->name('courses.')
         ->group(function () {
-            Route::get('/create', [CourseController::class, 'create'])->name('create'); // تأكد من وجود هذا المسار
-            Route::post('/', [CourseController::class, 'store'])->name('store'); // تأكد من وجود هذا المسار
-           // Route::resource('', CourseController::class)->except(['index', 'show', 'create', 'store']);
+            Route::get('/create', [CourseController::class, 'create'])->name('create');
+            Route::post('/', [CourseController::class, 'store'])->name('store');
             Route::post('/destroy-bulk', [CourseController::class, 'destroyBulk'])->name('destroy-bulk');
             Route::get('{courseId}/details/', [CourseController::class, 'details'])->name('details.show');
-            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('edit'); // Fixed: removed duplicate 'courses.'
 
             // Lecture and Section Management
             Route::prefix('{course}')->group(function () {
                 Route::get('/lecture/create', [CourseController::class, 'createLecture'])->name('lecture.create');
+                Route::post('/lecture', [CourseContentController::class, 'storeLecture'])->name('lecture.store');
                 Route::post('/sections', [CourseController::class, 'storeSection'])->name('sections.store');
                 Route::post('/sections/{section}/lectures', [CourseController::class, 'storeLecture'])->name('sections.lectures.store');
                 Route::delete('/sections/{section}', [CourseController::class, 'destroySection'])->name('sections.destroy');
