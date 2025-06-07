@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from 'vue';
+import { reactive, watch, computed, ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -10,25 +10,27 @@ import Checkbox from '@/Components/Checkbox.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import InputError from '@/Components/InputError.vue';
-
+import QuickSectionModal from '@/Components/Course/QuickSectionModal.vue';
 const props = defineProps({
     show: { type: Boolean, default: false },
     lesson: { type: Object, default: null },
     course: { type: Object, required: true }
 });
 // show course details consol log
-console.log('Courser' , props.course.data);
+
 
 const emit = defineEmits(['close', 'success']);
 
 const form = useForm({
+    name: '',
     title: '',
     description: '',
-    video_url: '',
-    duration: '',
     type: 'video',
+    video_url: '',
+    duration: 0,
+    order: '1',
     is_free: false,
-    order: 1
+    section_id: null,
 });
 
 const lessonTypes = [
@@ -37,18 +39,28 @@ const lessonTypes = [
     { value: 'quiz', label: 'Quiz' }
 ];
 
+const sectionOptions = computed(() => {
+    const options = props.course?.sections?.map(section => ({
+        value: section.id,
+        label: section.title
+    })) || [];
+
+    options.push({ value: 'new', label: '+ Create New Section' });
+    return options;
+});
+
 // Watch for lesson prop changes to populate form
 watch(() => props.lesson, (newLesson) => {
     if (newLesson) {
+        form.name = newLesson.name || '';
         form.title = newLesson.title || '';
         form.description = newLesson.description || '';
-        form.video_url = newLesson.video_url || '';
-        form.duration = newLesson.duration || '';
         form.type = newLesson.type || 'video';
-        form.is_free = newLesson.is_free || false;
+        form.video_url = newLesson.video_url || '';
+        form.duration = newLesson.duration || 0;
         form.order = newLesson.order || 1;
-    } else {
-        form.reset();
+        form.is_free = newLesson.is_free || false;
+        form.section_id = newLesson.section_id || null; // Add this
     }
 }, { immediate: true });
 
@@ -62,8 +74,8 @@ watch(() => props.show, (show) => {
 
 const submit = () => {
     const url = props.lesson
-        ? route('courses.lectures.update', { course: props.course.id, lesson: props.lesson.id })
-        : route('courses.lectures.store', { course: props.course.id });
+        ? route('courses.lecture.update', { course: props.course.id, lesson: props.lesson.id })
+        : route('courses.lecture.store', { course: props.course.id });
 
     const method = props.lesson ? 'put' : 'post';
 
@@ -80,6 +92,27 @@ const submit = () => {
 const closeModal = () => {
     emit('close');
 };
+
+// Auto-select first section if only one exists
+watch(() => props.course?.sections, (sections) => {
+    if (sections?.length === 1 && !form.section_id) {
+        form.section_id = sections[0].id;
+    }
+}, { immediate: true });
+
+const showQuickSection = ref(false);
+
+const handleSectionCreated = () => {
+    // Refresh sections or handle success
+    showQuickSection.value = false;
+};
+// Add this watch to handle section selection
+watch(() => form.section_id, (newValue) => {
+    if (newValue === 'new') {
+        showQuickSection.value = true;
+        form.section_id = null; // Reset selection
+    }
+});
 </script>
 
 <template>
@@ -90,6 +123,19 @@ const closeModal = () => {
             </h2>
 
             <form @submit.prevent="submit" class="space-y-6">
+                <!-- Name -->
+                <div>
+                    <InputLabel for="name" value="Lesson Name" />
+                    <TextInput
+                        id="name"
+                        v-model="form.name"
+                        type="text"
+                        class="mt-1 block w-full"
+                        required
+                    />
+                    <InputError :message="form.errors.name" class="mt-2" />
+                </div>
+
                 <!-- Title -->
                 <div>
                     <InputLabel for="title" value="Lesson Title" />
@@ -128,6 +174,25 @@ const closeModal = () => {
                     <InputError :message="form.errors.type" class="mt-2" />
                 </div>
 
+                <!-- Add this after the "Type" field -->
+                <div>
+                    <InputLabel for="section_id" value="Section" />
+                    <SelectInput
+                        id="section_id"
+                        v-model="form.section_id"
+                        class="mt-1 block w-full"
+                        :dataSet="sectionOptions"
+                        placeholder="Select a section..."
+                        required
+                    />
+                    <InputError :message="form.errors.section_id" class="mt-2" />
+                </div>
+                                <QuickSectionModal
+                    :show="showQuickSection"
+                    :course-id="course.id"
+                    @close="showQuickSection = false"
+                    @success="handleSectionCreated"
+                />
                 <!-- Video URL (only for video type) -->
                 <div v-if="form.type === 'video'">
                     <InputLabel for="video_url" value="Video URL" />
@@ -193,4 +258,8 @@ const closeModal = () => {
             </form>
         </div>
     </Modal>
+
+    <div v-if="!sectionOptions.length" class="text-yellow-600">
+        ⚠️ No sections available. Create a section first.
+    </div>
 </template>

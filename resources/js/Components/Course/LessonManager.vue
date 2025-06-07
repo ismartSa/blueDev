@@ -28,6 +28,7 @@ const totalDuration = computed(() => {
 });
 
 const openLessonModal = (lesson = null) => {
+    if (data.lessonModalOpen) return; // Prevent multiple opens
     data.currentLesson = lesson;
     data.lessonModalOpen = true;
 };
@@ -40,7 +41,7 @@ const playLesson = (lesson, index) => {
 </script>
 
 <template>
-    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg" :key="course.id">
         <div class="p-6">
             <!-- Header -->
             <div class="flex justify-between items-center mb-6">

@@ -19,7 +19,13 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'update user']);
         Permission::create(['name' => 'read user']);
         Permission::create(['name' => 'create user']);
-
+        Permission::create(['name' => 'manage courses']);
+        Permission::create(['name' =>'manage roles']);
+        Permission::create(['name' =>'manage permissions']);
+        Permission::create(['name' =>'manage users']);
+        Permission::create(['name' =>'manage quizzes']);
+        Permission::create(['name' =>'manage quiz reports']);
+        Permission::create(['name' =>'manage quiz results']);
         Permission::create(['name' => 'delete course']);
         Permission::create(['name' => 'update course']);
         Permission::create(['name' => 'read course']);
@@ -33,10 +39,11 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'read quiz']);
         Permission::create(['name' => 'create quiz']);
         Permission::create(['name' => 'view quiz reports']);
-        
+
         Permission::create(['name' => 'delete permission']);
         Permission::create(['name' => 'update permission']);
         Permission::create(['name' => 'read permission']);
         Permission::create(['name' => 'create permission']);
+
     }
 }

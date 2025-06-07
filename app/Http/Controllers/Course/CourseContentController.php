@@ -12,6 +12,7 @@ use App\Models\Question;
 use App\Models\QuizAttempt;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Lecture\StoreLectureRequest;
 
 class CourseContentController extends Controller
 {
@@ -20,19 +21,18 @@ class CourseContentController extends Controller
         // ... existing storeSection method code ...
     }
 
-    public function storeLecture(Request $request, Course $course)
+    public function storeLecture(StoreLectureRequest $request, Course $course)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'section_id' => 'required|exists:sections,id',
-        ]);
 
         $lecture = Lecture::create([
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'section_id' => $validated['section_id'],
+            'name' => $request->name,
+            'title' => $request->title,
+            'description' => $request->description,
+            'video_url' => $request->video_url,
+            'duration' => $request->duration,
+            'order' => $request->order ?? 1,
             'course_id' => $course->id,
+            'section_id' => $request->section_id
         ]);
 
         return redirect()->back()->with('success', 'Lecture created successfully!');
