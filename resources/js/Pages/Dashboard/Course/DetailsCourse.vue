@@ -122,7 +122,7 @@ onMounted(() => {
                             <!-- Tab Content -->
                             <div class="p-6">
                                 <Transition name="fade" mode="out-in">
-
+                                    <!-- Make sure this appears only once -->
                                     <LessonManager
                                         v-if="data.activeTab === 'lessons'"
                                         :course="course.data"
