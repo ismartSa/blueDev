@@ -31,4 +31,14 @@ class StoreLectureRequest extends FormRequest
             'section_id' => 'required|exists:sections,id'
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Lecture name is required',
+            'title.required' => 'Lecture title is required',
+            'section_id.required' => 'Section is required',
+            'section_id.exists' => 'Selected section does not exist'
+        ];
+    }
 }

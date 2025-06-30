@@ -11,7 +11,8 @@ use App\Http\Controllers\{
     SectionController,
     GoogleController,
     QuizController,
-    QuestionController
+    QuestionController,
+    CategoryController,
 };
 use App\Http\Controllers\Course\CourseContentController;
 use App\Http\Controllers\Opt\OptController;
@@ -192,6 +193,7 @@ Route::get('/dashboard', function () {
 
             Route::prefix('{quiz}')->group(function () {
                 Route::get('/', [QuizController::class, 'show'])->name('show');
+                Route::get('/edit', [QuizController::class, 'edit'])->name('edit')->middleware('can:update quiz'); // Add this line
                 Route::put('/', [QuizController::class, 'update'])->name('update')->middleware('can:update quiz');
                 Route::delete('/', [QuizController::class, 'destroy'])->name('destroy')->middleware('can:delete quiz');
 
@@ -267,4 +269,12 @@ Route::post('/courses/{course}/quiz/create', [CourseContentController::class, 'c
 Route::post('/quiz/{quiz}/question', [CourseContentController::class, 'storeQuestion'])->name('quiz.question.store');
 // Add this route for course updates
 Route::put('/courses/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'update'])->name('courses.update');
+// Add this in the admin middleware group around line 125
+Route::prefix('category')->name('category.')->group(function () {
+    Route::get('/', [CategoryController::class, 'index'])->name('index');
+    Route::post('/', [CategoryController::class, 'store'])->name('store');
+    Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+    Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+    Route::post('/destroy-bulk', [CategoryController::class, 'destroyBulk'])->name('destroy-bulk');
+});
 

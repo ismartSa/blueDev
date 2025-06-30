@@ -25,6 +25,16 @@ class CourseSeeder extends Seeder
                 'price' => 0, // دورة مجانية
             ],
             [
+                'title' => 'Project Management Professional (PMP)®',
+                'name' => 'PMP',
+                'description' => 'Comprehensive project management certification course based on PMBOK Guide',
+                'body' => 'Comprehensive project management certification course based on PMBOK Guide',
+                'duration' => 60,
+                'status' => true,
+                'intro_video' => 'https://example.com/intro-video.mp4',
+                'price' => 0, // دورة مجانية
+            ],
+            [
                 'title' => 'Advanced JavaScript Programming',
                 'description' => 'Dive deep into JavaScript with advanced concepts and techniques.',
                 'body' => 'Explore advanced JavaScript topics such as closures, prototypes, and async programming...',

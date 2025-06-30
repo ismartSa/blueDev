@@ -386,7 +386,7 @@ class CourseController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string|min:10', // Ensures description is present
             'price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'status' => 'required|in:draft,active,inactive',
@@ -395,19 +395,34 @@ class CourseController extends Controller
             'duration' => 'nullable|integer|min:1',
         ]);
 
+        // The $validated['description'] will now always have a value.
+        // If you still wanted to modify it if it was, for example, just whitespace
+        // you could add logic here, but the NOT NULL constraint is already handled by validation.
+
+        if (empty(trim($validated['description']))) {
+            // This case should ideally be caught by 'required' and 'min:10' rules
+            // But as an absolute fallback if somehow an empty/whitespace string got through
+            // and you didn't want that, you could set a default.
+            // However, relying on validation is cleaner.
+            $validated['description'] = Str::words($validated['title'], 1, ''); 
+        }
+
         // Handle thumbnail upload
         if ($request->hasFile('thumbnail')) {
             // Delete old thumbnail
-            if ($course->thumbnail) {
+            if ($course->thumbnail && Storage::disk('public')->exists($course->thumbnail)) {
                 Storage::disk('public')->delete($course->thumbnail);
             }
             $validated['thumbnail'] = $request->file('thumbnail')->store('courses/thumbnails', 'public');
+        } else {
+            // Keep the old thumbnail if a new one is not uploaded
+            $validated['thumbnail'] = $course->thumbnail;
         }
 
         $course->update($validated);
 
         return Redirect::route('courses.show', $course->id)
-            ->with('success', 'تم تحديث الكورس بنجاح!');
+            ->with('success', 'تم تحديث الكورس بنجاح!'); // Course updated successfully!
     }
 
     public function destroy(Course $course)
