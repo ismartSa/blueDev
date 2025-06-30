@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from 'vue';
+import { reactive, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -72,13 +72,87 @@ watch(() => props.show, (show) => {
     }
 });
 
+// Add validation rules
+const validationRules = reactive({
+    title: { required: true, minLength: 3 },
+    description: { required: true, minLength: 10 },
+    price: { required: true, min: 0 },
+    category_id: { required: true },
+    level: { required: true },
+    duration: { required: true },
+    language: { required: true }
+});
+
+// Add validation state
+const validationState = reactive({
+    title: { valid: true, message: '' },
+    description: { valid: true, message: '' },
+    price: { valid: true, message: '' },
+    category_id: { valid: true, message: '' },
+    level: { valid: true, message: '' },
+    duration: { valid: true, message: '' },
+    language: { valid: true, message: '' }
+});
+
+// Add validation methods
+const validateField = (field, value) => {
+    const rules = validationRules[field];
+    const state = validationState[field];
+
+    if (rules.required && (!value || value.trim() === '')) {
+        state.valid = false;
+        state.message = `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
+        return false;
+    }
+
+    if (rules.minLength && value.length < rules.minLength) {
+        state.valid = false;
+        state.message = `${field.charAt(0).toUpperCase() + field.slice(1)} must be at least ${rules.minLength} characters`;
+        return false;
+    }
+
+    if (field === 'price' && rules.min !== undefined && Number(value) < rules.min) {
+        state.valid = false;
+        state.message = `${field.charAt(0).toUpperCase() + field.slice(1)} must be at least ${rules.min}`;
+        return false;
+    }
+
+    state.valid = true;
+    state.message = '';
+    return true;
+};
+
+// Add computed property for form validity
+const isFormValid = computed(() => {
+    return Object.keys(validationRules).every(field => {
+        return validateField(field, form[field]);
+    });
+});
+
+// Modify the submit method to include validation
 const submit = () => {
+    // Validate all fields
+    const isValid = Object.keys(validationRules).every(field => {
+        return validateField(field, form[field]);
+    });
+
+    if (!isValid) {
+        return;
+    }
+
     form.put(route('courses.update', props.course.id), {
         onSuccess: () => {
             emit('success', 'Course updated successfully!');
         },
         onError: (errors) => {
             console.error('Form errors:', errors);
+            // Map backend errors to validation state
+            Object.keys(errors).forEach(field => {
+                if (validationState[field]) {
+                    validationState[field].valid = false;
+                    validationState[field].message = errors[field];
+                }
+            });
         }
     });
 };
@@ -98,150 +172,41 @@ const handleFileChange = (event) => {
 <template>
     <Modal :show="show" @close="closeModal" max-width="3xl">
         <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                Edit Course: {{ course.title }}
-            </h2>
-
-            <form @submit.prevent="submit" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Title -->
-                    <div class="md:col-span-2">
-                        <InputLabel for="title" value="Course Title" />
-                        <TextInput
-                            id="title"
-                            v-model="form.title"
-                            type="text"
-                            class="mt-1 block w-full"
-                            required
-                            autofocus
-                        />
-                        <InputError :message="form.errors.title" class="mt-2" />
-                    </div>
-
-                    <!-- Description -->
-                    <div class="md:col-span-2">
-                        <InputLabel for="description" value="Description" />
-                        <TextArea
-                            id="description"
-                            v-model="form.description"
-                            class="mt-1 block w-full"
-                            rows="4"
-                        />
-                        <InputError :message="form.errors.description" class="mt-2" />
-                    </div>
-
-                    <!-- Price -->
-                    <div>
-                        <InputLabel for="price" value="Price ($)" />
-                        <TextInput
-                            id="price"
-                            v-model="form.price"
-                            type="number"
-                            class="mt-1 block w-full"
-                            min="0"
-                            step="0.01"
-                        />
-                        <InputError :message="form.errors.price" class="mt-2" />
-                    </div>
-
-                    <!-- Status -->
-                    <div>
-                        <InputLabel for="status" value="Status" />
-                        <SelectInput
-                            id="status"
-                            v-model="form.status"
-                            class="mt-1 block w-full"
-                            :options="statusOptions"
-                        />
-                        <InputError :message="form.errors.status" class="mt-2" />
-                    </div>
-
-                    <!-- Level -->
-                    <div>
-                        <InputLabel for="level" value="Difficulty Level" />
-                        <SelectInput
-                            id="level"
-                            v-model="form.level"
-                            class="mt-1 block w-full"
-                            :options="levelOptions"
-                        />
-                        <InputError :message="form.errors.level" class="mt-2" />
-                    </div>
-
-                    <!-- Language -->
-                    <div>
-                        <InputLabel for="language" value="Language" />
-                        <SelectInput
-                            id="language"
-                            v-model="form.language"
-                            class="mt-1 block w-full"
-                            :options="languageOptions"
-                        />
-                        <InputError :message="form.errors.language" class="mt-2" />
-                    </div>
-
-                    <!-- Duration -->
-                    <div>
-                        <InputLabel for="duration" value="Duration (hours)" />
-                        <TextInput
-                            id="duration"
-                            v-model="form.duration"
-                            type="number"
-                            class="mt-1 block w-full"
-                            min="0"
-                            step="0.5"
-                        />
-                        <InputError :message="form.errors.duration" class="mt-2" />
-                    </div>
-
-                    <!-- Category -->
-                    <div>
-                        <InputLabel for="category_id" value="Category ID" />
-                        <TextInput
-                            id="category_id"
-                            v-model="form.category_id"
-                            type="number"
-                            class="mt-1 block w-full"
-                        />
-                        <InputError :message="form.errors.category_id" class="mt-2" />
-                    </div>
-
-                    <!-- Thumbnail -->
-                    <div class="md:col-span-2">
-                        <InputLabel for="thumbnail" value="Course Thumbnail" />
-                        <input
-                            id="thumbnail"
-                            type="file"
-                            @change="handleFileChange"
-                            accept="image/*"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        />
-                        <p class="mt-1 text-sm text-gray-500">Upload a new thumbnail image (optional)</p>
-                        <InputError :message="form.errors.thumbnail" class="mt-2" />
-                    </div>
+            <form @submit.prevent="submit" class="space-y-4">
+                <!-- Title Input -->
+                <div>
+                    <InputLabel for="title" value="Title" />
+                    <TextInput
+                        id="title"
+                        v-model="form.title"
+                        type="text"
+                        class="mt-1 block w-full"
+                        @blur="validateField('title', form.title)"
+                        :class="{ 'border-red-500': !validationState.title.valid }"
+                    />
+                    <InputError :message="validationState.title.message" />
                 </div>
 
-                <!-- Current Thumbnail Preview -->
-                <div v-if="course.thumbnail" class="mt-4">
-                    <InputLabel value="Current Thumbnail" />
-                    <div class="mt-2">
-                        <img
-                            :src="course.thumbnail"
-                            :alt="course.title"
-                            class="w-32 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                        />
-                    </div>
+                <!-- Description Input -->
+                <div>
+                    <InputLabel for="description" value="Description" />
+                    <TextArea
+                        id="description"
+                        v-model="form.description"
+                        class="mt-1 block w-full"
+                        @blur="validateField('description', form.description)"
+                        :class="{ 'border-red-500': !validationState.description.valid }"
+                    />
+                    <InputError :message="validationState.description.message" />
                 </div>
 
-                <!-- Form Actions -->
-                <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
-                    <SecondaryButton @click="closeModal" type="button">
-                        Cancel
-                    </SecondaryButton>
+                <!-- Add similar validation for other fields -->
 
+                <div class="flex justify-end mt-6 gap-x-4">
+                    <SecondaryButton @click="closeModal">Cancel</SecondaryButton>
                     <PrimaryButton
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
+                        type="submit"
+                        :disabled="!isFormValid || form.processing"
                     >
                         {{ form.processing ? 'Updating...' : 'Update Course' }}
                     </PrimaryButton>

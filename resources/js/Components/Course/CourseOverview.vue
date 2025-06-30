@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { UsersIcon, EyeIcon, ClockIcon, BookOpenIcon, StarIcon, AcademicCapIcon, ChartBarIcon } from '@heroicons/vue/24/solid';
+import { UsersIcon, EyeIcon, ClockIcon, BookOpenIcon, StarIcon, AcademicCapIcon, ChartBarIcon, PencilIcon } from '@heroicons/vue/24/solid';
+import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
     course: { type: Object, required: true },
@@ -98,7 +99,14 @@ const getCourseImage = () => {
                 <ChartBarIcon class="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Quick Actions
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <Link
+                    :href="`/dashboard/courses/${course.id}/edit`"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg hover:scale-105"
+                >
+                    <PencilIcon class="h-5 w-5" />
+                    Edit Course
+                </Link>
                 <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg hover:scale-105">
                     <ChartBarIcon class="h-5 w-5" />
                     View Analytics
