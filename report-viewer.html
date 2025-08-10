@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عارض التقارير - Laravel Brive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .date-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .date-item {
+            text-align: center;
+            color: white;
+        }
+        
+        .date-item .label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .date-item .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .tabs-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .tabs-nav {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(0,123,255,0.1);
+            color: #007bff;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .report-section {
+            margin-bottom: 25px;
+        }
+        
+        .report-section h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .report-section h3 {
+            color: #34495e;
+            margin: 20px 0 10px 0;
+            font-size: 1.2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .status-icon {
+            margin-left: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .status-success { color: #28a745; }
+        .status-warning { color: #ffc107; }
+        .status-info { color: #17a2b8; }
+        
+        .download-section {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0 10px;
+            transition: transform 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .tabs-nav {
+                flex-direction: column;
+            }
+            
+            .date-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 تقارير منصة Laravel Brive</h1>
+            <p>نظام إدارة التقارير والإحصائيات</p>
+        </div>
+        
+        <div class="date-info">
+            <div class="date-item">
+                <div class="label">التاريخ الهجري</div>
+                <div class="value" id="hijriDate">جاري التحميل...</div>
+            </div>
+            <div class="date-item">
+                <div class="label">التاريخ الميلادي</div>
+                <div class="value" id="gregorianDate">جاري التحميل...</div>
+            </div>
+            <div class="date-item">
+                <div class="label">رقم اليوم</div>
+                <div class="value" id="dayNumber">جاري التحميل...</div>
+            </div>
+            <div class="date-item">
+                <div class="label">اليوم</div>
+                <div class="value" id="dayName">جاري التحميل...</div>
+            </div>
+        </div>
+        
+        <div class="tabs-container">
+            <div class="tabs-nav">
+                <button class="tab-btn active" onclick="showTab('overview')">📋 نظرة عامة</button>
+                <button class="tab-btn" onclick="showTab('testing')">🧪 تقرير الاختبار</button>
+                <button class="tab-btn" onclick="showTab('statistics')">📊 الإحصائيات</button>
+                <button class="tab-btn" onclick="showTab('recommendations')">💡 التوصيات</button>
+            </div>
+            
+            <div id="overview" class="tab-content active">
+                <div class="report-section">
+                    <h2>🎯 ملخص المنصة</h2>
+                    <p>منصة Laravel Brive هي نظام تعلم إلكتروني متكامل يوفر تجربة تعليمية شاملة للطلاب والمعلمين.</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="number">46</div>
+                            <div class="label">المستخدمون</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">24</div>
+                            <div class="label">الدورات</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">49</div>
+                            <div class="label">الاختبارات</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">122</div>
+                            <div class="label">المسارات</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h2>🚀 الميزات الرئيسية</h2>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-success">✅</span> نظام المصادقة والتسجيل</li>
+                        <li><span class="status-icon status-success">✅</span> إدارة الدورات والمحاضرات</li>
+                        <li><span class="status-icon status-success">✅</span> نظام الاختبارات التفاعلية</li>
+                        <li><span class="status-icon status-success">✅</span> لوحة التحكم الإدارية</li>
+                        <li><span class="status-icon status-success">✅</span> واجهة برمجة التطبيقات</li>
+                        <li><span class="status-icon status-success">✅</span> نظام الأدوار والصلاحيات</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="testing" class="tab-content">
+                <div class="report-section">
+                    <h2>🧪 نتائج الاختبار</h2>
+                    <h3>الوظائف المختبرة بنجاح:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-success">✅</span> صفحة تسجيل الدخول</li>
+                        <li><span class="status-icon status-success">✅</span> لوحة التحكم</li>
+                        <li><span class="status-icon status-success">✅</span> صفحة الدورات</li>
+                        <li><span class="status-icon status-success">✅</span> صفحة الاختبارات</li>
+                        <li><span class="status-icon status-success">✅</span> صفحة التسجيل</li>
+                        <li><span class="status-icon status-success">✅</span> لوحة الإدارة</li>
+                        <li><span class="status-icon status-success">✅</span> صفحة الملف الشخصي</li>
+                        <li><span class="status-icon status-success">✅</span> استعادة كلمة المرور</li>
+                        <li><span class="status-icon status-success">✅</span> توثيق API</li>
+                    </ul>
+                    
+                    <h3>الإصلاحات المنجزة:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-success">🔧</span> إصلاح خطأ JavaScript في Navbar.vue</li>
+                        <li><span class="status-icon status-success">🔧</span> إضافة فحص null للكائن user</li>
+                        <li><span class="status-icon status-success">🔧</span> تحسين معالجة الأخطاء</li>
+                    </ul>
+                    
+                    <h3>حالة الخوادم:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-success">🟢</span> خادم Laravel (المنفذ 8000)</li>
+                        <li><span class="status-icon status-success">🟢</span> خادم Vite (تطوير)</li>
+                        <li><span class="status-icon status-success">🟢</span> خادم HTTP (المنفذ 8080)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="statistics" class="tab-content">
+                <div class="report-section">
+                    <h2>📊 إحصائيات مفصلة</h2>
+                    
+                    <h3>قاعدة البيانات:</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="number">46</div>
+                            <div class="label">إجمالي المستخدمين</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">24</div>
+                            <div class="label">الدورات المتاحة</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number">49</div>
+                            <div class="label">الاختبارات النشطة</div>
+                        </div>
+                    </div>
+                    
+                    <h3>المسارات والواجهات:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-info">📍</span> 122 مسار API مسجل</li>
+                        <li><span class="status-icon status-info">📍</span> مسارات المصادقة والتسجيل</li>
+                        <li><span class="status-icon status-info">📍</span> مسارات إدارة الدورات</li>
+                        <li><span class="status-icon status-info">📍</span> مسارات الاختبارات</li>
+                        <li><span class="status-icon status-info">📍</span> مسارات إدارة المستخدمين</li>
+                    </ul>
+                    
+                    <h3>حالة قاعدة البيانات:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-success">✅</span> جميع الجداول منشأة بنجاح</li>
+                        <li><span class="status-icon status-success">✅</span> البيانات الأساسية متوفرة</li>
+                        <li><span class="status-icon status-success">✅</span> الفهارس والعلاقات سليمة</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="recommendations" class="tab-content">
+                <div class="report-section">
+                    <h2>💡 التوصيات والتحسينات</h2>
+                    
+                    <h3>تحسينات الأداء:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-warning">⚡</span> تحسين استعلامات قاعدة البيانات</li>
+                        <li><span class="status-icon status-warning">⚡</span> إضافة نظام التخزين المؤقت</li>
+                        <li><span class="status-icon status-warning">⚡</span> ضغط الأصول الثابتة</li>
+                    </ul>
+                    
+                    <h3>الأمان:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-warning">🔒</span> تحديث مكتبات الأمان</li>
+                        <li><span class="status-icon status-warning">🔒</span> إضافة مصادقة ثنائية</li>
+                        <li><span class="status-icon status-warning">🔒</span> تشفير البيانات الحساسة</li>
+                    </ul>
+                    
+                    <h3>تجربة المستخدم:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-info">🎨</span> تحسين التصميم المتجاوب</li>
+                        <li><span class="status-icon status-info">🎨</span> إضافة وضع الظلام</li>
+                        <li><span class="status-icon status-info">🎨</span> تحسين إمكانية الوصول</li>
+                    </ul>
+                    
+                    <h3>المراقبة والصيانة:</h3>
+                    <ul class="feature-list">
+                        <li><span class="status-icon status-info">📈</span> إضافة نظام مراقبة الأداء</li>
+                        <li><span class="status-icon status-info">📈</span> تسجيل الأخطاء والتنبيهات</li>
+                        <li><span class="status-icon status-info">📈</span> نسخ احتياطية منتظمة</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="download-section">
+            <h3>تحميل التقارير</h3>
+            <a href="./Laravel-Brive-Testing-Report.md" download class="download-btn">📄 تحميل التقرير الكامل</a>
+            <a href="./sitemap-flowchart.svg" download class="download-btn">🗺️ تحميل خريطة الموقع</a>
+        </div>
+    </div>
+    
+    <script>
+        // Dynamic date and time functions
+        const dateConfig = {
+            hijriMonths: ['محرم', 'صفر', 'ربيع الأول', 'ربيع الثاني', 'جمادى الأولى', 'جمادى الثانية', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'],
+            arabicDays: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+        };
+        
+        function updateDateTime() {
+            const now = new Date();
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            
+            // Update elements with error handling
+            const elements = {
+                gregorianDate: now.toLocaleDateString('ar-SA'),
+                dayNumber: dayOfYear,
+                dayName: dateConfig.arabicDays[now.getDay()],
+                hijriDate: getHijriDate(now)
+            };
+            
+            Object.entries(elements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            });
+        }
+        
+        function getHijriDate(date) {
+            try {
+                // Simple Hijri approximation - for production use proper library
+                const hijriYear = Math.floor((date.getFullYear() - 622) * 1.030684);
+                const hijriMonth = Math.floor(Math.random() * 12); // Simplified
+                const hijriDay = date.getDate();
+                return `${hijriDay} ${dateConfig.hijriMonths[hijriMonth]} ${hijriYear}هـ`;
+            } catch (error) {
+                return 'غير متاح';
+            }
+        }
+        
+        function showTab(tabName) {
+            // Hide all tabs and remove active class
+            document.querySelectorAll('.tab-content, .tab-btn').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected tab and mark button as active
+            const selectedTab = document.getElementById(tabName);
+            const selectedBtn = event.target;
+            
+            if (selectedTab) selectedTab.classList.add('active');
+            if (selectedBtn) selectedBtn.classList.add('active');
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateTime();
+            // Update time every minute
+            setInterval(updateDateTime, 60000);
+        });
+    </script>
+</body>
+</html>

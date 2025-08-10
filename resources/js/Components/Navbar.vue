@@ -79,15 +79,14 @@ const lang = () => translations.value;
                                             class="flex justify-between items-center hidden sm:inline-flex"
                                         >
                                             {{
-                                                $page.props.auth.user.name.split(
+                                                $page.props.auth.user?.name?.split(
                                                     " "
-                                                )[0]
+                                                )[0] || 'Guest'
                                             }}
                                             <CheckBadgeIcon
                                                 class="ml-[2px] w-4 h-4 text-white dark:text-white lg:text-primary"
                                                 v-show="
-                                                    $page.props.auth.user
-                                                        .email_verified_at
+                                                    $page.props.auth.user?.email_verified_at
                                                 "
                                             />
                                         </span>
@@ -104,12 +103,11 @@ const lang = () => translations.value;
                                         <span
                                             class="flex items-center justify-start text-sm truncate"
                                         >
-                                            {{ $page.props.auth.user.name }}
+                                            {{ $page.props.auth.user?.name || 'Guest' }}
                                             <CheckBadgeIcon
                                                 class="ml-[2px] w-4 h-4 dark:text-white text-primary"
                                                 v-show="
-                                                    $page.props.auth.user
-                                                        .email_verified_at
+                                                    $page.props.auth.user?.email_verified_at
                                                 "
                                             />
                                         </span>
@@ -117,7 +115,7 @@ const lang = () => translations.value;
                                             class="block text-sm font-medium text-slate-500 truncate dark:text-slate-400"
                                         >
                                             {{
-                                                $page.props.auth.user.email
+                                                $page.props.auth.user?.email || 'No email'
                                             }}</span
                                         >
                                     </div>

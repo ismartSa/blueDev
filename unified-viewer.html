@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عارض منصة Laravel Brive المتكامل</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .date-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .date-item {
+            text-align: center;
+            color: white;
+        }
+        
+        .date-item .label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .date-item .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .main-tabs-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .main-tabs-nav {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .main-tab-btn {
+            flex: 1;
+            padding: 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .main-tab-btn:hover {
+            background: rgba(0,123,255,0.1);
+            color: #007bff;
+        }
+        
+        .main-tab-btn.active {
+            background: white;
+            color: #007bff;
+            border-bottom: 4px solid #007bff;
+        }
+        
+        .main-tab-content {
+            display: none;
+            min-height: 70vh;
+        }
+        
+        .main-tab-content.active {
+            display: block;
+        }
+        
+        /* Flowchart specific styles */
+        .flowchart-container {
+            padding: 20px;
+            background: white;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .svg-container {
+            text-align: center;
+            overflow-x: auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            min-height: 400px;
+        }
+        
+        .zoom-info {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .download-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-btn {
+            background: #10b981 !important;
+        }
+        
+        .dropdown-btn:hover {
+            background: #059669 !important;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 1000;
+            right: 0;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .dropdown-content a {
+            color: #374151;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .dropdown-content a:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .dropdown-content a:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .show {
+            display: block;
+        }
+        
+        /* Reports management styles */
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .add-report-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .add-report-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .reports-tabs-container {
+            margin-bottom: 20px;
+        }
+        
+        .reports-nav {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .report-tab-btn {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            min-width: 200px;
+        }
+        
+        .report-tab-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .report-tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .report-date {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        .close-report {
+            background: rgba(255,0,0,0.7);
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: auto;
+        }
+        
+        .close-report:hover {
+            background: rgba(255,0,0,0.9);
+        }
+        
+        .report-content {
+            display: none;
+        }
+        
+        .report-content.active {
+            display: block;
+        }
+        
+        /* Report specific styles */
+        .report-container {
+            padding: 0;
+        }
+        
+        .sub-tabs-nav {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .sub-tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        
+        .sub-tab-btn:hover {
+            background: rgba(0,123,255,0.1);
+            color: #007bff;
+        }
+        
+        .sub-tab-btn.active {
+            background: white;
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+        }
+        
+        .sub-tab-content {
+            display: none;
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .sub-tab-content.active {
+            display: block;
+        }
+        
+        .report-section {
+            margin-bottom: 25px;
+        }
+        
+        .report-section h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .report-section h3 {
+            color: #34495e;
+            margin: 20px 0 10px 0;
+            font-size: 1.2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        /* Improvement checkboxes */
+        .improvement-checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+            accent-color: #3b82f6;
+        }
+        
+        .improvement-checkbox:checked + label {
+            text-decoration: line-through;
+            opacity: 0.7;
+            color: #10b981;
+        }
+        
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .feature-list label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .feature-list li:hover {
+            background-color: #f8f9fa;
+            padding-right: 10px;
+            border-radius: 5px;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .status-icon {
+            margin-left: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .status-success { color: #28a745; }
+        .status-warning { color: #ffc107; }
+        .status-info { color: #17a2b8; }
+        
+        .download-section {
+            text-align: center;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .report-date {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-align: left;
+        }
+        
+        .report-date span {
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+        }
+        
+        /* Message styles */
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .main-tabs-nav, .sub-tabs-nav {
+                flex-direction: column;
+            }
+            
+            .date-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                padding: 15px;
+            }
+            
+            .btn {
+                margin: 5px;
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 منصة Laravel Brive المتكاملة | Laravel Brive Integrated Platform</h1>
+            <p>نظام إدارة التعلم الإلكتروني - عارض التقارير والمخططات<br>Learning Management System - Reports & Charts Viewer</p>
+        </div>
+        
+        <div class="date-info">
+            <div class="date-item">
+                <div class="label">التاريخ الهجري | Hijri Date</div>
+                <div class="value" id="hijriDate">جاري التحميل... | Loading...</div>
+            </div>
+            <div class="date-item">
+                <div class="label">التاريخ الميلادي | Gregorian Date</div>
+                <div class="value" id="gregorianDate">جاري التحميل... | Loading...</div>
+            </div>
+            <div class="date-item">
+                <div class="label">رقم اليوم | Day Number</div>
+                <div class="value" id="dayNumber">جاري التحميل... | Loading...</div>
+            </div>
+            <div class="date-item">
+                <div class="label">اليوم | Day</div>
+                <div class="value" id="dayName">جاري التحميل... | Loading...</div>
+            </div>
+        </div>
+        
+        <div class="main-tabs-container">
+            <div class="main-tabs-nav">
+                <button class="main-tab-btn active" onclick="showMainTab('flowchart')">🗺️ خريطة الموقع | Site Map</button>
+                <button class="main-tab-btn" onclick="showMainTab('reports')">📊 التقارير والإحصائيات | Reports & Statistics</button>
+            </div>
+            
+            <!-- Flowchart Tab -->
+            <div id="flowchart" class="main-tab-content active">
+                <div class="flowchart-container">
+                    <div class="controls">
+                        <button class="btn" onclick="zoomIn()">🔍 تكبير | Zoom In</button>
+                        <button class="btn" onclick="zoomOut()">🔍 تصغير | Zoom Out</button>
+                        <button class="btn" onclick="resetZoom()">↻ إعادة تعيين | Reset</button>
+                        <div class="download-dropdown">
+                            <button class="btn dropdown-btn" onclick="toggleDropdown()">💾 تحميل | Download ▼</button>
+                            <div class="dropdown-content" id="downloadDropdown">
+                                <a href="#" onclick="downloadSVG()">📄 تحميل SVG | Download SVG</a>
+                                <a href="#" onclick="downloadPDF()">📋 تحميل PDF | Download PDF</a>
+                                <a href="#" onclick="downloadReport()">📊 تحميل التقرير | Download Report</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="zoom-info">
+                        <span>مستوى التكبير | Zoom Level: <span id="zoomLevel">100%</span></span>
+                    </div>
+                    
+                    <div class="svg-container" id="svgContainer">
+                        <div id="loadingMessage">⏳ جاري تحميل الفلوشارت... | Loading Flowchart...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reports Tab -->
+            <div id="reports" class="main-tab-content">
+                <div class="report-container">
+                    <div class="reports-header">
+                        <h2>📊 إدارة التقارير | Reports Management</h2>
+                        <button class="add-report-btn" onclick="addNewReport()">➕ إضافة تقرير جديد | Add New Report</button>
+                    </div>
+                    
+                    <div class="reports-tabs-container">
+                        <div class="reports-nav">
+                            <button class="report-tab-btn active" data-report="report-1" onclick="switchReport('report-1')">
+                                📋 التقرير الأول | Report 1
+                                <span class="report-date">اليوم | Today</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="report-content-container">
+                        <div id="report-1" class="report-content active">
+                            <div class="sub-tabs-nav">
+                                <button class="sub-tab-btn active" onclick="showSubTab('overview')">📋 نظرة عامة | Overview</button>
+                                <button class="sub-tab-btn" onclick="showSubTab('testing')">🧪 تقرير الاختبار | Test Report</button>
+                                <button class="sub-tab-btn" onclick="showSubTab('statistics')">📊 الإحصائيات | Statistics</button>
+                                <button class="sub-tab-btn" onclick="showSubTab('recommendations')">💡 التوصيات | Recommendations</button>
+                            </div>
+                    
+                    <div id="overview" class="sub-tab-content active">
+                        <div class="report-section">
+                            <div class="report-header">
+                                <h2>🎯 ملخص المنصة | Platform Summary</h2>
+                                <div class="report-date">
+                                    <span>📅 تاريخ التقرير | Report Date: <span id="reportDate"></span></span>
+                                    <span>⏰ وقت الإنشاء | Creation Time: <span id="reportTime"></span></span>
+                                </div>
+                            </div>
+                            <p>منصة Laravel Brive هي نظام تعلم إلكتروني متكامل يوفر تجربة تعليمية شاملة للطلاب والمعلمين.<br><em>Laravel Brive is an integrated e-learning platform that provides a comprehensive educational experience for students and teachers.</em></p>
+                            
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="number">46</div>
+                                    <div class="label">المستخدمون | Users</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="number">24</div>
+                                    <div class="label">الدورات | Courses</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="number">49</div>
+                                    <div class="label">الاختبارات | Quizzes</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="number">122</div>
+                                    <div class="label">المسارات | Routes</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="report-section">
+                            <h2>🚀 الميزات الرئيسية | Key Features</h2>
+                            <ul class="feature-list">
+                                 <li><span class="status-icon status-success">✅</span> نظام المصادقة والتسجيل | Authentication & Registration System</li>
+                                 <li><span class="status-icon status-success">✅</span> إدارة الدورات والمحاضرات | Course & Lecture Management</li>
+                                 <li><span class="status-icon status-success">✅</span> نظام الاختبارات التفاعلية | Interactive Quiz System</li>
+                                 <li><span class="status-icon status-success">✅</span> لوحة التحكم الإدارية | Admin Dashboard</li>
+                                 <li><span class="status-icon status-success">✅</span> واجهة برمجة التطبيقات | API Interface</li>
+                                 <li><span class="status-icon status-success">✅</span> نظام الأدوار والصلاحيات | Roles & Permissions System</li>
+                             </ul>
+                        </div>
+                    </div>
+                    
+                    <div id="testing" class="sub-tab-content">
+                        <div class="report-section">
+                            <div class="report-header">
+                                <h2>🧪 نتائج الاختبار | Test Results</h2>
+                                 <div class="report-date">
+                                     <span>📅 تاريخ الاختبار | Test Date: <span class="report-date-value"></span></span>
+                                 </div>
+                            </div>
+                            <h3>الوظائف المختبرة بنجاح | Successfully Tested Functions:</h3>
+                             <ul class="feature-list">
+                                 <li><span class="status-icon status-success">✅</span> صفحة تسجيل الدخول | Login Page</li>
+                                 <li><span class="status-icon status-success">✅</span> لوحة التحكم | Dashboard</li>
+                                 <li><span class="status-icon status-success">✅</span> صفحة الدورات | Courses Page</li>
+                                 <li><span class="status-icon status-success">✅</span> صفحة الاختبارات | Quizzes Page</li>
+                                 <li><span class="status-icon status-success">✅</span> صفحة التسجيل | Registration Page</li>
+                                 <li><span class="status-icon status-success">✅</span> لوحة الإدارة | Admin Panel</li>
+                                 <li><span class="status-icon status-success">✅</span> صفحة الملف الشخصي | Profile Page</li>
+                                 <li><span class="status-icon status-success">✅</span> استعادة كلمة المرور | Password Recovery</li>
+                                 <li><span class="status-icon status-success">✅</span> توثيق API | API Documentation</li>
+                             </ul>
+                            
+                            <h3>الإصلاحات المنجزة | Completed Fixes:</h3>
+                             <ul class="feature-list">
+                                 <li><span class="status-icon status-success">🔧</span> إصلاح خطأ JavaScript في Navbar.vue | Fixed JavaScript Error in Navbar.vue</li>
+                                 <li><span class="status-icon status-success">🔧</span> إضافة فحص null للكائن user | Added Null Check for User Object</li>
+                                 <li><span class="status-icon status-success">🔧</span> تحسين معالجة الأخطاء | Improved Error Handling</li>
+                             </ul>
+                            
+                            <h3>حالة الخوادم | Server Status:</h3>
+                             <ul class="feature-list">
+                                 <li><span class="status-icon status-success">🟢</span> خادم Laravel (المنفذ 8000) | Laravel Server (Port 8000)</li>
+                                 <li><span class="status-icon status-success">🟢</span> خادم Vite (تطوير) | Vite Server (Development)</li>
+                                 <li><span class="status-icon status-success">🟢</span> خادم HTTP (المنفذ 8080) | HTTP Server (Port 8080)</li>
+                             </ul>
+                        </div>
+                    </div>
+                    
+                    <div id="statistics" class="sub-tab-content">
+                        <div class="report-section">
+                            <div class="report-header">
+                                <h2>📊 إحصائيات مفصلة | Detailed Statistics</h2>
+                                 <div class="report-date">
+                                     <span>📊 آخر تحديث | Last Update: <span class="report-date-value"></span></span>
+                                 </div>
+                            </div>
+                            
+                            <h3>قاعدة البيانات | Database:</h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                     <div class="number">46</div>
+                                     <div class="label">إجمالي المستخدمين | Total Users</div>
+                                 </div>
+                                 <div class="stat-card">
+                                     <div class="number">24</div>
+                                     <div class="label">الدورات المتاحة | Available Courses</div>
+                                 </div>
+                                 <div class="stat-card">
+                                     <div class="number">49</div>
+                                     <div class="label">الاختبارات النشطة | Active Quizzes</div>
+                                 </div>
+                            </div>
+                            
+                            <h3>المسارات والواجهات:</h3>
+                            <ul class="feature-list">
+                                <li><span class="status-icon status-info">📍</span> 122 مسار API مسجل</li>
+                                <li><span class="status-icon status-info">📍</span> مسارات المصادقة والتسجيل</li>
+                                <li><span class="status-icon status-info">📍</span> مسارات إدارة الدورات</li>
+                                <li><span class="status-icon status-info">📍</span> مسارات الاختبارات</li>
+                                <li><span class="status-icon status-info">📍</span> مسارات إدارة المستخدمين</li>
+                            </ul>
+                            
+                            <h3>حالة قاعدة البيانات:</h3>
+                            <ul class="feature-list">
+                                <li><span class="status-icon status-success">✅</span> جميع الجداول منشأة بنجاح</li>
+                                <li><span class="status-icon status-success">✅</span> البيانات الأساسية متوفرة</li>
+                                <li><span class="status-icon status-success">✅</span> الفهارس والعلاقات سليمة</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div id="recommendations" class="sub-tab-content">
+                        <div class="report-section">
+                            <div class="report-header">
+                                <h2>💡 التوصيات والتحسينات | Recommendations & Improvements</h2>
+                                <div class="report-date">
+                                    <span>💡 تاريخ التوصيات | Recommendations Date: <span class="report-date-value"></span></span>
+                                </div>
+                            </div>
+                            
+                            <h3>تحسينات الأداء | Performance Improvements:</h3>
+                            <ul class="feature-list">
+                                <li><input type="checkbox" class="improvement-checkbox" id="db-optimize"> <label for="db-optimize"><span class="status-icon status-warning">⚡</span> تحسين استعلامات قاعدة البيانات | Optimize Database Queries</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="caching-system"> <label for="caching-system"><span class="status-icon status-warning">⚡</span> إضافة نظام التخزين المؤقت | Add Caching System</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="compress-assets"> <label for="compress-assets"><span class="status-icon status-warning">⚡</span> ضغط الأصول الثابتة | Compress Static Assets</label></li>
+                            </ul>
+                            
+                            <h3>الأمان | Security:</h3>
+                            <ul class="feature-list">
+                                <li><input type="checkbox" class="improvement-checkbox" id="security-libs"> <label for="security-libs"><span class="status-icon status-warning">🔒</span> تحديث مكتبات الأمان | Update Security Libraries</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="two-factor"> <label for="two-factor"><span class="status-icon status-warning">🔒</span> إضافة مصادقة ثنائية | Add Two-Factor Authentication</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="encrypt-data"> <label for="encrypt-data"><span class="status-icon status-warning">🔒</span> تشفير البيانات الحساسة | Encrypt Sensitive Data</label></li>
+                            </ul>
+                            
+                            <h3>تجربة المستخدم | User Experience:</h3>
+                            <ul class="feature-list">
+                                <li><input type="checkbox" class="improvement-checkbox" id="responsive-design"> <label for="responsive-design"><span class="status-icon status-info">🎨</span> تحسين التصميم المتجاوب | Improve Responsive Design</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="dark-mode"> <label for="dark-mode"><span class="status-icon status-info">🎨</span> إضافة وضع الظلام | Add Dark Mode</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="accessibility"> <label for="accessibility"><span class="status-icon status-info">🎨</span> تحسين إمكانية الوصول | Improve Accessibility</label></li>
+                            </ul>
+                            
+                            <h3>المراقبة والصيانة | Monitoring & Maintenance:</h3>
+                            <ul class="feature-list">
+                                <li><input type="checkbox" class="improvement-checkbox" id="performance-monitoring"> <label for="performance-monitoring"><span class="status-icon status-info">📈</span> إضافة نظام مراقبة الأداء | Add Performance Monitoring System</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="error-logging"> <label for="error-logging"><span class="status-icon status-info">📈</span> تسجيل الأخطاء والتنبيهات | Error Logging & Alerts</label></li>
+                                <li><input type="checkbox" class="improvement-checkbox" id="regular-backups"> <label for="regular-backups"><span class="status-icon status-info">📈</span> نسخ احتياطية منتظمة | Regular Backups</label></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="download-section">
+                        <h3>تحميل التقارير والملفات | Download Reports & Files</h3>
+                        <a href="./Laravel-Brive-Testing-Report.md" download class="download-btn">📄 تحميل التقرير الكامل | Download Full Report</a>
+                        <a href="./sitemap-flowchart.svg" download class="download-btn">🗺️ تحميل خريطة الموقع | Download Site Map</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let currentZoom = 1;
+        let svgElement = null;
+        let reportCounter = 1;
+        let activeReport = 'report-1';
+        
+        // Configuration object - DRY principle
+        const config = {
+            hijriMonths: ['محرم', 'صفر', 'ربيع الأول', 'ربيع الثاني', 'جمادى الأولى', 'جمادى الثانية', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'],
+            arabicDays: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+            zoomLimits: { min: 0.5, max: 3, step: 0.2 },
+            messageTimeout: 3000
+        };
+        
+        // Utility functions - DRY principle
+        const utils = {
+            // Show message with auto-hide
+            showMessage(message, type = 'success') {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}-message`;
+                messageDiv.innerHTML = message;
+                
+                const container = document.querySelector('.container');
+                container.insertBefore(messageDiv, container.querySelector('.main-tabs-container'));
+                
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, config.messageTimeout);
+            },
+            
+            // Update element content safely
+            updateElement(id, value) {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            },
+            
+            // Toggle class on elements
+            toggleClass(selector, className, condition = null) {
+                document.querySelectorAll(selector).forEach(el => {
+                    if (condition === null) {
+                        el.classList.toggle(className);
+                    } else {
+                        el.classList.toggle(className, condition);
+                    }
+                });
+            }
+        };
+        
+        // Date and time functions
+        function updateDateTime() {
+            const now = new Date();
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            
+            const dateElements = {
+                gregorianDate: now.toLocaleDateString('ar-SA'),
+                dayNumber: dayOfYear,
+                dayName: config.arabicDays[now.getDay()],
+                hijriDate: getHijriDate(now)
+            };
+            
+            Object.entries(dateElements).forEach(([id, value]) => {
+                utils.updateElement(id, value);
+            });
+            
+            // Update report dates
+            updateReportDates(now);
+        }
+        
+        // Add new report functionality
+        function addNewReport() {
+            reportCounter++;
+            const reportId = `report-${reportCounter}`;
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            
+            // Add new report tab
+            const reportsNav = document.querySelector('.reports-nav');
+            const newTabBtn = document.createElement('button');
+            newTabBtn.className = 'report-tab-btn';
+            newTabBtn.setAttribute('data-report', reportId);
+            newTabBtn.setAttribute('onclick', `switchReport('${reportId}')`);
+            newTabBtn.innerHTML = `
+                📋 التقرير ${reportCounter} | Report ${reportCounter}
+                <span class="report-date">${timeString}</span>
+                <button class="close-report" onclick="closeReport('${reportId}', event)">✕</button>
+            `;
+            reportsNav.appendChild(newTabBtn);
+            
+            // Add new report content
+            const reportContainer = document.querySelector('.report-content-container');
+            const newReportContent = document.createElement('div');
+            newReportContent.id = reportId;
+            newReportContent.className = 'report-content';
+            newReportContent.innerHTML = createReportTemplate(reportCounter);
+            reportContainer.appendChild(newReportContent);
+            
+            // Switch to new report
+            switchReport(reportId);
+        }
+        
+        // Switch between reports
+        function switchReport(reportId) {
+            // Update active report
+            activeReport = reportId;
+            
+            // Update tab buttons
+            document.querySelectorAll('.report-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-report="${reportId}"]`).classList.add('active');
+            
+            // Update report content
+            document.querySelectorAll('.report-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(reportId).classList.add('active');
+        }
+        
+        // Close report
+        function closeReport(reportId, event) {
+            event.stopPropagation();
+            
+            if (document.querySelectorAll('.report-tab-btn').length <= 1) {
+                alert('لا يمكن حذف التقرير الأخير | Cannot delete the last report');
+                return;
+            }
+            
+            // Remove tab and content
+            document.querySelector(`[data-report="${reportId}"]`).remove();
+            document.getElementById(reportId).remove();
+            
+            // Switch to first available report if current was active
+            if (activeReport === reportId) {
+                const firstReport = document.querySelector('.report-tab-btn');
+                if (firstReport) {
+                    switchReport(firstReport.getAttribute('data-report'));
+                }
+            }
+        }
+        
+        // Create report template
+        function createReportTemplate(reportNumber) {
+            return `
+                <div class="sub-tabs-nav">
+                    <button class="sub-tab-btn active" onclick="showSubTab('overview')">📋 نظرة عامة | Overview</button>
+                    <button class="sub-tab-btn" onclick="showSubTab('testing')">🧪 تقرير الاختبار | Test Report</button>
+                    <button class="sub-tab-btn" onclick="showSubTab('statistics')">📊 الإحصائيات | Statistics</button>
+                    <button class="sub-tab-btn" onclick="showSubTab('recommendations')">💡 التوصيات | Recommendations</button>
+                </div>
+                
+                <div id="overview" class="sub-tab-content active">
+                    <div class="report-section">
+                        <div class="report-header">
+                            <h2>🎯 التقرير ${reportNumber} - ملخص المنصة | Report ${reportNumber} - Platform Summary</h2>
+                            <div class="report-date">
+                                <span>📅 تاريخ التقرير | Report Date: <span id="reportDate"></span></span>
+                                <span>⏰ وقت الإنشاء | Creation Time: <span id="reportTime"></span></span>
+                            </div>
+                        </div>
+                        <p>منصة Laravel Brive هي نظام تعلم إلكتروني متكامل يوفر تجربة تعليمية شاملة للطلاب والمعلمين.<br><em>Laravel Brive is an integrated e-learning platform that provides a comprehensive educational experience for students and teachers.</em></p>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="number">46</div>
+                                <div class="label">المستخدمون | Users</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="number">24</div>
+                                <div class="label">الدورات | Courses</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="number">49</div>
+                                <div class="label">الاختبارات | Quizzes</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="number">122</div>
+                                <div class="label">المسارات | Routes</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-section">
+                        <h2>🚀 الميزات الرئيسية | Key Features</h2>
+                        <ul class="feature-list">
+                             <li><span class="status-icon status-success">✅</span> نظام المصادقة والتسجيل | Authentication & Registration System</li>
+                             <li><span class="status-icon status-success">✅</span> إدارة الدورات والمحاضرات | Course & Lecture Management</li>
+                             <li><span class="status-icon status-success">✅</span> نظام الاختبارات التفاعلية | Interactive Quiz System</li>
+                             <li><span class="status-icon status-success">✅</span> لوحة التحكم الإدارية | Admin Dashboard</li>
+                             <li><span class="status-icon status-success">✅</span> واجهة برمجة التطبيقات | API Interface</li>
+                             <li><span class="status-icon status-success">✅</span> نظام الأدوار والصلاحيات | Roles & Permissions System</li>
+                         </ul>
+                    </div>
+                </div>
+                
+                <div id="testing" class="sub-tab-content">
+                    <div class="report-section">
+                        <div class="report-header">
+                            <h2>🧪 نتائج الاختبار ${reportNumber} | Test Results ${reportNumber}</h2>
+                             <div class="report-date">
+                                 <span>📅 تاريخ الاختبار | Test Date: <span class="report-date-value"></span></span>
+                             </div>
+                        </div>
+                        <h3>الوظائف المختبرة بنجاح | Successfully Tested Functions:</h3>
+                         <ul class="feature-list">
+                             <li><span class="status-icon status-success">✅</span> صفحة تسجيل الدخول | Login Page</li>
+                             <li><span class="status-icon status-success">✅</span> لوحة التحكم | Dashboard</li>
+                             <li><span class="status-icon status-success">✅</span> صفحة الدورات | Courses Page</li>
+                             <li><span class="status-icon status-success">✅</span> صفحة الاختبارات | Quizzes Page</li>
+                             <li><span class="status-icon status-success">✅</span> صفحة التسجيل | Registration Page</li>
+                             <li><span class="status-icon status-success">✅</span> لوحة الإدارة | Admin Panel</li>
+                             <li><span class="status-icon status-success">✅</span> صفحة الملف الشخصي | Profile Page</li>
+                             <li><span class="status-icon status-success">✅</span> استعادة كلمة المرور | Password Recovery</li>
+                             <li><span class="status-icon status-success">✅</span> توثيق API | API Documentation</li>
+                         </ul>
+                    </div>
+                </div>
+                
+                <div id="statistics" class="sub-tab-content">
+                    <div class="report-section">
+                        <div class="report-header">
+                            <h2>📊 إحصائيات التقرير ${reportNumber} | Report ${reportNumber} Statistics</h2>
+                             <div class="report-date">
+                                 <span>📊 آخر تحديث | Last Update: <span class="report-date-value"></span></span>
+                             </div>
+                        </div>
+                        <p>إحصائيات محدثة للتقرير الجديد | Updated statistics for new report</p>
+                    </div>
+                </div>
+                
+                <div id="recommendations" class="sub-tab-content">
+                    <div class="report-section">
+                        <div class="report-header">
+                            <h2>💡 توصيات التقرير ${reportNumber} | Report ${reportNumber} Recommendations</h2>
+                            <div class="report-date">
+                                <span>💡 تاريخ التوصيات | Recommendations Date: <span class="report-date-value"></span></span>
+                            </div>
+                        </div>
+                        <p>توصيات جديدة للتحسين | New improvement recommendations</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function updateReportDates(date = new Date()) {
+            const reportDate = date.toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const reportTime = date.toLocaleTimeString('ar-SA', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            utils.updateElement('reportDate', reportDate);
+            utils.updateElement('reportTime', reportTime);
+            
+            // Update all report date values
+            document.querySelectorAll('.report-date-value').forEach(el => {
+                el.textContent = reportDate;
+            });
+        }
+        
+        function getHijriDate(date) {
+            try {
+                // Simple Hijri approximation - for production use proper library
+                const hijriYear = Math.floor((date.getFullYear() - 622) * 1.030684);
+                const hijriMonth = Math.floor(Math.random() * 12); // Simplified
+                const hijriDay = date.getDate();
+                return `${hijriDay} ${config.hijriMonths[hijriMonth]} ${hijriYear}هـ`;
+            } catch (error) {
+                return 'غير متاح';
+            }
+        }
+        
+        // Tab management functions
+        function showMainTab(tabName) {
+            // Hide all main tabs and remove active class
+            utils.toggleClass('.main-tab-content, .main-tab-btn', 'active', false);
+            
+            // Show selected tab and mark button as active
+            const selectedTab = document.getElementById(tabName);
+            const selectedBtn = event.target;
+            
+            if (selectedTab) selectedTab.classList.add('active');
+            if (selectedBtn) selectedBtn.classList.add('active');
+            
+            // Load flowchart if flowchart tab is selected
+            if (tabName === 'flowchart' && !svgElement) {
+                loadSVG();
+            }
+        }
+        
+        function showSubTab(tabName) {
+            // Hide all sub tabs and remove active class
+            utils.toggleClass('.sub-tab-content, .sub-tab-btn', 'active', false);
+            
+            // Show selected tab and mark button as active
+            const selectedTab = document.getElementById(tabName);
+            const selectedBtn = event.target;
+            
+            if (selectedTab) selectedTab.classList.add('active');
+            if (selectedBtn) selectedBtn.classList.add('active');
+        }
+        
+        // SVG and flowchart functions
+        async function loadSVG() {
+            try {
+                const response = await fetch('./sitemap-flowchart.svg');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const svgText = await response.text();
+                
+                const container = document.getElementById('svgContainer');
+                container.innerHTML = svgText;
+                
+                svgElement = container.querySelector('svg');
+                if (svgElement) {
+                    // Make SVG responsive
+                    Object.assign(svgElement.style, {
+                        maxWidth: '100%',
+                        height: 'auto',
+                        transition: 'transform 0.3s ease'
+                    });
+                    
+                    utils.showMessage('✅ تم تحميل الفلوشارت بنجاح!', 'success');
+                } else {
+                    throw new Error('لم يتم العثور على عنصر SVG في الملف');
+                }
+            } catch (error) {
+                console.error('Error loading SVG:', error);
+                document.getElementById('svgContainer').innerHTML = 
+                    `<div class="error-message">
+                        ❌ خطأ في تحميل الفلوشارت: ${error.message}<br>
+                        <small>تأكد من وجود ملف sitemap-flowchart.svg في نفس المجلد</small>
+                    </div>`;
+            }
+        }
+        
+        // Zoom functions
+        function zoomIn() {
+            if (svgElement && currentZoom < config.zoomLimits.max) {
+                currentZoom += config.zoomLimits.step;
+                updateZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (svgElement && currentZoom > config.zoomLimits.min) {
+                currentZoom -= config.zoomLimits.step;
+                updateZoom();
+            }
+        }
+        
+        function resetZoom() {
+            if (svgElement) {
+                currentZoom = 1;
+                updateZoom();
+            }
+        }
+        
+        function updateZoom() {
+            if (svgElement) {
+                svgElement.style.transform = `scale(${currentZoom})`;
+                utils.updateElement('zoomLevel', Math.round(currentZoom * 100) + '%');
+            }
+        }
+        
+        // Dropdown functions
+        function toggleDropdown() {
+            document.getElementById('downloadDropdown').classList.toggle('show');
+        }
+        
+        // Download functions
+        function downloadSVG() {
+            const link = document.createElement('a');
+            link.href = './sitemap-flowchart.svg';
+            link.download = 'laravel-brive-sitemap.svg';
+            link.click();
+            document.getElementById('downloadDropdown').classList.remove('show');
+            utils.showMessage('✅ تم تحميل ملف SVG بنجاح!', 'success');
+        }
+        
+        function downloadPDF() {
+            if (!svgElement) {
+                utils.showMessage('❌ لم يتم تحميل الفلوشارت بعد!', 'error');
+                return;
+            }
+            
+            try {
+                // Create canvas element
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas size based on SVG dimensions
+                const svgWidth = parseInt(svgElement.getAttribute('width')) || 1400;
+                const svgHeight = parseInt(svgElement.getAttribute('height')) || 1800;
+                
+                canvas.width = svgWidth;
+                canvas.height = svgHeight;
+                
+                // Convert SVG to data URL
+                const svgData = new XMLSerializer().serializeToString(svgElement);
+                const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+                const svgUrl = URL.createObjectURL(svgBlob);
+                
+                // Create image and draw to canvas
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+                    
+                    // Convert canvas to PDF using jsPDF
+                    if (typeof window.jsPDF !== 'undefined') {
+                        const { jsPDF } = window.jsPDF;
+                        const pdf = new jsPDF({
+                            orientation: svgWidth > svgHeight ? 'landscape' : 'portrait',
+                            unit: 'px',
+                            format: [svgWidth, svgHeight]
+                        });
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        pdf.addImage(imgData, 'PNG', 0, 0, svgWidth, svgHeight);
+                        pdf.save('laravel-brive-sitemap.pdf');
+                        
+                        utils.showMessage('✅ تم تحميل ملف PDF بنجاح!', 'success');
+                    } else {
+                        // Fallback: download as PNG if jsPDF is not available
+                        const link = document.createElement('a');
+                        link.download = 'laravel-brive-sitemap.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        
+                        utils.showMessage('✅ تم تحميل ملف PNG بنجاح! (PDF غير متاح)', 'success');
+                    }
+                    
+                    URL.revokeObjectURL(svgUrl);
+                };
+                
+                img.onerror = function() {
+                    utils.showMessage('❌ خطأ في تحويل SVG إلى صورة', 'error');
+                    URL.revokeObjectURL(svgUrl);
+                };
+                
+                img.src = svgUrl;
+                
+            } catch (error) {
+                console.error('Error converting to PDF:', error);
+                utils.showMessage('❌ خطأ في تحويل الملف إلى PDF', 'error');
+            }
+            
+            document.getElementById('downloadDropdown').classList.remove('show');
+        }
+        
+        function downloadReport() {
+            const link = document.createElement('a');
+            link.href = './Laravel-Brive-Testing-Report.md';
+            link.download = 'Laravel-Brive-Testing-Report.md';
+            link.click();
+            document.getElementById('downloadDropdown').classList.remove('show');
+            utils.showMessage('✅ تم تحميل تقرير الاختبار بنجاح!', 'success');
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateTime();
+            // Update time every minute
+            setInterval(updateDateTime, 60000);
+        });
+        
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (event) => {
+            if (!event.target.matches('.dropdown-btn')) {
+                const dropdowns = document.getElementsByClassName('dropdown-content');
+                Array.from(dropdowns).forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '=':
+                    case '+':
+                        e.preventDefault();
+                        zoomIn();
+                        break;
+                    case '-':
+                        e.preventDefault();
+                        zoomOut();
+                        break;
+                    case '0':
+                        e.preventDefault();
+                        resetZoom();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

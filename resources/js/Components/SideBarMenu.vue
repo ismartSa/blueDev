@@ -2,6 +2,7 @@
 import {
     HomeIcon, UserIcon, CheckBadgeIcon, KeyIcon,
     ShieldCheckIcon, PlusCircleIcon, TagIcon, AcademicCapIcon,
+    MagnifyingGlassIcon, CogIcon,
 } from "@heroicons/vue/24/solid";
 import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from 'vue';
@@ -25,11 +26,14 @@ const translations = computed(() => ({
         category: 'Categories',
         courses: 'Courses',
         create_course: 'Create Course',
+        explore_courses: 'Explore Courses',
         access: 'Access Control',
         role: 'Roles',
         permission: 'Permissions',
         quizzes: 'Quizzes',
-        create_quiz: 'Create Quiz'
+        create_quiz: 'Create Quiz',
+        settings: 'Settings',
+        project_settings: 'Project Settings'
     }
 }));
 
@@ -83,6 +87,11 @@ const menuSections = [
                 permission: 'create course',
                 icon: PlusCircleIcon,
                 label: 'create_course'
+            },
+            {
+                route: 'courses.explore',
+                icon: MagnifyingGlassIcon,
+                label: 'explore_courses'
             }
         ]
     },
@@ -119,6 +128,18 @@ const menuSections = [
                 permission: 'create quiz',
                 icon: PlusCircleIcon,
                 label: 'create_quiz'
+            }
+        ]
+    },
+    {
+        title: 'settings',
+        permission: 'manage courses',
+        items: [
+            {
+                route: 'admin.settings.index',
+                permission: 'manage courses',
+                icon: CogIcon,
+                label: 'project_settings'
             }
         ]
     }

@@ -24,19 +24,19 @@ const toggleSidebar = () => {
 </script>
 
 <template>
-    <div class="flex w-full overflow-hidden">
+    <div class="flex w-full min-h-screen">
         <SideBarVue
             :open="sidebarOpened"
             @close="sidebarOpened = false"
         />
-        <div class="pl-0 lg:pl-64 w-full min-h-screen block bg-slate-100 dark:bg-slate-900">
+        <div class="pl-0 lg:pl-64 w-full flex flex-col bg-slate-100 dark:bg-slate-900">
             <Toast :flash="flash" />
             <NavbarVue
                 :open="sidebarOpened"
                 @open="toggleSidebar"
             />
             <!-- Page Content -->
-            <main class="max-w-7xl mx-auto sm:px-6 lg:px-8 pb-10 text-slate-900 dark:text-slate-100 text-sm">
+            <main class="flex-1 max-w-7xl mx-auto sm:px-6 lg:px-8 pb-10 text-slate-900 dark:text-slate-100 text-sm">
                 <slot />
             </main>
             <Footer />
