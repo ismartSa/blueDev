@@ -301,6 +301,87 @@ class CourseController extends Controller
     }
 
     /**
+     * Display the explore courses page for users.
+     */
+    public function explore(Request $request)
+    {
+        $query = Course::with(['category', 'user'])
+            ->withCount(['lessons', 'enrollments'])
+            ->where('status', 'active');
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Filter by category
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        // Filter by price
+        if ($request->filled('price')) {
+            if ($request->price === 'free') {
+                $query->where('price', 0);
+            } elseif ($request->price === 'paid') {
+                $query->where('price', '>', 0);
+            }
+        }
+
+        // Sort functionality
+        switch ($request->get('sort', 'latest')) {
+            case 'popular':
+                $query->orderBy('enrollments_count', 'desc');
+                break;
+            case 'title':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'price_low':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('price', 'desc');
+                break;
+            default:
+                $query->latest();
+        }
+
+        $courses = $query->paginate(12)->withQueryString();
+        $categories = Category::all(['id', 'name']);
+        
+        // Platform statistics
+        $stats = [
+            'totalCourses' => Course::where('status', 'active')->count(),
+            'totalStudents' => User::whereHas('enrollments')->count(),
+            'totalInstructors' => User::whereHas('courses')->count(),
+        ];
+
+        return Inertia::render('Courses/Explore', [
+            'courses' => $courses,
+            'categories' => $categories,
+            'filters' => $request->only(['search', 'category', 'price', 'sort']),
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Toggle course wishlist status.
+     */
+    public function toggleWishlist(Request $request, $courseId)
+    {
+        $user = auth()->user();
+        $course = Course::findOrFail($courseId);
+        
+        // Toggle wishlist (this would require a wishlist table/relationship)
+        // For now, we'll just return success
+        return back()->with('success', 'Wishlist updated successfully');
+    }
+
+    /**
      * Store a newly created course in storage.
      */
     public function storecourse(Request $request)

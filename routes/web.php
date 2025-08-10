@@ -13,10 +13,11 @@ use App\Http\Controllers\{
     QuizController,
     QuestionController,
     CategoryController,
+    SettingsController,
 };
 use App\Http\Controllers\Course\CourseContentController;
 use App\Http\Controllers\Opt\OptController;
-use Illuminate\Support\Facades\{Route, Session};
+use Illuminate\Support\Facades\{Route, Session, Cache, DB, App};
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
 
@@ -62,6 +63,10 @@ Route::post('/user/login-as', [UserController::class, 'loginAsUser'])->name('use
 | Public Course Routes
 |--------------------------------------------------------------------------
 */
+// Public explore route - no authentication required
+Route::get('/courses/explore', [CourseController::class, 'explore'])->name('courses.explore');
+
+// Protected course routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('courses')->name('courses.')->group(function () {
         Route::get('/', [CourseController::class, 'index'])->name('index');
@@ -71,6 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{courseId}/player/{courseSlug}', [CourseController::class, 'coursePlayer'])->name('player');
         Route::get('/{courseId}/player/{courseSlug}/watch/{lectureID}', [CourseController::class, 'watchLecture'])->name('watch');
         Route::post('/lectures/mark-completed', [CourseController::class, 'markLectureAsCompleted'])->name('lecture.complete');
+        Route::post('/{courseId}/wishlist/toggle', [CourseController::class, 'toggleWishlist'])->name('wishlist.toggle');
     });
 });
 
@@ -172,6 +178,22 @@ Route::get('/dashboard', function () {
         Route::get('/{courseId}/check-enrollment', [EnrollmentController::class, 'checkEnrollment'])->name('check-enrollment');
         Route::post('/{courseId}/update-progress', [EnrollmentController::class, 'updateProgress'])->name('update-progress');
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Settings Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['can:manage courses'])
+        ->prefix('admin/settings')
+        ->name('admin.settings.')
+        ->group(function () {
+            Route::get('/', [SettingsController::class, 'index'])->name('index');
+            Route::post('/update', [SettingsController::class, 'update'])->name('update');
+            Route::post('/upload/{key}', [SettingsController::class, 'uploadFile'])->name('upload');
+            Route::get('/get/{key}', [SettingsController::class, 'getSetting'])->name('get');
+            Route::post('/reset', [SettingsController::class, 'reset'])->name('reset');
+        });
 
     /*
     |--------------------------------------------------------------------------
