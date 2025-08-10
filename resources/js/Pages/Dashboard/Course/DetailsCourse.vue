@@ -2,7 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
 import { reactive, computed, ref, onMounted } from "vue";
-import { ChevronLeftIcon, ShareIcon, BookmarkIcon, UsersIcon, EyeIcon, ClockIcon } from '@heroicons/vue/24/outline';
+import { UsersIcon, EyeIcon, ClockIcon } from '@heroicons/vue/24/outline';
 import CourseHeader from "@/Components/Course/CourseHeader.vue";
 import CourseTabs from "@/Components/Course/CourseTabs.vue";
 import CourseOverview from "@/Components/Course/CourseOverview.vue";

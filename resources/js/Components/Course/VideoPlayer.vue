@@ -6,12 +6,12 @@ import {
     PauseIcon,
     SpeakerWaveIcon,
     SpeakerXMarkIcon,
-    ArrowsPointingOutIcon,
     ForwardIcon,
     BackwardIcon,
     XMarkIcon
 } from '@heroicons/vue/24/solid';
 
+// Props definition
 const props = defineProps({
     show: { type: Boolean, default: false },
     lesson: { type: Object, default: null },
@@ -21,9 +21,11 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'next', 'previous']);
 
+// Refs
 const videoPlayer = ref(null);
 const videoContainer = ref(null);
 
+// Reactive state
 const data = reactive({
     isPlaying: false,
     currentTime: 0,
@@ -36,28 +38,26 @@ const data = reactive({
     controlsTimeout: null,
 });
 
-const progressPercentage = computed(() => {
-    return data.duration > 0 ? (data.currentTime / data.duration) * 100 : 0;
-});
+// Computed properties
+const progressPercentage = computed(() => 
+    data.duration > 0 ? (data.currentTime / data.duration) * 100 : 0
+);
 
-const volumePercentage = computed(() => {
-    return data.isMuted ? 0 : data.volume * 100;
-});
+const volumePercentage = computed(() => 
+    data.isMuted ? 0 : data.volume * 100
+);
 
+// Helper functions
 const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
+// Video control functions
 const togglePlay = () => {
     if (!videoPlayer.value) return;
-
-    if (data.isPlaying) {
-        videoPlayer.value.pause();
-    } else {
-        videoPlayer.value.play();
-    }
+    data.isPlaying ? videoPlayer.value.pause() : videoPlayer.value.play();
 };
 
 const updateTime = () => {
@@ -68,21 +68,17 @@ const updateTime = () => {
 
 const seekTo = (event) => {
     if (!videoPlayer.value) return;
-
     const rect = event.target.getBoundingClientRect();
     const percent = (event.clientX - rect.left) / rect.width;
     const time = percent * data.duration;
-
     videoPlayer.value.currentTime = time;
     data.currentTime = time;
 };
 
 const changeVolume = (event) => {
     if (!videoPlayer.value) return;
-
     const rect = event.target.getBoundingClientRect();
     const volume = (event.clientX - rect.left) / rect.width;
-
     data.volume = Math.max(0, Math.min(1, volume));
     videoPlayer.value.volume = data.volume;
     data.isMuted = data.volume === 0;
@@ -90,7 +86,6 @@ const changeVolume = (event) => {
 
 const toggleMute = () => {
     if (!videoPlayer.value) return;
-
     data.isMuted = !data.isMuted;
     videoPlayer.value.muted = data.isMuted;
 };
@@ -108,26 +103,19 @@ const changePlaybackRate = (rate) => {
 
 const showControlsTemporarily = () => {
     data.showControls = true;
-
-    if (data.controlsTimeout) {
-        clearTimeout(data.controlsTimeout);
-    }
-
+    if (data.controlsTimeout) clearTimeout(data.controlsTimeout);
     data.controlsTimeout = setTimeout(() => {
-        if (data.isPlaying) {
-            data.showControls = false;
-        }
+        if (data.isPlaying) data.showControls = false;
     }, 3000);
 };
 
 const closePlayer = () => {
-    if (videoPlayer.value) {
-        videoPlayer.value.pause();
-    }
+    if (videoPlayer.value) videoPlayer.value.pause();
     data.isPlaying = false;
     emit('close');
 };
 
+// Watch for changes in props.show
 watch(() => props.show, (newVal) => {
     if (newVal && props.lesson?.video_url) {
         nextTick(() => {
@@ -138,6 +126,25 @@ watch(() => props.show, (newVal) => {
         });
     }
 });
+
+// Playback speed options
+const speedOptions = [
+    { value: 0.5, label: '0.5x' },
+    { value: 0.75, label: '0.75x' },
+    { value: 1, label: '1x' },
+    { value: 1.25, label: '1.25x' },
+    { value: 1.5, label: '1.5x' },
+    { value: 2, label: '2x' }
+];
+
+// Common CSS classes
+const classes = {
+    controlButton: 'hover:text-red-500 transition-colors',
+    progressBar: 'w-full h-1 bg-gray-600 rounded cursor-pointer',
+    progressFill: 'h-full bg-red-500 rounded',
+    volumeBar: 'w-20 h-1 bg-gray-600 rounded cursor-pointer',
+    volumeFill: 'h-full bg-white rounded'
+};
 </script>
 
 <template>
@@ -164,14 +171,8 @@ watch(() => props.show, (newVal) => {
             >
                 <!-- Progress Bar -->
                 <div class="mb-4">
-                    <div
-                        class="w-full h-1 bg-gray-600 rounded cursor-pointer"
-                        @click="seekTo"
-                    >
-                        <div
-                            class="h-full bg-red-500 rounded"
-                            :style="{ width: progressPercentage + '%' }"
-                        ></div>
+                    <div :class="classes.progressBar" @click="seekTo">
+                        <div :class="classes.progressFill" :style="{ width: progressPercentage + '%' }"></div>
                     </div>
                 </div>
 
@@ -179,35 +180,30 @@ watch(() => props.show, (newVal) => {
                 <div class="flex items-center justify-between text-white">
                     <div class="flex items-center space-x-4">
                         <!-- Play/Pause -->
-                        <button @click="togglePlay" class="hover:text-red-500 transition-colors">
-                            <PlayIcon v-if="!data.isPlaying" class="h-6 w-6" />
-                            <PauseIcon v-else class="h-6 w-6" />
+                        <button @click="togglePlay" :class="classes.controlButton">
+                            <component :is="data.isPlaying ? PauseIcon : PlayIcon" class="h-6 w-6" />
                         </button>
 
                         <!-- Skip Backward -->
-                        <button @click="skipTime(-10)" class="hover:text-red-500 transition-colors">
+                        <button @click="skipTime(-10)" :class="classes.controlButton">
                             <BackwardIcon class="h-5 w-5" />
                         </button>
 
                         <!-- Skip Forward -->
-                        <button @click="skipTime(10)" class="hover:text-red-500 transition-colors">
+                        <button @click="skipTime(10)" :class="classes.controlButton">
                             <ForwardIcon class="h-5 w-5" />
                         </button>
 
                         <!-- Volume -->
                         <div class="flex items-center space-x-2">
-                            <button @click="toggleMute" class="hover:text-red-500 transition-colors">
-                                <SpeakerWaveIcon v-if="!data.isMuted && data.volume > 0" class="h-5 w-5" />
-                                <SpeakerXMarkIcon v-else class="h-5 w-5" />
+                            <button @click="toggleMute" :class="classes.controlButton">
+                                <component 
+                                    :is="!data.isMuted && data.volume > 0 ? SpeakerWaveIcon : SpeakerXMarkIcon" 
+                                    class="h-5 w-5" 
+                                />
                             </button>
-                            <div
-                                class="w-20 h-1 bg-gray-600 rounded cursor-pointer"
-                                @click="changeVolume"
-                            >
-                                <div
-                                    class="h-full bg-white rounded"
-                                    :style="{ width: volumePercentage + '%' }"
-                                ></div>
+                            <div :class="classes.volumeBar" @click="changeVolume">
+                                <div :class="classes.volumeFill" :style="{ width: volumePercentage + '%' }"></div>
                             </div>
                         </div>
 
@@ -224,16 +220,13 @@ watch(() => props.show, (newVal) => {
                             @change="changePlaybackRate(data.playbackRate)"
                             class="bg-transparent text-white text-sm border-none focus:ring-0"
                         >
-                            <option value="0.5">0.5x</option>
-                            <option value="0.75">0.75x</option>
-                            <option value="1">1x</option>
-                            <option value="1.25">1.25x</option>
-                            <option value="1.5">1.5x</option>
-                            <option value="2">2x</option>
+                            <option v-for="option in speedOptions" :key="option.value" :value="option.value">
+                                {{ option.label }}
+                            </option>
                         </select>
 
                         <!-- Close Button -->
-                        <button @click="closePlayer" class="hover:text-red-500 transition-colors">
+                        <button @click="closePlayer" :class="classes.controlButton">
                             <XMarkIcon class="h-6 w-6" />
                         </button>
                     </div>

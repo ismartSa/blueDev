@@ -1,6 +1,6 @@
 
 <script setup>
-// يمكنك إضافة أي منطق أو بيانات مطلوبة هنا
+// You can add any required logic or data here
 </script>
 
 <template>
@@ -12,10 +12,10 @@
                         <div class="bg-white rounded-full p-2 mr-3">
                             <i class="fas fa-graduation-cap text-indigo-600"></i>
                         </div>
-                        <h3 class="text-white text-xl font-bold">أكاديمية النخبة</h3>
+                        <h3 class="text-white text-xl font-bold">Elite Academy</h3>
                     </div>
                     <p class="mb-4">
-                        نقدم كورسات فيديو احترافية في مختلف المجالات لتطوير مهاراتك ومسيرتك المهنية.
+                        We offer professional video courses in various fields to develop your skills and professional career.
                     </p>
                     <div class="flex space-x-4">
                         <a href="#" class="text-gray-400 hover:text-white">
@@ -34,33 +34,33 @@
                 </div>
 
                 <div>
-                    <h4 class="text-white text-lg font-bold mb-4">الكورسات</h4>
+                    <h4 class="text-white text-lg font-bold mb-4">Courses</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-white transition">تطوير الويب</a></li>
-                        <li><a href="#" class="hover:text-white transition">تحليل البيانات</a></li>
-                        <li><a href="#" class="hover:text-white transition">التسويق الرقمي</a></li>
-                        <li><a href="#" class="hover:text-white transition">إدارة المشاريع</a></li>
-                        <li><a href="#" class="hover:text-white transition">التصميم الجرافيكي</a></li>
+                        <li><a href="#" class="hover:text-white transition">Web Development</a></li>
+                        <li><a href="#" class="hover:text-white transition">Data Analysis</a></li>
+                        <li><a href="#" class="hover:text-white transition">Digital Marketing</a></li>
+                        <li><a href="#" class="hover:text-white transition">Project Management</a></li>
+                        <li><a href="#" class="hover:text-white transition">Graphic Design</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-white text-lg font-bold mb-4">روابط سريعة</h4>
+                    <h4 class="text-white text-lg font-bold mb-4">Quick Links</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-white transition">عن الأكاديمية</a></li>
-                        <li><a href="#" class="hover:text-white transition">المدربون</a></li>
-                        <li><a href="#" class="hover:text-white transition">الأسئلة الشائعة</a></li>
-                        <li><a href="#" class="hover:text-white transition">سياسة الخصوصية</a></li>
-                        <li><a href="#" class="hover:text-white transition">شروط الاستخدام</a></li>
+                        <li><a href="#" class="hover:text-white transition">About Academy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Instructors</a></li>
+                        <li><a href="#" class="hover:text-white transition">FAQ</a></li>
+                        <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Terms of Use</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-white text-lg font-bold mb-4">اتصل بنا</h4>
+                    <h4 class="text-white text-lg font-bold mb-4">Contact Us</h4>
                     <ul class="space-y-2">
                         <li class="flex items-center">
                             <i class="fas fa-map-marker-alt mr-2 text-indigo-400"></i>
-                            <span>الرياض، المملكة العربية السعودية</span>
+                            <span>Riyadh, Saudi Arabia</span>
                         </li>
                         <li class="flex items-center">
                             <i class="fas fa-phone-alt mr-2 text-indigo-400"></i>
@@ -75,7 +75,7 @@
             </div>
 
             <div class="border-t border-gray-800 mt-12 pt-8 text-center">
-                <p>© 2023 أكاديمية النخبة. جميع الحقوق محفوظة.</p>
+                <p>© 2023 Elite Academy. All rights reserved.</p>
             </div>
         </div>
     </footer>
