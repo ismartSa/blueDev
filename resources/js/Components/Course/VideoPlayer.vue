@@ -54,7 +54,7 @@ const formatTime = (seconds) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-// Video control functions
+// Video control functions - simplified with early returns
 const togglePlay = () => {
     if (!videoPlayer.value) return;
     data.isPlaying ? videoPlayer.value.pause() : videoPlayer.value.play();
@@ -70,18 +70,17 @@ const seekTo = (event) => {
     if (!videoPlayer.value) return;
     const rect = event.target.getBoundingClientRect();
     const percent = (event.clientX - rect.left) / rect.width;
-    const time = percent * data.duration;
-    videoPlayer.value.currentTime = time;
-    data.currentTime = time;
+    videoPlayer.value.currentTime = percent * data.duration;
+    data.currentTime = videoPlayer.value.currentTime;
 };
 
 const changeVolume = (event) => {
     if (!videoPlayer.value) return;
     const rect = event.target.getBoundingClientRect();
-    const volume = (event.clientX - rect.left) / rect.width;
-    data.volume = Math.max(0, Math.min(1, volume));
-    videoPlayer.value.volume = data.volume;
-    data.isMuted = data.volume === 0;
+    const volume = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    data.volume = volume;
+    videoPlayer.value.volume = volume;
+    data.isMuted = volume === 0;
 };
 
 const toggleMute = () => {
@@ -127,7 +126,7 @@ watch(() => props.show, (newVal) => {
     }
 });
 
-// Playback speed options
+// Playback speed options - extracted to a constant for reuse
 const speedOptions = [
     { value: 0.5, label: '0.5x' },
     { value: 0.75, label: '0.75x' },
@@ -137,13 +136,18 @@ const speedOptions = [
     { value: 2, label: '2x' }
 ];
 
-// Common CSS classes
+// Common CSS classes - DRY principle applied
 const classes = {
     controlButton: 'hover:text-red-500 transition-colors',
     progressBar: 'w-full h-1 bg-gray-600 rounded cursor-pointer',
     progressFill: 'h-full bg-red-500 rounded',
     volumeBar: 'w-20 h-1 bg-gray-600 rounded cursor-pointer',
-    volumeFill: 'h-full bg-white rounded'
+    volumeFill: 'h-full bg-white rounded',
+    controlsContainer: 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4',
+    infoOverlay: 'absolute top-4 left-4 bg-black/60 text-white p-3 rounded-lg',
+    speedSelect: 'bg-transparent text-white text-sm border-none focus:ring-0',
+    iconSm: 'h-5 w-5',
+    iconMd: 'h-6 w-6'
 };
 </script>
 
@@ -167,7 +171,7 @@ const classes = {
             <!-- Video Controls -->
             <div
                 v-show="data.showControls"
-                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4"
+                :class="classes.controlsContainer"
             >
                 <!-- Progress Bar -->
                 <div class="mb-4">
@@ -181,17 +185,17 @@ const classes = {
                     <div class="flex items-center space-x-4">
                         <!-- Play/Pause -->
                         <button @click="togglePlay" :class="classes.controlButton">
-                            <component :is="data.isPlaying ? PauseIcon : PlayIcon" class="h-6 w-6" />
+                            <component :is="data.isPlaying ? PauseIcon : PlayIcon" :class="classes.iconMd" />
                         </button>
 
                         <!-- Skip Backward -->
                         <button @click="skipTime(-10)" :class="classes.controlButton">
-                            <BackwardIcon class="h-5 w-5" />
+                            <BackwardIcon :class="classes.iconSm" />
                         </button>
 
                         <!-- Skip Forward -->
                         <button @click="skipTime(10)" :class="classes.controlButton">
-                            <ForwardIcon class="h-5 w-5" />
+                            <ForwardIcon :class="classes.iconSm" />
                         </button>
 
                         <!-- Volume -->
@@ -199,7 +203,7 @@ const classes = {
                             <button @click="toggleMute" :class="classes.controlButton">
                                 <component 
                                     :is="!data.isMuted && data.volume > 0 ? SpeakerWaveIcon : SpeakerXMarkIcon" 
-                                    class="h-5 w-5" 
+                                    :class="classes.iconSm" 
                                 />
                             </button>
                             <div :class="classes.volumeBar" @click="changeVolume">
@@ -218,7 +222,7 @@ const classes = {
                         <select
                             v-model="data.playbackRate"
                             @change="changePlaybackRate(data.playbackRate)"
-                            class="bg-transparent text-white text-sm border-none focus:ring-0"
+                            :class="classes.speedSelect"
                         >
                             <option v-for="option in speedOptions" :key="option.value" :value="option.value">
                                 {{ option.label }}
@@ -227,14 +231,14 @@ const classes = {
 
                         <!-- Close Button -->
                         <button @click="closePlayer" :class="classes.controlButton">
-                            <XMarkIcon class="h-6 w-6" />
+                            <XMarkIcon :class="classes.iconMd" />
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- Lesson Info Overlay -->
-            <div class="absolute top-4 left-4 bg-black/60 text-white p-3 rounded-lg">
+            <div :class="classes.infoOverlay">
                 <h3 class="font-semibold">{{ lesson?.title }}</h3>
                 <p class="text-sm text-gray-300">Lesson {{ currentIndex + 1 }} of {{ lessons.length }}</p>
             </div>
