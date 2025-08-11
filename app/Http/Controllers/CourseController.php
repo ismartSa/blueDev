@@ -14,9 +14,9 @@ use App\Services\LectureCountService;
 use App\Services\LectureProgressService;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\CourseStoreRequest;
-use Illuminate\{Support\Str, Http\Request, Support\Facades\Log, Support\Facades\Storage, Support\Facades\DB};
+use Illuminate\{Support\Str, Http\Request, Support\Facades\Log, Support\Facades\Storage, Support\Facades\DB, Support\Facades\Hash};
 use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt };
-use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
+use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository, Http\Requests\UserUpdateRequest};
 
 class CourseController extends Controller
 {
@@ -216,7 +216,7 @@ class CourseController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log error and redirect with error message
-            \Log::error('Course display error: ' . $e->getMessage());
+            Log::error('Course display error: ' . $e->getMessage());
             dd($e->getMessage());
             return redirect()->route('courses.index')
                 ->with('error', 'An error occurred while displaying the course. Please try again.');
@@ -263,7 +263,7 @@ class CourseController extends Controller
             DB::rollback();
             return back()->with('error', __('app.label.updated_error', ['name' => $user->name]) . $th->getMessage());
         }
-  }
+    }
 
     /**
      * Display a listing of the courses.
@@ -656,8 +656,17 @@ class CourseController extends Controller
             ->with(['sections.lectures'])
             ->firstOrFail();
 
-        // إذا لم يتم تحديد محاضرة، جلب أول محاضرة بشكل افتراضي
-        $lecture = $lectureID ? Lecture::findOrFail($lectureID) : optional($course->sections->first()->lectures->first());
+        // If no lecture is specified, get the first lecture by default
+        if ($lectureID) {
+            $lecture = Lecture::findOrFail($lectureID);
+        } else {
+            // Check if course has sections and lectures
+            $firstSection = $course->sections->first();
+            if (!$firstSection || $firstSection->lectures->isEmpty()) {
+                abort(404, 'No lectures found in this course');
+            }
+            $lecture = $firstSection->lectures->first();
+        }
 
         if (!$lecture || $lecture->course_id !== $course->id) {
             abort(404, 'Lecture not found or does not belong to the course');
@@ -896,7 +905,7 @@ class CourseController extends Controller
                 DB::beginTransaction();
 
                 foreach ($validated['lessons'] as $lessonData) {
-                    Lesson::where('id', $lessonData['id'])
+                    Lecture::where('id', $lessonData['id'])
                         ->where('course_id', $course->id)
                         ->update(['order' => $lessonData['order']]);
                 }

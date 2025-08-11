@@ -27,7 +27,6 @@ class LectureSeeder extends Seeder
                         'video_url' => 'https://example.com/video' . rand(1, 100) . '.mp4',
                         'duration' => rand(10, 60), // Duration in minutes
                         'order' => $i,
-                        'slug' => "lecture-$i-" . \Illuminate\Support\Str::slug($section->title),
                         'course_id' => $course->id,
                         'section_id' => $section->id,
                     ]);

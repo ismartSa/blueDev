@@ -8,17 +8,27 @@ use Illuminate\Support\Str;
 class LectureObserver
 {
     /**
-     * معالجة slug المحاضرة
+     * Handle lecture slug generation
      *
      * @param Lecture $lecture
      * @return void
      */
     private function handleSlug(Lecture $lecture): void
     {
-        // إنشاء slug من عنوان المحاضرة إذا كان العنوان موجودًا
+        // Generate slug from lecture title if title exists
         if ($lecture->title) {
-            $lecture->slug = Str::slug($lecture->title);
-            $lecture->saveQuietly(); // حفظ التغييرات بدون تشغيل المراقب مرة أخرى
+            $baseSlug = Str::slug($lecture->title);
+            $slug = $baseSlug;
+            $counter = 1;
+            
+            // Check for existing slugs and make unique
+            while (Lecture::where('slug', $slug)->where('id', '!=', $lecture->id)->exists()) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
+            }
+            
+            $lecture->slug = $slug;
+            $lecture->saveQuietly(); // Save changes without triggering observer again
         }
     }
 

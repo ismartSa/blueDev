@@ -15,7 +15,7 @@ class RoleSeeder extends Seeder
      */
     public function run()
     {
-        $superadmin = Role::create([
+        $superadmin = Role::firstOrCreate([
             'name'          => 'superadmin'
         ]);
         $superadmin->givePermissionTo([
@@ -37,7 +37,7 @@ class RoleSeeder extends Seeder
             'create permission',
             'manage database'
         ]);
-        $admin = Role::create([
+        $admin = Role::firstOrCreate([
             'name'          => 'admin'
         ]);
         $admin->givePermissionTo([
@@ -49,7 +49,7 @@ class RoleSeeder extends Seeder
             'read permission',
             'manage database'
         ]);
-        $operator = Role::create([
+        $operator = Role::firstOrCreate([
             'name'          => 'operator'
         ]);
 
@@ -59,7 +59,7 @@ class RoleSeeder extends Seeder
             'read role',
             'read permission',
         ]);
-        $instructor = Role::create([
+        $instructor = Role::firstOrCreate([
             'name' => 'instructor'
         ]);
         
@@ -73,7 +73,7 @@ class RoleSeeder extends Seeder
         ]);
 
         // Student role
-        $student = Role::create([
+        $student = Role::firstOrCreate([
             'name' => 'student'
         ]);
         $student->givePermissionTo([
