@@ -1,21 +1,81 @@
-# Laravel Brive Deployment Guide
+# SiteeBlue Deployment
 
-This folder contains all deployment-related files and scripts for the Laravel Brive application.
+This directory contains deployment scripts and configurations for the SiteeBlue Laravel application, including the new **Clean Deployment System** with integrated dev-tools management.
+
+## 🚀 Quick Start
+
+### Clean Deployment (Recommended)
+```bash
+# Production deployment (excludes dev-tools)
+./scripts/clean-deployment.sh production
+
+# Staging deployment (includes dev-tools)
+./scripts/clean-deployment.sh staging --include-dev-tools
+```
+
+### Traditional Deployment
+```bash
+# Full deployment with server setup
+./scripts/deploy.sh production
+
+# Files-only deployment
+./scripts/deploy-files-only.sh
+```
 
 ## 📁 Folder Structure
 
 ```
 deployment/
-├── scripts/           # Deployment and setup scripts
-│   ├── deploy.sh      # Main deployment script
-│   ├── server-setup.sh # Server initialization script
-│   └── configure-env.sh # Environment configuration
-├── configs/           # Configuration files
-│   └── nginx.conf     # Nginx server configuration
-├── docs/             # Documentation
-│   └── DEPLOYMENT.md  # Detailed deployment guide
-├── templates/        # Template files
-└── README.md         # This file
+├── scripts/                    # Deployment scripts
+│   ├── clean-deployment.sh     # 🆕 Clean deployment with dev-tools integration
+│   ├── deploy.sh              # Traditional full deployment
+│   └── deploy-files-only.sh   # Files-only deployment
+├── configs/                    # Configuration files
+│   ├── clean-deployment.conf   # 🆕 Clean deployment settings
+│   └── deployment.conf         # Traditional deployment settings
+├── templates/                  # Template files
+├── docs/                       # 🆕 Documentation
+│   └── clean-deployment-guide.md  # Comprehensive deployment guide
+└── logs/                      # Deployment logs
+```
+
+## 🛠️ Dev-Tools Integration
+
+The clean deployment system includes optimized development tools:
+
+### Optimized Viewer Files
+- **admin-testing-suite.html** - Admin functionality testing (60% code reduction)
+- **unified-viewer.html** - Site map and route visualization (70% code reduction)  
+- **report-viewer.html** - Advanced report generation with dynamic rendering
+
+### Environment-Specific Behavior
+| Environment | Dev-Tools | Optimization | Debug Mode |
+|-------------|-----------|--------------|------------|
+| Production  | ❌ Excluded | Maximum     | ❌ Off      |
+| Staging     | ✅ Included | Standard    | ✅ On       |
+| Development | ✅ Included | Minimal     | ✅ On       |
+
+## 🔧 Configuration
+
+### Clean Deployment Settings
+Edit `configs/clean-deployment.conf` to customize:
+- Environment-specific settings
+- Dev-tools inclusion rules
+- Performance optimization levels
+- Backup and security configurations
+
+### File Exclusions
+The `.deployignore` file controls deployment exclusions:
+```
+# Development tools (excluded from production)
+dev-tools/
+LessonModal.vue
+Untitled-*
+
+# Testing and dependencies
+tests/
+node_modules/
+vendor/
 ```
 
 ## 🚀 Quick Deployment Steps
