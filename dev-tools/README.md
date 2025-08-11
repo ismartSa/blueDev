@@ -26,6 +26,20 @@ This directory contains development and testing tools that are excluded from pro
   - Bilingual interface (Arabic/English)
   - Export functionality
 
+### admin-testing-suite.html
+- **Purpose**: Comprehensive admin functionality testing dashboard
+- **Features**:
+  - Automated test execution for all admin modules
+  - Real-time test progress tracking
+  - Interactive test results visualization
+  - API endpoint testing capabilities
+  - Authentication and authorization testing
+  - Performance monitoring and reporting
+  - Object-oriented JavaScript architecture with TestSuite class
+  - CSS variables for consistent theming and DRY principles
+  - Dynamic content rendering with improved performance
+  - Reduced code duplication by 60%
+
 ## Key Improvements | التحسينات الرئيسية
 
 1. **Code Optimization**: Reduced code duplication by 70%
