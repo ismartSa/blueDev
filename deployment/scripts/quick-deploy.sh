@@ -41,16 +41,23 @@ fi
 
 # Check for uncommitted changes
 if ! git diff --quiet || ! git diff --cached --quiet; then
-    echo -e "${YELLOW}📋 Committing changes...${NC}"
+    echo -e "${YELLOW}📝 Committing changes...${NC}"
     git add .
-    git commit -m "$COMMIT_MSG"
+    git commit -m "$COMMIT_MSG" || {
+        echo -e "${YELLOW}⚠️  No changes to commit${NC}"
+    }
 else
     echo -e "${GREEN}✅ No changes to commit${NC}"
 fi
 
 # Push to repository
 echo -e "${YELLOW}📤 Pushing to repository...${NC}"
-git push origin main
+# Get current branch name
+CURRENT_BRANCH=$(git branch --show-current)
+git push blueDev $CURRENT_BRANCH || {
+    echo -e "${RED}❌ Failed to push to repository${NC}"
+    exit 1
+}
 
 # Deploy to server
 echo -e "${YELLOW}🚀 Deploying to server...${NC}"
