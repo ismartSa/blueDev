@@ -1,0 +1,72 @@
+# Development files
+.git/
+.github/
+.gitignore
+.gitattributes
+.editorconfig
+.nvmrc
+
+# Dependencies (installed on server)
+node_modules/
+vendor/
+composer.lock
+package-lock.json
+
+# Testing
+tests/
+.phpunit.cache/
+phpunit.xml
+phpunit.xml.bak
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+storage/logs/
+
+# Cache and temporary files
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+storage/app/public/
+bootstrap/cache/*.php
+
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE files
+.trae/
+.vscode/
+.idea/
+*.sublime-*
+
+# Build and deployment
+deployment/
+backups/
+stubs/
+
+# Documentation (optional)
+README.md
+LICENSE
+*.md
+
+# Development tools
+LessonModal.vue
+Untitled-*
+quizzz
+report-viewer.html
+unified-viewer.html
+route-flowchart.svg
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
