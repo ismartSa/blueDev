@@ -1,72 +1,79 @@
-# Development files
+# Deployment ignore file
+# Files and directories to exclude from deployment
+
+# Version control
 .git/
-.github/
 .gitignore
 .gitattributes
+
+# Development files
+.env.example
 .editorconfig
-.nvmrc
-
-# Dependencies (installed on server)
-node_modules/
-vendor/
-composer.lock
-package-lock.json
-
-# Testing
-tests/
-.phpunit.cache/
 phpunit.xml
 phpunit.xml.bak
-coverage/
 
-# Environment files
-.env
-.env.*
-!.env.example
+# Node modules and build files
+node_modules/
+npm-debug.log
+yarn-error.log
 
-# Logs
-*.log
-storage/logs/
+# Composer
+vendor/
+composer.lock
 
-# Cache and temporary files
-storage/framework/cache/
-storage/framework/sessions/
-storage/framework/views/
-storage/app/public/
-bootstrap/cache/*.php
-
-# System files
-.DS_Store
-Thumbs.db
+# IDE files
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
 
-# IDE files
-.trae/
-.vscode/
-.idea/
-*.sublime-*
+# OS files
+.DS_Store
+Thumbs.db
 
-# Build and deployment
-deployment/
-backups/
-stubs/
+# Logs
+storage/logs/
+*.log
 
-# Documentation (optional)
-README.md
-LICENSE
-*.md
-
-# Development tools
-LessonModal.vue
-Untitled-*
-quizzz
-report-viewer.html
-unified-viewer.html
-route-flowchart.svg
+# Cache
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
 
 # Temporary files
 *.tmp
 *.temp
+
+# Backup files
 *.bak
+*.backup
+backups/
+
+# Testing
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Documentation
+README.md
+*.md
+
+# Deployment scripts (optional)
+deployment/
+
+# Large files
+*.zip
+*.tar.gz
+*.sql
+
+# Unwanted development files
+Untitled-*
+quizzz*
+*-viewer.html
+test-*
+demo-*
+*.old
+
+# User uploads (be careful with this)
+# storage/app/public/uploads/
