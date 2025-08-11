@@ -54,9 +54,14 @@ fi
 
 # Push to repository
 echo -e "${YELLOW}📤 Pushing to repository...${NC}"
-# Get current branch name
+# Get current branch name or use default
 CURRENT_BRANCH=$(git branch --show-current)
-git push blueDev $CURRENT_BRANCH || {
+if [ "$CURRENT_BRANCH" = "redseing_fronted" ]; then
+    echo -e "${YELLOW}⚠️  Switching to clean deployment branch...${NC}"
+    git checkout $DEFAULT_BRANCH 2>/dev/null || git checkout -b $DEFAULT_BRANCH
+    CURRENT_BRANCH=$DEFAULT_BRANCH
+fi
+git push $REMOTE_NAME $CURRENT_BRANCH || {
     echo -e "${RED}❌ Failed to push to repository${NC}"
     exit 1
 }
