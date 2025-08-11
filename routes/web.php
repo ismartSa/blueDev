@@ -278,8 +278,7 @@ Route::prefix('courses')->group(function () {
         Route::post('/lectures', [\App\Http\Controllers\Course\CourseContentController::class, 'storeLecture']);
     });
 
-    // Enrollment Routes
-    Route::post('/{course}/enroll', [\App\Http\Controllers\Course\CourseEnrollmentController::class, 'enroll'])->name('courses.enroll');
+    // Enrollment Routes (removed duplicate - already defined in courses group above)
 });
 
 // Quiz routes
