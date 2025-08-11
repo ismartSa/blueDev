@@ -17,6 +17,8 @@ SERVER_IP="158.101.234.203"
 SERVER_USER="siteeblue"
 SERVER_PATH="/home/siteeblue/htdocs/siteeblue.so"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REMOTE_NAME="blueDev"
+DEFAULT_BRANCH="clean-deployment"
 
 echo -e "${BLUE}🚀 SiteeBlue Quick Deploy${NC}"
 echo "================================"
