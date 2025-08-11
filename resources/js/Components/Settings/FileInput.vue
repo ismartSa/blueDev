@@ -17,8 +17,8 @@
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                     {{ getFileName() }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Current {{ setting.key.replace(/_/g, ' ') }}
+                <p :class="COMMON_CLASSES.description">
+                    Current {{ formatLabel(setting.key) }}
                 </p>
             </div>
             <button
@@ -35,8 +35,7 @@
             @drop="handleDrop"
             @dragover.prevent
             @dragenter.prevent
-            :class="dropzoneClasses"
-            class="relative border-2 border-dashed rounded-lg p-6 text-center hover:border-indigo-400 transition-colors duration-200 cursor-pointer"
+            :class="[dropzoneBaseClasses, dropzoneClasses]"
             @click="$refs.fileInput.click()"
         >
             <input
@@ -44,7 +43,7 @@
                 :id="setting.key"
                 @change="handleFileChange"
                 type="file"
-                :accept="getAcceptedTypes()"
+                :accept="getFileConfig(setting.key, 'acceptedTypes')"
                 class="sr-only"
             />
             
@@ -60,8 +59,8 @@
                         or drag and drop
                     </span>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ getFileTypeDescription() }}
+                <p :class="COMMON_CLASSES.description">
+                    {{ getFileConfig(setting.key, 'descriptions') }}
                 </p>
             </div>
         </div>
@@ -71,6 +70,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { CloudArrowUpIcon, DocumentIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { COMMON_CLASSES, formatLabel, getFileConfig, isImage, validateFile } from '@/utils/settingsUtils'
 
 const props = defineProps({
     setting: Object,
@@ -81,16 +81,18 @@ const emit = defineEmits(['update:modelValue', 'file-upload'])
 
 const isDragging = ref(false)
 
-const dropzoneClasses = computed(() => ({
-    'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20': isDragging.value,
-    'border-gray-300 dark:border-gray-600': !isDragging.value
-}))
+// Base classes
+const dropzoneBaseClasses = 'relative border-2 border-dashed rounded-lg p-6 text-center hover:border-indigo-400 transition-colors duration-200 cursor-pointer'
+
+const dropzoneClasses = computed(() => 
+    isDragging.value 
+        ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+        : 'border-gray-300 dark:border-gray-600'
+)
 
 const handleFileChange = (event) => {
-    const file = event.target.files[0]
-    if (file) {
-        processFile(file)
-    }
+    const file = event.target.files?.[0]
+    if (file) processFile(file)
 }
 
 const handleDrop = (event) => {
@@ -98,67 +100,26 @@ const handleDrop = (event) => {
     isDragging.value = false
     
     const files = event.dataTransfer.files
-    if (files.length > 0) {
-        processFile(files[0])
-    }
+    if (files.length > 0) processFile(files[0])
 }
 
 const processFile = (file) => {
-    // Validate file type
-    const acceptedTypes = getAcceptedTypes().split(',')
-    const isValidType = acceptedTypes.some(type => {
-        if (type.includes('*')) {
-            return file.type.startsWith(type.replace('*', ''))
-        }
-        return file.type === type || file.name.toLowerCase().endsWith(type.replace('.', ''))
-    })
+    const validation = validateFile(file, props.setting.key)
     
-    if (!isValidType) {
-        alert(`Please select a valid file type: ${getFileTypeDescription()}`)
-        return
-    }
-    
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        alert('File size must be less than 10MB')
+    if (!validation.valid) {
+        alert(validation.error)
         return
     }
     
     emit('file-upload', { target: { files: [file] } }, props.setting.key)
 }
 
-const removeFile = () => {
-    emit('update:modelValue', null)
-}
-
-const getAcceptedTypes = () => {
-    const types = {
-        logo: 'image/*,.svg',
-        favicon: 'image/*,.ico',
-        banner: 'image/*',
-        avatar: 'image/*'
-    }
-    return types[props.setting.key] || 'image/*,.ico'
-}
-
-const getFileTypeDescription = () => {
-    const descriptions = {
-        logo: 'PNG, JPG, SVG up to 10MB',
-        favicon: 'ICO, PNG up to 10MB',
-        banner: 'PNG, JPG up to 10MB',
-        avatar: 'PNG, JPG up to 10MB'
-    }
-    return descriptions[props.setting.key] || 'Images up to 10MB'
-}
+const removeFile = () => emit('update:modelValue', null)
 
 const getFileName = () => {
     if (typeof props.modelValue === 'string') {
         return props.modelValue.split('/').pop() || 'Current file'
     }
     return props.modelValue?.name || 'Current file'
-}
-
-const isImage = (url) => {
-    return url && /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(url)
 }
 </script>

@@ -74,7 +74,7 @@ onMounted(() => {
         <Head :title="`Course: ${props.course.data.title}`" />
 
         <!-- Breadcrumb -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
             <Breadcrumb :breadcrumbs="props.breadcrumbs" />
         </div>
 
@@ -106,21 +106,21 @@ onMounted(() => {
             />
 
             <!-- Main Content Area -->
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div class="flex flex-col lg:flex-row gap-8">
-                    <!-- Main Content -->
-                    <div class="flex-1">
-                        <!-- Course Tabs Component -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden">
-                            <CourseTabs
-                                :active-tab="data.activeTab"
-                                :lessons-count="lessonsCount"
-                                :quizzes-count="quizzesCount"
-                                @update:active-tab="handleTabChange"
-                            />
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Main Content -->
+                <div class="flex-1">
+                    <!-- Course Tabs Component -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
+                        <CourseTabs
+                            :active-tab="data.activeTab"
+                            :lessons-count="lessonsCount"
+                            :quizzes-count="quizzesCount"
+                            @update:active-tab="handleTabChange"
+                        />
 
-                            <!-- Tab Content -->
-                            <div class="p-6">
+                        <!-- Tab Content -->
+                        <div class="p-4">
                                 <Transition name="fade" mode="out-in">
                                     <!-- Make sure this appears only once -->
                                     <LessonManager
@@ -150,11 +150,11 @@ onMounted(() => {
                     </div>
 
                     <!-- Sidebar -->
-                    <div class="lg:w-80">
-                        <div class="sticky top-8 space-y-6">
-                            <CourseStatistics :stats="stats" />
-                        </div>
+                <div class="lg:w-72">
+                    <div class="sticky top-4 space-y-4">
+                        <CourseStatistics :stats="stats" />
                     </div>
+                </div>
                 </div>
             </div>
 

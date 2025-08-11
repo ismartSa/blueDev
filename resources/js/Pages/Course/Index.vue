@@ -5,73 +5,86 @@
       <Breadcrumb :title="title" :breadcrumbs="breadcrumbs" />
     </template>
 
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6">
+    <div class="py-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm rounded-lg">
+          <div class="p-6 sm:p-8">
             <!-- Header -->
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
               <div class="flex-1 min-w-0">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ title }}</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Manage and organize your courses</p>
               </div>
-              <div class="flex items-center space-x-2 mt-4 md:mt-0">
+              <div class="mt-4 sm:mt-0">
                 <Link
                   :href="route('courses.create')"
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-150 ease-in-out flex items-center gap-2"
+                  class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-150 ease-in-out w-full sm:w-auto justify-center"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
-                  إضافة دورة جديدة
+                  Add New Course
                 </Link>
               </div>
             </div>
 
             <!-- Search and Filters -->
             <div class="mb-8">
-              <form @submit.prevent="performSearch" class="flex gap-4">
+              <form @submit.prevent="performSearch" class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
                   <input
                     v-model="data.params.search"
                     type="text"
-                    placeholder="ابحث عن الدورات..."
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                    placeholder="Search for courses..."
+                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
                   />
                 </div>
                 <button
                   type="submit"
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg transition duration-150 ease-in-out flex items-center gap-2"
+                  class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition duration-150 ease-in-out"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  بحث
+                  Search
                 </button>
               </form>
             </div>
 
             <!-- Courses List -->
-            <div v-if="courses.data.length === 0" class="bg-white rounded-lg shadow p-8 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 14h.01M12 16h.01M12 18h.01M12 20h.01M12 22h.01" />
-              </svg>
-              <p class="text-gray-600 text-lg">لم يتم العثور على دورات</p>
+            <div v-if="courses.data.length === 0" class="text-center py-12">
+              <div class="mx-auto w-24 h-24 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No courses found</h3>
+              <p class="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first course</p>
+              <Link
+                :href="route('courses.create')"
+                class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-150 ease-in-out"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add New Course
+              </Link>
             </div>
 
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               <div
                 v-for="course in courses"
                 :key="course.id"
-                class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 ease-in-out transform hover:-translate-y-1"
+                class="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-gray-200 dark:border-slate-600 overflow-hidden hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1"
               >
                 <div class="relative">
                   <img :src="course.image" :alt="course.title" class="w-full h-48 object-cover">
                   <div class="absolute top-4 right-4">
                     <span v-if="course.price" class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {{ course.price }} ريال
+                      {{ course.price }} SAR
                     </span>
                     <span v-else class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      مجاني
+                      Free
                     </span>
                   </div>
                 </div>
@@ -87,14 +100,14 @@
                         :href="route('courses.show', { id: course.id, slug: course.slug })"
                         class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-150 ease-in-out flex-1 text-center"
                       >
-                        متابعة التعلم
+                        Continue Learning
                       </Link>
                       <button
                         v-else
                         @click="enrollCourse(course.id)"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-150 ease-in-out flex-1"
                       >
-                        التسجيل في الدورة
+                        Enroll in Course
                       </button>
                     </div>
 
@@ -103,7 +116,7 @@
                         :href="route('courses.details', { id: course.id, slug: course.slug })"
                         class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition duration-150 ease-in-out flex-1 text-center"
                       >
-                        تفاصيل الدورة
+                        Course Details
                       </Link>
                       <button
                         @click="editCourse(course.id)"

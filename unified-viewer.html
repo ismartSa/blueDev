@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عارض منصة Laravel Brive المتكامل</title>
+    <title>عارض منصة SiteeBlue المتكامل</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -19,547 +19,113 @@
             direction: rtl;
         }
         
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .date-info {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .date-item {
-            text-align: center;
-            color: white;
-        }
-        
-        .date-item .label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-        
-        .date-item .value {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        
-        .main-tabs-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        
-        .main-tabs-nav {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-        }
-        
-        .main-tab-btn {
-            flex: 1;
-            padding: 20px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #6c757d;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .main-tab-btn:hover {
-            background: rgba(0,123,255,0.1);
-            color: #007bff;
-        }
-        
-        .main-tab-btn.active {
-            background: white;
-            color: #007bff;
-            border-bottom: 4px solid #007bff;
-        }
-        
-        .main-tab-content {
-            display: none;
-            min-height: 70vh;
-        }
-        
-        .main-tab-content.active {
-            display: block;
-        }
-        
-        /* Flowchart specific styles */
-        .flowchart-container {
-            padding: 20px;
-            background: white;
-        }
-        
-        .controls {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        
-        .btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 0 8px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .btn:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-        }
-        
-        .svg-container {
-            text-align: center;
-            overflow-x: auto;
-            padding: 20px;
-            background: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            min-height: 400px;
-        }
-        
-        .zoom-info {
-            color: #6b7280;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .download-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .dropdown-btn {
-            background: #10b981 !important;
-        }
-        
-        .dropdown-btn:hover {
-            background: #059669 !important;
-        }
-        
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: white;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            border-radius: 8px;
-            z-index: 1000;
-            right: 0;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .dropdown-content a {
-            color: #374151;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            transition: background-color 0.2s;
-            font-weight: 500;
-        }
-        
-        .dropdown-content a:hover {
-            background-color: #f3f4f6;
-        }
-        
-        .dropdown-content a:first-child {
-            border-radius: 8px 8px 0 0;
-        }
-        
-        .dropdown-content a:last-child {
-            border-radius: 0 0 8px 8px;
-        }
-        
-        .show {
-            display: block;
-        }
-        
-        /* Reports management styles */
-        .reports-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            color: white;
-        }
-        
-        .add-report-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.3);
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-        }
-        
-        .add-report-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-        }
-        
-        .reports-tabs-container {
-            margin-bottom: 20px;
-        }
-        
-        .reports-nav {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-        
-        .report-tab-btn {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            padding: 12px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-            min-width: 200px;
-        }
-        
-        .report-tab-btn:hover {
-            background: #e9ecef;
-            transform: translateY(-2px);
-        }
-        
-        .report-tab-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .report-date {
-            font-size: 0.8em;
-            opacity: 0.8;
-        }
-        
-        .close-report {
-            background: rgba(255,0,0,0.7);
-            color: white;
-            border: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: auto;
-        }
-        
-        .close-report:hover {
-            background: rgba(255,0,0,0.9);
-        }
-        
-        .report-content {
-            display: none;
-        }
-        
-        .report-content.active {
-            display: block;
-        }
-        
-        /* Report specific styles */
-        .report-container {
-            padding: 0;
-        }
-        
-        .sub-tabs-nav {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .sub-tab-btn {
-            flex: 1;
-            padding: 15px 20px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #6c757d;
-            transition: all 0.3s ease;
-        }
-        
-        .sub-tab-btn:hover {
-            background: rgba(0,123,255,0.1);
-            color: #007bff;
-        }
-        
-        .sub-tab-btn.active {
-            background: white;
-            color: #007bff;
-            border-bottom: 3px solid #007bff;
-        }
-        
-        .sub-tab-content {
-            display: none;
-            padding: 30px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        
-        .sub-tab-content.active {
-            display: block;
-        }
-        
-        .report-section {
-            margin-bottom: 25px;
-        }
-        
-        .report-section h2 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-        }
-        
-        .report-section h3 {
-            color: #34495e;
-            margin: 20px 0 10px 0;
-            font-size: 1.2rem;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        /* Improvement checkboxes */
-        .improvement-checkbox {
-            margin-right: 10px;
-            transform: scale(1.2);
-            accent-color: #3b82f6;
-        }
-        
-        .improvement-checkbox:checked + label {
-            text-decoration: line-through;
-            opacity: 0.7;
-            color: #10b981;
-        }
-        
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-        }
-        
-        .feature-list label {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            flex: 1;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-card .number {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .stat-card .label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .feature-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            transition: background-color 0.2s;
-        }
-        
-        .feature-list li:hover {
-            background-color: #f8f9fa;
-            padding-right: 10px;
-            border-radius: 5px;
-        }
-        
-        .feature-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .status-icon {
-            margin-left: 10px;
-            font-size: 1.2rem;
-        }
-        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .date-info { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px); display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px; }
+        .date-item { text-align: center; color: white; }
+        .date-item .label { font-size: 0.9rem; opacity: 0.8; margin-bottom: 5px; }
+        .date-item .value { font-size: 1.2rem; font-weight: bold; }
+        
+        .main-tabs-container { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        .main-tabs-nav { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        .main-tab-btn { flex: 1; padding: 20px; border: none; background: transparent; cursor: pointer; font-size: 1.1rem; font-weight: 600; color: #6c757d; transition: all 0.3s ease; position: relative; }
+        .main-tab-btn:hover { background: rgba(0,123,255,0.1); color: #007bff; }
+        .main-tab-btn.active { background: white; color: #007bff; border-bottom: 4px solid #007bff; }
+        .main-tab-content { display: none; min-height: 70vh; }
+        .main-tab-content.active { display: block; }
+        
+        /* Flowchart & Controls */
+        .flowchart-container { padding: 20px; background: white; }
+        .controls { text-align: center; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+        .btn { background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; margin: 0 8px; font-size: 14px; font-weight: 500; transition: all 0.3s ease; }
+        .btn:hover { background: #2563eb; transform: translateY(-2px); }
+        
+        .svg-container { text-align: center; overflow-x: auto; padding: 20px; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; min-height: 400px; }
+        .zoom-info { color: #6b7280; font-size: 14px; margin-top: 10px; text-align: center; }
+        .download-dropdown { position: relative; display: inline-block; }
+        .dropdown-btn { background: #10b981 !important; }
+        .dropdown-btn:hover { background: #059669 !important; }
+        .dropdown-content { display: none; position: absolute; background-color: white; min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 8px; z-index: 1000; right: 0; border: 1px solid #e5e7eb; }
+        .dropdown-content a { color: #374151; padding: 12px 16px; text-decoration: none; display: block; transition: background-color 0.2s; font-weight: 500; }
+        .dropdown-content a:hover { background-color: #f3f4f6; }
+        .dropdown-content a:first-child { border-radius: 8px 8px 0 0; }
+        .dropdown-content a:last-child { border-radius: 0 0 8px 8px; }
+        .show { display: block; }
+        
+        /* Reports Management */
+        .reports-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; }
+        .add-report-btn { background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 10px 20px; border-radius: 25px; cursor: pointer; transition: all 0.3s ease; font-weight: bold; }
+        .add-report-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .reports-tabs-container { margin-bottom: 20px; }
+        .reports-nav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .report-tab-btn { background: #f8f9fa; border: 2px solid #e9ecef; padding: 12px 20px; border-radius: 25px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; position: relative; min-width: 200px; }
+        .report-tab-btn:hover { background: #e9ecef; transform: translateY(-2px); }
+        .report-tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: #667eea; }
+        .report-date { font-size: 0.8em; opacity: 0.8; }
+        .close-report { background: rgba(255,0,0,0.7); color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-size: 12px; margin-left: auto; }
+        .close-report:hover { background: rgba(255,0,0,0.9); }
+        .report-content { display: none; }
+        .report-content.active { display: block; }
+        
+        /* Report Styles */
+        .report-container { padding: 0; }
+        .sub-tabs-nav { display: flex; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+        .sub-tab-btn { flex: 1; padding: 15px 20px; border: none; background: transparent; cursor: pointer; font-size: 1rem; font-weight: 500; color: #6c757d; transition: all 0.3s ease; }
+        .sub-tab-btn:hover { background: rgba(0,123,255,0.1); color: #007bff; }
+        .sub-tab-btn.active { background: white; color: #007bff; border-bottom: 3px solid #007bff; }
+        .sub-tab-content { display: none; padding: 30px; max-height: 60vh; overflow-y: auto; }
+        .sub-tab-content.active { display: block; }
+        .report-section { margin-bottom: 25px; }
+        .report-section h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 15px; font-size: 1.5rem; }
+        .report-section h3 { color: #34495e; margin: 20px 0 10px 0; font-size: 1.2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        
+        /* Interactive Elements */
+        .improvement-checkbox { margin-right: 10px; transform: scale(1.2); accent-color: #3b82f6; }
+        .improvement-checkbox:checked + label { text-decoration: line-through; opacity: 0.7; color: #10b981; }
+        .feature-list li { display: flex; align-items: center; margin: 10px 0; }
+        .feature-list label { cursor: pointer; display: flex; align-items: center; flex: 1; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card .number { font-size: 2rem; font-weight: bold; margin-bottom: 5px; }
+        .stat-card .label { font-size: 0.9rem; opacity: 0.9; }
+        
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; transition: background-color 0.2s; }
+        .feature-list li:hover { background-color: #f8f9fa; padding-right: 10px; border-radius: 5px; }
+        .feature-list li:last-child { border-bottom: none; }
+        .status-icon { margin-left: 10px; font-size: 1.2rem; }
         .status-success { color: #28a745; }
         .status-warning { color: #ffc107; }
         .status-info { color: #17a2b8; }
         
-        .download-section {
-            text-align: center;
-            padding: 25px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
+        .download-section { text-align: center; padding: 25px; background: #f8f9fa; border-radius: 10px; margin-top: 20px; }
+        .download-btn { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-size: 1rem; margin: 0 10px; transition: all 0.3s ease; text-decoration: none; display: inline-block; font-weight: 500; }
+        .download-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .report-date { display: flex; flex-direction: column; gap: 5px; font-size: 0.9rem; color: #6c757d; text-align: left; }
+        .report-date span { background: #f8f9fa; padding: 5px 10px; border-radius: 15px; border: 1px solid #dee2e6; }
         
-        .download-btn {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: 500;
-        }
+        /* Messages */
+        .message { padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: 500; }
+        .success-message { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
         
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .report-date {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            font-size: 0.9rem;
-            color: #6c757d;
-            text-align: left;
-        }
-        
-        .report-date span {
-            background: #f8f9fa;
-            padding: 5px 10px;
-            border-radius: 15px;
-            border: 1px solid #dee2e6;
-        }
-        
-        /* Message styles */
-        .message {
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .success-message {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            color: #166534;
-        }
-        
-        .error-message {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-        }
-        
-        /* Responsive design */
+        /* Responsive */
         @media (max-width: 768px) {
-            .main-tabs-nav, .sub-tabs-nav {
-                flex-direction: column;
-            }
-            
-            .date-info {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .controls {
-                padding: 15px;
-            }
-            
-            .btn {
-                margin: 5px;
-                padding: 10px 15px;
-            }
+            .main-tabs-nav, .sub-tabs-nav { flex-direction: column; }
+            .date-info { flex-direction: column; text-align: center; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .controls { padding: 15px; }
+            .btn { margin: 5px; padding: 10px 15px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 منصة Laravel Brive المتكاملة | Laravel Brive Integrated Platform</h1>
+            <h1>🚀 منصة SiteeBlue المتكاملة | SiteeBlue Integrated Platform</h1>
             <p>نظام إدارة التعلم الإلكتروني - عارض التقارير والمخططات<br>Learning Management System - Reports & Charts Viewer</p>
         </div>
         
@@ -585,6 +151,7 @@
         <div class="main-tabs-container">
             <div class="main-tabs-nav">
                 <button class="main-tab-btn active" onclick="showMainTab('flowchart')">🗺️ خريطة الموقع | Site Map</button>
+                <button class="main-tab-btn" onclick="showMainTab('routes')">🛣️ مخطط المسارات | Routes Chart</button>
                 <button class="main-tab-btn" onclick="showMainTab('reports')">📊 التقارير والإحصائيات | Reports & Statistics</button>
             </div>
             
@@ -611,6 +178,32 @@
                     
                     <div class="svg-container" id="svgContainer">
                         <div id="loadingMessage">⏳ جاري تحميل الفلوشارت... | Loading Flowchart...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Routes Chart Tab -->
+            <div id="routes" class="main-tab-content">
+                <div class="flowchart-container">
+                    <div class="controls">
+                        <button class="btn" onclick="zoomRouteChart(1.2)">🔍 تكبير | Zoom In</button>
+                        <button class="btn" onclick="zoomRouteChart(0.8)">🔍 تصغير | Zoom Out</button>
+                        <button class="btn" onclick="resetRouteZoom()">↻ إعادة تعيين | Reset</button>
+                        <div class="download-dropdown">
+                            <button class="btn dropdown-btn" onclick="toggleDropdown()">💾 تحميل | Download ▼</button>
+                            <div class="dropdown-content" id="downloadDropdown">
+                                <a href="#" onclick="downloadRouteSVG()">📄 تحميل SVG | Download SVG</a>
+                                <a href="#" onclick="downloadRoutePDF()">📋 تحميل PDF | Download PDF</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="zoom-info">
+                        <span>مستوى التكبير | Zoom Level: <span id="routeZoomLevel">100%</span></span>
+                    </div>
+                    
+                    <div class="svg-container" id="routeSvgContainer">
+                        <div id="routeLoadingMessage">⏳ جاري تحميل مخطط المسارات... | Loading Routes Chart...</div>
                     </div>
                 </div>
             </div>
@@ -650,7 +243,7 @@
                                     <span>⏰ وقت الإنشاء | Creation Time: <span id="reportTime"></span></span>
                                 </div>
                             </div>
-                            <p>منصة Laravel Brive هي نظام تعلم إلكتروني متكامل يوفر تجربة تعليمية شاملة للطلاب والمعلمين.<br><em>Laravel Brive is an integrated e-learning platform that provides a comprehensive educational experience for students and teachers.</em></p>
+                            <p>منصة SiteeBlue هي نظام تعلم إلكتروني متكامل يوفر تجربة تعليمية شاملة للطلاب والمعلمين.<br><em>SiteeBlue is an integrated e-learning platform that provides a comprehensive educational experience for students and teachers.</em></p>
                             
                             <div class="stats-grid">
                                 <div class="stat-card">
@@ -818,7 +411,9 @@
     <script>
         // Global variables
         let currentZoom = 1;
+        let routeZoom = 1;
         let svgElement = null;
+        let routeSvgElement = null;
         let reportCounter = 1;
         let activeReport = 'report-1';
         
@@ -866,6 +461,185 @@
             }
         };
         
+        // Load SVG content for sitemap
+        async function loadSVG() {
+            try {
+                const response = await fetch('sitemap-flowchart.svg');
+                if (!response.ok) throw new Error('SVG not found');
+                const svgContent = await response.text();
+                document.getElementById('svgContainer').innerHTML = svgContent;
+                svgElement = document.querySelector('#svgContainer svg');
+                updateZoomDisplay();
+            } catch (error) {
+                document.getElementById('svgContainer').innerHTML = '<div class="error-message">❌ خطأ في تحميل الملف | Error loading file: sitemap-flowchart.svg</div>';
+            }
+        }
+
+        // Load Routes SVG content
+        async function loadRoutesSVG() {
+            try {
+                const response = await fetch('route-flowchart.svg');
+                if (!response.ok) throw new Error('Routes SVG not found');
+                const routeSvgContent = await response.text();
+                document.getElementById('routeSvgContainer').innerHTML = routeSvgContent;
+                routeSvgElement = document.querySelector('#routeSvgContainer svg');
+                updateRouteZoomDisplay();
+            } catch (error) {
+                document.getElementById('routeSvgContainer').innerHTML = '<div class="error-message">❌ خطأ في تحميل الملف | Error loading file: route-flowchart.svg</div>';
+            }
+        }
+
+        // Zoom functions for sitemap
+        function zoomIn() {
+            if (currentZoom < config.zoomLimits.max) {
+                currentZoom += config.zoomLimits.step;
+                updateZoomDisplay();
+            }
+        }
+
+        function zoomOut() {
+            if (currentZoom > config.zoomLimits.min) {
+                currentZoom -= config.zoomLimits.step;
+                updateZoomDisplay();
+            }
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            updateZoomDisplay();
+        }
+
+        function updateZoomDisplay() {
+            if (svgElement) {
+                svgElement.style.transform = `scale(${currentZoom})`;
+            }
+            utils.updateElement('zoomLevel', Math.round(currentZoom * 100) + '%');
+        }
+
+        // Routes chart zoom functions
+        function zoomRouteChart(factor) {
+            routeZoom *= factor;
+            if (routeZoom < config.zoomLimits.min) routeZoom = config.zoomLimits.min;
+            if (routeZoom > config.zoomLimits.max) routeZoom = config.zoomLimits.max;
+            updateRouteZoomDisplay();
+        }
+
+        function resetRouteZoom() {
+            routeZoom = 1;
+            updateRouteZoomDisplay();
+        }
+
+        function updateRouteZoomDisplay() {
+            if (routeSvgElement) {
+                routeSvgElement.style.transform = `scale(${routeZoom})`;
+            }
+            utils.updateElement('routeZoomLevel', Math.round(routeZoom * 100) + '%');
+        }
+
+        // Download functions
+        function downloadSVG() {
+            if (!svgElement) return;
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sitemap-flowchart.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadRouteSVG() {
+            if (!routeSvgElement) return;
+            const svgData = new XMLSerializer().serializeToString(routeSvgElement);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'route-flowchart.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPDF() {
+            if (!svgElement) return;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('l', 'mm', [canvas.width * 0.264583, canvas.height * 0.264583]);
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width * 0.264583, canvas.height * 0.264583);
+                pdf.save('sitemap-flowchart.pdf');
+            };
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+        }
+
+        function downloadRoutePDF() {
+            if (!routeSvgElement) return;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('l', 'mm', [canvas.width * 0.264583, canvas.height * 0.264583]);
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width * 0.264583, canvas.height * 0.264583);
+                pdf.save('route-flowchart.pdf');
+            };
+            const svgData = new XMLSerializer().serializeToString(routeSvgElement);
+            img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+        }
+
+        function downloadReport() {
+            const reportContent = document.querySelector('.report-content.active');
+            if (reportContent) {
+                const reportHtml = reportContent.innerHTML;
+                const blob = new Blob([reportHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `report-${activeReport}.html`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Toggle dropdown
+        function toggleDropdown() {
+            document.getElementById('downloadDropdown').classList.toggle('show');
+        }
+
+        // Main tab switching
+        function showMainTab(tabName) {
+            utils.toggleClass('.main-tab-content', 'active', false);
+            utils.toggleClass('.main-tab-btn', 'active', false);
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'flowchart' && !svgElement) loadSVG();
+            if (tabName === 'routes' && !routeSvgElement) loadRoutesSVG();
+        }
+
+        // Sub tab switching
+        function showSubTab(tabName) {
+            const activeReport = document.querySelector('.report-content.active');
+            if (activeReport) {
+                activeReport.querySelectorAll('.sub-tab-content').forEach(tab => tab.classList.remove('active'));
+                activeReport.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+                activeReport.querySelector(`#${tabName}`).classList.add('active');
+                event.target.classList.add('active');
+            }
+        }
+
         // Date and time functions
         function updateDateTime() {
             const now = new Date();
@@ -977,7 +751,7 @@
                                 <span>⏰ وقت الإنشاء | Creation Time: <span id="reportTime"></span></span>
                             </div>
                         </div>
-                        <p>منصة Laravel Brive هي نظام تعلم إلكتروني متكامل يوفر تجربة تعليمية شاملة للطلاب والمعلمين.<br><em>Laravel Brive is an integrated e-learning platform that provides a comprehensive educational experience for students and teachers.</em></p>
+                        <p>منصة SiteeBlue هي نظام تعلم إلكتروني متكامل يوفر تجربة تعليمية شاملة للطلاب والمعلمين.<br><em>SiteeBlue is an integrated e-learning platform that provides a comprehensive educational experience for students and teachers.</em></p>
                         
                         <div class="stats-grid">
                             <div class="stat-card">
@@ -1093,113 +867,109 @@
             }
         }
         
-        // Tab management functions
-        function showMainTab(tabName) {
-            // Hide all main tabs and remove active class
-            utils.toggleClass('.main-tab-content, .main-tab-btn', 'active', false);
-            
-            // Show selected tab and mark button as active
-            const selectedTab = document.getElementById(tabName);
-            const selectedBtn = event.target;
-            
-            if (selectedTab) selectedTab.classList.add('active');
-            if (selectedBtn) selectedBtn.classList.add('active');
-            
-            // Load flowchart if flowchart tab is selected
-            if (tabName === 'flowchart' && !svgElement) {
-                loadSVG();
-            }
-        }
-        
-        function showSubTab(tabName) {
-            // Hide all sub tabs and remove active class
-            utils.toggleClass('.sub-tab-content, .sub-tab-btn', 'active', false);
-            
-            // Show selected tab and mark button as active
-            const selectedTab = document.getElementById(tabName);
-            const selectedBtn = event.target;
-            
-            if (selectedTab) selectedTab.classList.add('active');
-            if (selectedBtn) selectedBtn.classList.add('active');
-        }
-        
-        // SVG and flowchart functions
-        async function loadSVG() {
+        // Routes chart functions
+        async function loadRoutesSVG() {
             try {
-                const response = await fetch('./sitemap-flowchart.svg');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const response = await fetch('./route-flowchart.svg');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const svgText = await response.text();
                 
-                const container = document.getElementById('svgContainer');
+                const container = document.getElementById('routeSvgContainer');
                 container.innerHTML = svgText;
                 
-                svgElement = container.querySelector('svg');
-                if (svgElement) {
-                    // Make SVG responsive
-                    Object.assign(svgElement.style, {
-                        maxWidth: '100%',
-                        height: 'auto',
-                        transition: 'transform 0.3s ease'
-                    });
-                    
-                    utils.showMessage('✅ تم تحميل الفلوشارت بنجاح!', 'success');
+                routeSvgElement = container.querySelector('svg');
+                if (routeSvgElement) {
+                    Object.assign(routeSvgElement.style, { maxWidth: '100%', height: 'auto', transition: 'transform 0.3s ease' });
+                    utils.showMessage('✅ Routes chart loaded successfully!', 'success');
                 } else {
-                    throw new Error('لم يتم العثور على عنصر SVG في الملف');
+                    throw new Error('SVG element not found in file');
                 }
             } catch (error) {
-                console.error('Error loading SVG:', error);
-                document.getElementById('svgContainer').innerHTML = 
-                    `<div class="error-message">
-                        ❌ خطأ في تحميل الفلوشارت: ${error.message}<br>
-                        <small>تأكد من وجود ملف sitemap-flowchart.svg في نفس المجلد</small>
-                    </div>`;
+                console.error('Error loading routes SVG:', error);
+                document.getElementById('routeSvgContainer').innerHTML = `<div class="error-message">❌ Error loading routes chart: ${error.message}<br><small>Make sure route-flowchart.svg exists in the same folder</small></div>`;
             }
         }
         
-        // Zoom functions
-        function zoomIn() {
-            if (svgElement && currentZoom < config.zoomLimits.max) {
-                currentZoom += config.zoomLimits.step;
-                updateZoom();
+        function routeZoomIn() {
+            if (routeSvgElement && routeZoom < config.zoomLimits.max) {
+                routeZoom += config.zoomLimits.step;
+                updateRouteZoom();
             }
         }
         
-        function zoomOut() {
-            if (svgElement && currentZoom > config.zoomLimits.min) {
-                currentZoom -= config.zoomLimits.step;
-                updateZoom();
+        function routeZoomOut() {
+            if (routeSvgElement && routeZoom > config.zoomLimits.min) {
+                routeZoom -= config.zoomLimits.step;
+                updateRouteZoom();
             }
         }
         
-        function resetZoom() {
-            if (svgElement) {
-                currentZoom = 1;
-                updateZoom();
+        function routeResetZoom() {
+            if (routeSvgElement) {
+                routeZoom = 1;
+                updateRouteZoom();
             }
         }
         
-        function updateZoom() {
-            if (svgElement) {
-                svgElement.style.transform = `scale(${currentZoom})`;
-                utils.updateElement('zoomLevel', Math.round(currentZoom * 100) + '%');
+        function updateRouteZoom() {
+            if (routeSvgElement) {
+                routeSvgElement.style.transform = `scale(${routeZoom})`;
+                utils.updateElement('routeZoomLevel', Math.round(routeZoom * 100) + '%');
             }
         }
         
-        // Dropdown functions
-        function toggleDropdown() {
-            document.getElementById('downloadDropdown').classList.toggle('show');
-        }
-        
-        // Download functions
-        function downloadSVG() {
+        function downloadRoutesSVG() {
             const link = document.createElement('a');
-            link.href = './sitemap-flowchart.svg';
-            link.download = 'laravel-brive-sitemap.svg';
+            link.href = './route-flowchart.svg';
+            link.download = 'siteeblue-routes.svg';
             link.click();
-            document.getElementById('downloadDropdown').classList.remove('show');
-            utils.showMessage('✅ تم تحميل ملف SVG بنجاح!', 'success');
+            utils.showMessage('✅ Routes SVG downloaded successfully!', 'success');
+        }
+        
+        function downloadRoutesPDF() {
+            if (!routeSvgElement) {
+                utils.showMessage('❌ Routes chart not loaded yet!', 'error');
+                return;
+            }
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const svgWidth = parseInt(routeSvgElement.getAttribute('width')) || 1400;
+                const svgHeight = parseInt(routeSvgElement.getAttribute('height')) || 1800;
+                
+                canvas.width = svgWidth;
+                canvas.height = svgHeight;
+                
+                const svgData = new XMLSerializer().serializeToString(routeSvgElement);
+                const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+                const svgUrl = URL.createObjectURL(svgBlob);
+                
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+                    
+                    if (typeof window.jsPDF !== 'undefined') {
+                        const { jsPDF } = window.jsPDF;
+                        const pdf = new jsPDF({ orientation: svgWidth > svgHeight ? 'landscape' : 'portrait', unit: 'px', format: [svgWidth, svgHeight] });
+                        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, svgWidth, svgHeight);
+                        pdf.save('siteeblue-routes.pdf');
+                        utils.showMessage('✅ Routes PDF downloaded successfully!', 'success');
+                    } else {
+                        const link = document.createElement('a');
+                        link.download = 'siteeblue-routes.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        utils.showMessage('✅ Routes PNG downloaded successfully! (PDF not available)', 'success');
+                    }
+                    URL.revokeObjectURL(svgUrl);
+                };
+                img.onerror = () => { utils.showMessage('❌ Error converting SVG to image', 'error'); URL.revokeObjectURL(svgUrl); };
+                img.src = svgUrl;
+            } catch (error) {
+                console.error('Error converting routes to PDF:', error);
+                utils.showMessage('❌ Error converting routes to PDF', 'error');
+            }
         }
         
         function downloadPDF() {
@@ -1241,13 +1011,13 @@
                         
                         const imgData = canvas.toDataURL('image/png');
                         pdf.addImage(imgData, 'PNG', 0, 0, svgWidth, svgHeight);
-                        pdf.save('laravel-brive-sitemap.pdf');
+                        pdf.save('siteeblue-sitemap.pdf');
                         
                         utils.showMessage('✅ تم تحميل ملف PDF بنجاح!', 'success');
                     } else {
                         // Fallback: download as PNG if jsPDF is not available
                         const link = document.createElement('a');
-                        link.download = 'laravel-brive-sitemap.png';
+                        link.download = 'siteeblue-sitemap.png';
                         link.href = canvas.toDataURL('image/png');
                         link.click();
                         
@@ -1274,8 +1044,8 @@
         
         function downloadReport() {
             const link = document.createElement('a');
-            link.href = './Laravel-Brive-Testing-Report.md';
-            link.download = 'Laravel-Brive-Testing-Report.md';
+            link.href = './SiteeBlue-Testing-Report.md';
+            link.download = 'SiteeBlue-Testing-Report.md';
             link.click();
             document.getElementById('downloadDropdown').classList.remove('show');
             utils.showMessage('✅ تم تحميل تقرير الاختبار بنجاح!', 'success');
@@ -1301,19 +1071,32 @@
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
+                const activeTab = document.querySelector('.main-tab-content.active');
                 switch(e.key) {
                     case '=':
                     case '+':
                         e.preventDefault();
-                        zoomIn();
+                        if (activeTab && activeTab.id === 'routes') {
+                            routeZoomIn();
+                        } else {
+                            zoomIn();
+                        }
                         break;
                     case '-':
                         e.preventDefault();
-                        zoomOut();
+                        if (activeTab && activeTab.id === 'routes') {
+                            routeZoomOut();
+                        } else {
+                            zoomOut();
+                        }
                         break;
                     case '0':
                         e.preventDefault();
-                        resetZoom();
+                        if (activeTab && activeTab.id === 'routes') {
+                            routeResetZoom();
+                        } else {
+                            resetZoom();
+                        }
                         break;
                 }
             }

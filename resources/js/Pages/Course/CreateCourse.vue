@@ -4,20 +4,21 @@
       <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $t('courses.create_new_course') }}</h2>
     </template>
 
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-6">
+      <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 bg-white border-b border-gray-200">
-            <!-- شريط التقدم -->
-            <div class="mb-8">
-              <div class="flex justify-between mb-1">
+          <div class="p-4 bg-white border-b border-gray-200">
+            <!-- Progress Bar -->
+            <div class="mb-6">
+              <div class="flex justify-between mb-2">
                 <span v-for="step in 3" :key="step"
-                      :class="{'text-blue-600 font-bold': currentStep >= step, 'text-gray-400': currentStep < step}">
+                      :class="{'text-blue-600 font-semibold': currentStep >= step, 'text-gray-400': currentStep < step}"
+                      class="text-sm">
                   {{ $t('courses.step') }} {{ step }}: {{ stepLabels[step-1] }}
                 </span>
               </div>
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: `${(currentStep / 3) * 100}%` }"></div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="{ width: `${(currentStep / 3) * 100}%` }"></div>
               </div>
             </div>
 
@@ -84,34 +85,34 @@
                 </div>
               </div>
 
-              <!-- الخطوة 3: المراجعة -->
+              <!-- Step 3: Review -->
               <div v-if="currentStep === 3">
-                <h3 class="text-lg font-semibold mb-4">{{ $t('courses.review_information') }}</h3>
-                <div class="bg-gray-50 p-4 rounded-md mb-4">
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <p><strong>{{ $t('courses.title') }}:</strong> {{ form.title }}</p>
-                      <p><strong>{{ $t('courses.description') }}:</strong> {{ form.description }}</p>
-                      <p><strong>{{ $t('courses.category') }}:</strong> {{ getCategoryName(form.category_id) }}</p>
-                      <p><strong>{{ $t('courses.price') }}:</strong> {{ form.price }}</p>
+                <h3 class="text-lg font-semibold mb-3">{{ $t('courses.review_information') }}</h3>
+                <div class="bg-gray-50 p-3 rounded-lg mb-3">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="space-y-2">
+                      <p class="text-sm"><strong>{{ $t('courses.title') }}:</strong> {{ form.title }}</p>
+                      <p class="text-sm"><strong>{{ $t('courses.description') }}:</strong> {{ form.description }}</p>
+                      <p class="text-sm"><strong>{{ $t('courses.category') }}:</strong> {{ getCategoryName(form.category_id) }}</p>
+                      <p class="text-sm"><strong>{{ $t('courses.price') }}:</strong> {{ form.price }}</p>
                     </div>
-                    <div>
-                      <p><strong>{{ $t('courses.duration') }}:</strong> {{ form.duration }} {{ $t('courses.minutes') }}</p>
-                      <p><strong>{{ $t('courses.image') }}:</strong> {{ form.image ? form.image.name : $t('courses.no_image') }}</p>
-                      <p><strong>{{ $t('courses.status') }}:</strong> {{ form.status }}</p>
-                      <p><strong>{{ $t('courses.intro_video_url') }}:</strong> {{ form.intro_video || $t('courses.none') }}</p>
+                    <div class="space-y-2">
+                      <p class="text-sm"><strong>{{ $t('courses.duration') }}:</strong> {{ form.duration }} {{ $t('courses.minutes') }}</p>
+                      <p class="text-sm"><strong>{{ $t('courses.image') }}:</strong> {{ form.image ? form.image.name : $t('courses.no_image') }}</p>
+                      <p class="text-sm"><strong>{{ $t('courses.status') }}:</strong> {{ form.status }}</p>
+                      <p class="text-sm"><strong>{{ $t('courses.intro_video_url') }}:</strong> {{ form.intro_video || $t('courses.none') }}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- أزرار التنقل -->
-              <div class="flex justify-between mt-6">
+              <!-- Navigation Buttons -->
+              <div class="flex justify-between mt-4">
                 <button
                   v-if="currentStep > 1"
                   @click="currentStep--"
                   type="button"
-                  class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   {{ $t('courses.previous') }}
                 </button>
@@ -121,14 +122,14 @@
                   v-if="currentStep < 3"
                   @click="nextStep"
                   type="button"
-                  class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {{ $t('courses.next') }}
                 </button>
                 <button
                   v-if="currentStep === 3"
                   type="submit"
-                  class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
                   :disabled="form.processing"
                 >
                   {{ $t('courses.create_course') }}

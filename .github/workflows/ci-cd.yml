@@ -1,0 +1,106 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, mysql, gd, curl, zip, bcmath, redis
+        coverage: xdebug
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Copy environment file
+      run: cp .env.example .env
+    
+    - name: Install PHP dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+    
+    - name: Install Node dependencies
+      run: npm ci
+    
+    - name: Generate application key
+      run: php artisan key:generate
+    
+    - name: Configure database
+      run: |
+        php artisan config:cache
+        php artisan migrate --force
+    
+    - name: Build frontend assets
+      run: npm run build
+    
+    - name: Run PHP tests
+      run: php artisan test --coverage
+    
+    - name: Run PHP CS Fixer
+      run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies and build
+      run: |
+        npm ci
+        npm run build
+    
+    - name: Deploy to server via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT || 22 }}
+        script: |
+          cd /var/www/siteeblue
+          git pull origin main
+          chmod +x deployment/deploy-master.sh
+          ./deployment/deploy-master.sh deploy production
+    
+    - name: Health check
+      run: |
+        sleep 30
+        curl -f ${{ secrets.APP_URL }} || exit 1

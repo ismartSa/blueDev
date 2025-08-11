@@ -34,7 +34,8 @@ class RoleSeeder extends Seeder
             'delete permission',
             'update permission',
             'read permission',
-            'create permission'
+            'create permission',
+            'manage database'
         ]);
         $admin = Role::create([
             'name'          => 'admin'
@@ -46,6 +47,7 @@ class RoleSeeder extends Seeder
             'create user',
             'read role',
             'read permission',
+            'manage database'
         ]);
         $operator = Role::create([
             'name'          => 'operator'

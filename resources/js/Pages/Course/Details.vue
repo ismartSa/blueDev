@@ -22,7 +22,7 @@
 
               <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  التعليقات والتقييمات
+                  Comments and Reviews
                 </h3>
               </div>
             </div>

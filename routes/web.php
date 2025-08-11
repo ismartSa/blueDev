@@ -193,6 +193,7 @@ Route::get('/dashboard', function () {
             Route::post('/upload/{key}', [SettingsController::class, 'uploadFile'])->name('upload');
             Route::get('/get/{key}', [SettingsController::class, 'getSetting'])->name('get');
             Route::post('/reset', [SettingsController::class, 'reset'])->name('reset');
+            Route::get('/database-status', [SettingsController::class, 'refreshDatabaseStatus'])->name('database.status');
         });
 
     /*

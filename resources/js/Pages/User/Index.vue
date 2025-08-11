@@ -31,7 +31,7 @@ const props = defineProps({
     filters: Object,
     users: Object,
     roles: Object,
-    breadcrumbs: Object,
+    breadcrumbs: Array,
     perPage: Number,
 });
 const data = reactive({
@@ -299,58 +299,43 @@ const loginAsUser = (user) => {
                                 <td class="whitespace-nowrap py-4 px-2 sm:py-3">
                                     {{ user.updated_at }}
                                 </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    <div
-                                        class="flex justify-center items-center"
-                                    >
-                                        <div class="rounded-md overflow-hidden">
-
-                                            <InfoButton
-                                                v-show="can(['update user'])"
-                                                type="button"
-                                                @click="
-                                                    (data.editOpen = true),
-                                                        (data.user = user)
-                                                "
-                                                class="px-2 py-1.5 rounded-none"
-                                                v-tooltip="lang().tooltip.edit"
-                                            >
-                                                <PencilIcon class="w-4 h-4" />
-                                            </InfoButton>
-                                            <DangerButton
-                                                v-show="can(['delete user'])"
-                                                type="button"
-                                                @click="
-                                                    (data.deleteOpen = true),
-                                                        (data.user = user)
-                                                "
-                                                class="px-2 py-1.5 rounded-none"
-                                                v-tooltip="
-                                                    lang().tooltip.delete
-                                                "
-                                            >
-                                                <TrashIcon class="w-4 h-4" />
-                                            </DangerButton>
-                                                  <!-- زر الدخول بهذا المستخدم -->
+                                <td class="whitespace-nowrap py-4 px-3">
+                                    <div class="flex justify-center items-center gap-1">
+                                        <InfoButton
+                                            v-show="can(['update user'])"
+                                            type="button"
+                                            @click="(data.editOpen = true), (data.user = user)"
+                                            class="px-3 py-2 rounded-lg"
+                                            v-tooltip="lang().tooltip.edit"
+                                        >
+                                            <PencilIcon class="w-4 h-4" />
+                                        </InfoButton>
+                                        <DangerButton
+                                            v-show="can(['delete user'])"
+                                            type="button"
+                                            @click="(data.deleteOpen = true), (data.user = user)"
+                                            class="px-3 py-2 rounded-lg"
+                                            v-tooltip="lang().tooltip.delete"
+                                        >
+                                            <TrashIcon class="w-4 h-4" />
+                                        </DangerButton>
+                                        <!-- Login as user button -->
                                         <InfoButton
                                             v-show="can(['login as user'])"
                                             type="button"
                                             @click="loginAsUser(user)"
-                                            class="px-2 py-1.5 rounded-none bg-black text-white hover:bg-gray-800 hover:text-white"
+                                            class="px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
                                             v-tooltip="lang().tooltip.loginAs"
                                         >
                                             <LanguageIcon class="w-4 h-4" />
                                         </InfoButton>
-                                        </div>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div
-                    class="flex justify-between items-center p-2 border-t border-slate-200 dark:border-slate-700"
-                >
+                <div class="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">
                     <Pagination :links="props.users" :filters="data.params" />
                 </div>
             </div>

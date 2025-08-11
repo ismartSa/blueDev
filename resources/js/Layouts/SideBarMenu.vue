@@ -1,20 +1,61 @@
-// ... existing code ...
-            <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                <template #icon>
-                    <HomeIcon class="w-5 h-5" />
-                </template>
-                Dashboard
-            </NavLink>
+<script setup>
+import { usePage } from '@inertiajs/vue3'
+import NavLink from '@/Components/NavLink.vue'
+import {
+    HomeIcon,
+    AcademicCapIcon,
+    UsersIcon,
+    CogIcon,
+    CircleStackIcon
+} from '@heroicons/vue/24/outline'
 
-            <!-- Quizzes Link -->
-            <NavLink v-if="$page.props.auth.user.permissions.includes('YOUR_PERMISSION_STRING_HERE')" :href="route('YOUR_ROUTE_NAME_HERE')" :active="route().current('YOUR_ROUTE_NAME_HERE') || route().current('YOUR_ROUTE_NAME_HERE.*')">
-                <template #icon>
-                    <!-- Replace YOUR_ICON_COMPONENT_NAME_HERE with your actual icon component -->
-                    <YOUR_ICON_COMPONENT_NAME_HERE class="w-5 h-5" />
-                </template>
-                Quizzes
-            </NavLink>
+const page = usePage()
+</script>
 
-            <NavLink :href="route('users.index')" :active="route().current('users.index') || route().current('users.create') || route().current('users.edit') "
-                v-if="$page.props.auth.user.permissions.includes('view users')">
-// ... existing code ...
+<template>
+    <div class="space-y-1">
+        <!-- Dashboard Link -->
+        <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
+            <template #icon>
+                <HomeIcon class="w-5 h-5" />
+            </template>
+            Dashboard
+        </NavLink>
+
+        <!-- Quizzes Link -->
+        <NavLink 
+            v-if="$page.props.auth.user.permissions?.includes('manage courses')"
+            :href="route('courses.index')" 
+            :active="route().current('courses.*')"
+        >
+            <template #icon>
+                <AcademicCapIcon class="w-5 h-5" />
+            </template>
+            Courses
+        </NavLink>
+
+        <!-- Users Link -->
+        <NavLink 
+            v-if="$page.props.auth.user.permissions?.includes('view users')"
+            :href="route('users.index')" 
+            :active="route().current('users.*')"
+        >
+            <template #icon>
+                <UsersIcon class="w-5 h-5" />
+            </template>
+            Users
+        </NavLink>
+
+        <!-- Settings Link -->
+        <NavLink 
+            v-if="$page.props.auth.user.permissions?.includes('manage database')"
+            :href="route('admin.settings')" 
+            :active="route().current('admin.settings')"
+        >
+            <template #icon>
+                <CogIcon class="w-5 h-5" />
+            </template>
+            Settings
+        </NavLink>
+    </div>
+</template>

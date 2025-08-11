@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Config;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
@@ -17,6 +19,7 @@ class SettingsController extends Controller
     public function index()
     {
         $settings = Setting::all()->groupBy('group');
+        $databaseConnections = $this->getDatabaseConnectionStatus();
         
         return Inertia::render('Settings', [
             'settings' => $settings,
@@ -24,8 +27,10 @@ class SettingsController extends Controller
                 'branding' => 'Branding & Appearance',
                 'contact' => 'Contact Information',
                 'social' => 'Social Media',
-                'system' => 'System Settings'
-            ]
+                'system' => 'System Settings',
+                'database' => 'Database Status'
+            ],
+            'databaseConnections' => $databaseConnections
         ]);
     }
 
@@ -141,5 +146,113 @@ class SettingsController extends Controller
         Setting::clearCache();
 
         return back()->with('success', 'Settings reset to default values!');
+    }
+
+    /**
+     * Get database connection status and all databases for admin users only
+     */
+    public function getDatabaseConnectionStatus()
+    {
+        $connections = [];
+        $configConnections = Config::get('database.connections');
+        
+        foreach ($configConnections as $name => $config) {
+            $status = $this->testDatabaseConnection($name);
+            $databases = $status['active'] ? $this->getAllDatabases($name, $config['driver']) : [];
+            
+            $connections[] = [
+                'name' => ucfirst($name),
+                'driver' => $config['driver'] ?? 'unknown',
+                'host' => $config['host'] ?? 'N/A',
+                'database' => $config['database'] ?? 'N/A',
+                'active' => $status['active'],
+                'message' => $status['message'],
+                'response_time' => $status['response_time'] ?? null,
+                'databases' => $databases
+            ];
+        }
+        
+        return $connections;
+    }
+
+    /**
+     * Get all databases from a connection
+     */
+    private function getAllDatabases($connectionName, $driver)
+    {
+        try {
+            $connection = DB::connection($connectionName);
+            $databases = [];
+            
+            switch ($driver) {
+                case 'mysql':
+                    $results = $connection->select('SHOW DATABASES');
+                    foreach ($results as $result) {
+                        $databases[] = $result->Database;
+                    }
+                    break;
+                    
+                case 'pgsql':
+                    $results = $connection->select('SELECT datname FROM pg_database WHERE datistemplate = false');
+                    foreach ($results as $result) {
+                        $databases[] = $result->datname;
+                    }
+                    break;
+                    
+                case 'sqlite':
+                    // For SQLite, return the database file path
+                    $config = Config::get("database.connections.{$connectionName}");
+                    $databases[] = basename($config['database'] ?? 'database.sqlite');
+                    break;
+                    
+                case 'sqlsrv':
+                    $results = $connection->select('SELECT name FROM sys.databases WHERE database_id > 4');
+                    foreach ($results as $result) {
+                        $databases[] = $result->name;
+                    }
+                    break;
+                    
+                default:
+                    $databases[] = 'Database listing not supported for ' . $driver;
+            }
+            
+            return $databases;
+        } catch (\Exception $e) {
+            return ['Error: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Test individual database connection
+     */
+    private function testDatabaseConnection($connectionName)
+    {
+        try {
+            $startTime = microtime(true);
+            DB::connection($connectionName)->getPdo();
+            $endTime = microtime(true);
+            
+            return [
+                'active' => true,
+                'message' => 'Connected successfully',
+                'response_time' => round(($endTime - $startTime) * 1000, 2) // milliseconds
+            ];
+        } catch (\Exception $e) {
+            return [
+                'active' => false,
+                'message' => 'Connection failed: ' . $e->getMessage(),
+                'response_time' => null
+            ];
+        }
+    }
+
+    /**
+     * API endpoint to refresh database status
+     */
+    public function refreshDatabaseStatus()
+    {
+        return response()->json([
+            'connections' => $this->getDatabaseConnectionStatus()
+        ]);
     }
 }

@@ -23,7 +23,8 @@ class PermissionSeeder extends Seeder
             'delete role', 'update role', 'read role', 'create role',
             'read quiz', 'create quiz', 'view quiz reports',
             'delete permission', 'update permission', 'read permission', 'create permission',
-            'read category', 'create category', 'update category', 'delete category'
+            'read category', 'create category', 'update category', 'delete category',
+            'manage database'
         ];
 
         foreach ($permissions as $permission) {
