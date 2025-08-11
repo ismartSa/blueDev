@@ -23,3 +23,13 @@ yarn-error.log
 backups/
 *.tar.gz
 *.zip
+# Unwanted files
+Untitled-*
+quizzz*
+*-viewer.html
+*.tmp
+*.temp
+*.bak
+*.old
+test-*
+demo-*
