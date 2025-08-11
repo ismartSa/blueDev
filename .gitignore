@@ -23,3 +23,8 @@ yarn-error.log
 backups/
 *.tar.gz
 *.zip
+*.backup
+*backup*.tar.gz
+laravel-brive-backup-*.tar.gz
+*.tar.gz
+*.zip

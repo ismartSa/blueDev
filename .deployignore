@@ -65,6 +65,7 @@ quizzz
 report-viewer.html
 unified-viewer.html
 route-flowchart.svg
+dev-tools/
 
 # Temporary files
 *.tmp
