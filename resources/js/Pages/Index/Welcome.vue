@@ -3,10 +3,11 @@ import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import SwitchDarkMode from "@/Components/SwitchDarkMode.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import SwitchLangNavbar from "@/Components/SwitchLangNavbar.vue";
-import Footer from "@/Pages/Index/Partials/Footer.vue"; // استيراد مكون الفوتر
-import { computed } from 'vue';
+import Footer from "@/Pages/Index/Partials/Footer.vue";
+import { computed, ref, onMounted } from 'vue';
+import { ChevronDownIcon, UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline';
 
-// تعريف Props
+// Define Props
 defineProps({
     canLogin: Boolean,
     canRegister: Boolean,
@@ -18,87 +19,189 @@ defineProps({
     }
 });
 
-// دالة للحصول على صورة الكورس
-const getCourseImage = (course) => {
-    if (course.thumbnail) {
-        return course.thumbnail;
-    }
+// Reactive states for new design
+const isVisible = ref(false);
+const currentSlide = ref(0);
+const hoveredCard = ref(null);
+const showUserDropdown = ref(false);
 
-    // استخدام خدمة Picsum Photos للحصول على صور عشوائية جميلة
-    // نستخدم معرف الكورس كرقم للصورة لضمان ثبات الصورة لنفس الكورس
-    const courseId = course.id || Math.floor(Math.random() * 1000);
-    return `https://picsum.photos/seed/${courseId}/800/450`;
+// Initialize on mount
+onMounted(() => {
+    setTimeout(() => isVisible.value = true, 200);
+    // Auto-slide testimonials
+    setInterval(() => {
+        currentSlide.value = (currentSlide.value + 1) % testimonials.length;
+    }, 4000);
+});
+
+// Optimized image loading
+const getCourseImage = (course) => {
+    if (course.thumbnail) return course.thumbnail;
+    return `https://picsum.photos/seed/${course.id || Math.random()}/600/400`;
 };
 
-// تعريف الترجمات
-const translations = computed(() => ({
-    label: {
-        welcome: 'Welcome',
-        dashboard: 'Dashboard',
+// Centralized content with bilingual support
+const content = computed(() => ({
+    hero: {
+        title: 'Master Skills That Matter',
+        titleAr: 'أتقن المهارات المهمة',
+        subtitle: 'Unlock your potential with world-class online education',
+        subtitleAr: 'اطلق إمكاناتك مع التعليم الإلكتروني عالمي المستوى',
+        cta: 'Explore Courses',
+        ctaAr: 'استكشف الدورات'
+    },
+    nav: {
+        home: 'Home',
+        courses: 'Courses',
+        about: 'About',
+        contact: 'Contact',
         login: 'Login',
         register: 'Register',
-        explore_courses: 'Explore Our Courses',
-        view_details: 'View Details'
+        dashboard: 'Dashboard',
+        profile: 'Profile',
+        logout: 'Logout'
     }
 }));
 
-const lang = () => translations.value;
-
-// إضافة قسم "لماذا تختار أكاديمية النخبة؟"
+// Simplified features with modern approach
 const features = [
     {
-        icon: 'fas fa-certificate',
-        title: 'شهادات معتمدة',
-        description: 'احصل على شهادات معتمدة عند إتمامك للكورسات يمكنك إضافتها لسيرتك الذاتية'
+        icon: '🎯',
+        title: 'Personalized Learning',
+        titleAr: 'تعلم مخصص',
+        desc: 'AI-powered recommendations tailored to your goals',
+        descAr: 'توصيات مدعومة بالذكاء الاصطناعي مصممة لأهدافك'
     },
     {
-        icon: 'fas fa-chalkboard-teacher',
-        title: 'مدربون محترفون',
-        description: 'تعلم من أفضل المدربين المحترفين في مجالاتهم'
+        icon: '⚡',
+        title: 'Lightning Fast',
+        titleAr: 'سريع البرق',
+        desc: 'Optimized platform for seamless learning experience',
+        descAr: 'منصة محسنة لتجربة تعلم سلسة'
     },
     {
-        icon: 'fas fa-users',
-        title: 'مجتمع نشط',
-        description: 'انضم إلى مجتمع نشط من المتعلمين وشارك في المناقشات'
+        icon: '🏆',
+        title: 'Industry Certified',
+        titleAr: 'معتمد من الصناعة',
+        desc: 'Certificates recognized by top employers worldwide',
+        descAr: 'شهادات معترف بها من كبار أصحاب العمل عالمياً'
+    },
+    {
+        icon: '🌍',
+        title: 'Global Access',
+        titleAr: 'وصول عالمي',
+        desc: 'Learn anywhere, anytime with mobile-first design',
+        descAr: 'تعلم في أي مكان وأي وقت بتصميم يركز على الهاتف المحمول'
     }
 ];
 
-// إضافة قسم "آراء متعلمينا"
+// Compact statistics
+const metrics = [
+    { value: '25K+', label: 'Students', labelAr: 'طالب' },
+    { value: '150+', label: 'Courses', labelAr: 'دورة' },
+    { value: '95%', label: 'Success Rate', labelAr: 'معدل النجاح' },
+    { value: '24/7', label: 'Support', labelAr: 'دعم' }
+];
+
+// Streamlined testimonials
 const testimonials = [
     {
-        name: 'محمد أحمد',
-        role: 'مطور ويب',
-        quote: 'الكورسات ساعدتني بشكل كبير في تطوير مهاراتي البرمجية'
+        name: 'Alex Chen',
+        role: 'Software Engineer',
+        company: 'Google',
+        quote: 'The best investment I made for my career growth.',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face'
     },
     {
-        name: 'فاطمة علي',
-        role: 'مصممة جرافيك',
-        quote: 'أكاديمية النخبة هي أفضل مكان لتعلم التصميم الجرافيكي'
+        name: 'Sarah Kim',
+        role: 'Product Manager',
+        company: 'Microsoft',
+        quote: 'Practical skills that I use every day at work.',
+        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face'
+    },
+    {
+        name: 'David Wilson',
+        role: 'Data Scientist',
+        company: 'Netflix',
+        quote: 'Transformed my understanding of machine learning.',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face'
     }
 ];
+
+// Popular categories
+const categories = [
+    { name: 'Web Development', icon: '💻', courses: 45 },
+    { name: 'Data Science', icon: '📊', courses: 32 },
+    { name: 'Design', icon: '🎨', courses: 28 },
+    { name: 'Business', icon: '💼', courses: 38 },
+    { name: 'Marketing', icon: '📈', courses: 25 },
+    { name: 'Mobile Dev', icon: '📱', courses: 22 }
+];
+
 </script>
 
 <template>
-    <Head :title="lang().label.welcome" />
-    <div class="min-h-screen bg-slate-100 dark:bg-slate-900">
-        <!-- الهيدر -->
-        <header class="bg-white dark:bg-slate-800 shadow">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <ApplicationLogo class="h-10 w-auto text-primary fill-current" />
-                        <p class="text-2xl ml-4 text-primary">{{ $page.props.app.name }}</p>
+    <Head :title="content.nav.home" />
+    <div class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300" :class="{ 'opacity-100': isVisible, 'opacity-0': !isVisible }">
+        
+        <!-- Minimalist Header -->
+        <header class="fixed top-0 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 z-50">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-3">
+                        <ApplicationLogo class="h-8 w-auto" />
+                        <span class="text-xl font-bold text-gray-900 dark:text-white">{{ $page.props.app.name }}</span>
                     </div>
+                    
+                    <nav class="hidden md:flex items-center space-x-8">
+                        <a v-for="item in ['home', 'courses', 'about', 'contact']" :key="item" 
+                           :href="`#${item}`" class="nav-link">{{ content.nav[item] }}</a>
+                    </nav>
+                    
                     <div class="flex items-center space-x-4">
                         <SwitchLangNavbar />
                         <SwitchDarkMode />
-                        <div v-if="canLogin" class="flex items-center space-x-4">
-                            <Link v-if="$page.props.auth.user" :href="route('dashboard')"
-                                class="btn-primary">{{ lang().label.dashboard }}</Link>
+                        <div v-if="canLogin" class="flex items-center space-x-3">
+                            <!-- User Dropdown for Authenticated Users -->
+                            <div v-if="$page.props.auth.user" class="relative">
+                                <button 
+                                    @click="showUserDropdown = !showUserDropdown"
+                                    @blur="setTimeout(() => showUserDropdown = false, 150)"
+                                    class="flex items-center space-x-2 px-3 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                        {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
+                                    </div>
+                                    <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ $page.props.auth.user.name }}
+                                    </span>
+                                    <ChevronDownIcon class="w-4 h-4 text-gray-500 transition-transform" :class="{ 'rotate-180': showUserDropdown }" />
+                                </button>
+                                
+                                <!-- Dropdown Menu -->
+                                <div v-show="showUserDropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                                    <Link :href="route('dashboard')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <Cog6ToothIcon class="w-4 h-4 mr-3" />
+                                        {{ content.nav.dashboard }}
+                                    </Link>
+                                    <Link :href="route('profile.edit')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <UserIcon class="w-4 h-4 mr-3" />
+                                        {{ content.nav.profile }}
+                                    </Link>
+                                    <hr class="my-1 border-gray-200 dark:border-gray-700" />
+                                    <Link :href="route('logout')" method="post" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                        <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
+                                        {{ content.nav.logout }}
+                                    </Link>
+                                </div>
+                            </div>
+                            
+                            <!-- Guest User Links -->
                             <template v-else>
-                                <Link :href="route('login')" class="btn-secondary">{{ lang().label.login }}</Link>
-                                <Link v-if="canRegister" :href="route('register')"
-                                    class="btn-primary">{{ lang().label.register }}</Link>
+                                <Link :href="route('login')" class="btn-ghost">{{ content.nav.login }}</Link>
+                                <Link v-if="canRegister" :href="route('register')" class="btn-primary">
+                                    {{ content.nav.register }}
+                                </Link>
                             </template>
                         </div>
                     </div>
@@ -106,305 +209,261 @@ const testimonials = [
             </div>
         </header>
 
-        <!-- القسم الرئيسي -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <!-- Hero Section -->
-            <section class="gradient-bg text-white py-24 rounded-lg mb-12">
-                <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
-                    <div class="md:w-1/2 mb-10 md:mb-0">
-                        <h2 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                            طور مهاراتك مع كورسات فيديو احترافية
-                        </h2>
-                        <p class="text-xl mb-8 text-indigo-100 max-w-md">
-                            انضم إلى آلاف المتعلمين الذين طوروا مسيرتهم المهنية من خلال كورساتنا الحصرية التي يقدمها نخبة من الخبراء
+        <!-- Hero Section -->
+        <section class="pt-32 pb-32 px-6">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center space-y-12">
+                    <div class="space-y-8">
+                        <h1 class="text-6xl md:text-8xl font-light text-gray-900 dark:text-white leading-none tracking-tight">
+                            {{ content.hero.title }}
+                        </h1>
+                        <p class="text-2xl font-light text-gray-500 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                            {{ content.hero.subtitle }}
                         </p>
-                        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                            <button class="bg-white text-indigo-600 px-8 py-4 rounded-lg font-bold hover:bg-indigo-50 transition duration-300 flex items-center justify-center shadow-lg">
-                                <i class="fas fa-play-circle mr-2"></i> ابدأ التعلم الآن
-                            </button>
-                            <button class="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white hover:text-indigo-600 transition duration-300 flex items-center justify-center shadow-lg">
-                                <i class="fas fa-info-circle mr-2"></i> تعرف أكثر
-                            </button>
-                        </div>
                     </div>
-                    <div class="md:w-1/2">
-                        <div class="relative">
-                            <div class="video-container rounded-xl overflow-hidden shadow-2xl transform hover:scale-105 transition duration-300">
-                                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                            </div>
-                            <div class="absolute -bottom-4 -left-4 bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-bold shadow-lg transform rotate-3">
-                                حصري لأعضاء النخبة
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- عرض الكورسات -->
-            <section class="py-16">
-                <div class="container mx-auto px-4">
-                    <div class="flex justify-between items-center mb-12">
-                        <h2 class="text-3xl md:text-4xl font-bold">أحدث الكورسات</h2>
-                        <div class="hidden md:flex space-x-2 rtl:space-x-reverse">
-                            <button class="bg-white dark:bg-slate-700 p-3 rounded-full shadow hover:bg-gray-100 dark:hover:bg-slate-600 transition">
-                                <i class="fas fa-chevron-right text-gray-600 dark:text-gray-300"></i>
-                            </button>
-                            <button class="bg-white dark:bg-slate-700 p-3 rounded-full shadow hover:bg-gray-100 dark:hover:bg-slate-600 transition">
-                                <i class="fas fa-chevron-left text-gray-600 dark:text-gray-300"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div v-for="course in courses" :key="course.id"
-                            class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col group">
-                            <div class="relative overflow-hidden">
-                                <img :src="getCourseImage(course)" :alt="course.title" class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110" />
-                                <div class="absolute top-4 right-4 bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg font-bold text-sm">
-                                    {{ course.category || 'كورس جديد' }}
-                                </div>
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                                    <Link :href="route('courses.details', { id: course.id, courseSlug: course.slug })"
-                                        class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-bold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                        {{ lang().label.view_details }}
-                                    </Link>
-                                </div>
-                            </div>
-                            <div class="p-6 flex-grow">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex text-yellow-400">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star-half-alt"></i>
-                                    </div>
-                                    <span class="text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-lg">{{ course.rating || '4.5' }} ({{ course.reviews_count || '120' }})</span>
-                                </div>
-                                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-3 line-clamp-2 h-14 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                    {{ course.title }}
-                                </h2>
-                                <p class="text-slate-600 dark:text-slate-400 mb-4 line-clamp-3 h-18">
-                                    {{ course.description }}
-                                </p>
-                                <div class="flex items-center mb-4">
-                                    <div class="w-10 h-10 rounded-full overflow-hidden mr-3 bg-indigo-100 border-2 border-indigo-200">
-                                        <i class="fas fa-user-tie text-indigo-600 flex items-center justify-center h-full"></i>
-                                    </div>
-                                    <div>
-                                        <span class="text-sm font-medium text-gray-900 dark:text-white block">{{ course.instructor || 'مدرب محترف' }}</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ course.instructor_title || 'خبير تطوير' }}</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4 justify-between">
-                                    <div class="flex items-center">
-                                        <i class="far fa-clock mr-1 text-indigo-500"></i>
-                                        <span>{{ course.duration || '12 ساعة' }}</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <i class="far fa-play-circle mr-1 text-indigo-500"></i>
-                                        <span>{{ course.lessons_count || '24 درس' }}</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <i class="far fa-user mr-1 text-indigo-500"></i>
-                                        <span>{{ course.students_count || '1,240' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="border-t border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-slate-700">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="text-primary font-bold text-xl">{{ course.price || '299 ر.س' }}</span>
-                                        <span class="text-gray-500 line-through text-sm ml-2">{{ course.original_price || '499 ر.س' }}</span>
-                                    </div>
-                                    <button class="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition">
-                                        <i class="fas fa-shopping-cart"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center mt-12">
-                        <Link href="/courses" class="bg-white dark:bg-slate-700 border border-indigo-600 text-indigo-600 dark:text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-600 hover:text-white transition duration-300 inline-flex items-center shadow-md">
-                            عرض جميع الكورسات
-                            <i class="fas fa-arrow-left mr-2"></i>
+                    
+                    <div class="flex flex-col sm:flex-row gap-6 justify-center pt-8">
+                        <Link :href="canRegister ? route('register') : route('login')" class="btn-hero">
+                            {{ content.hero.cta }}
                         </Link>
+                        <button class="btn-outline">Watch Demo</button>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- إضافة قسم "لماذا تختار أكاديمية النخبة؟" -->
-            <section class="py-20 bg-white dark:bg-slate-800 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-full opacity-5">
-                    <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600 rounded-full"></div>
-                    <div class="absolute top-1/2 right-0 w-80 h-80 bg-yellow-400 rounded-full"></div>
-                    <div class="absolute bottom-0 left-1/3 w-64 h-64 bg-green-500 rounded-full"></div>
-                </div>
-                <div class="container mx-auto px-4 relative z-10">
-                    <div class="text-center mb-16">
-                        <span class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 px-4 py-1 rounded-full text-sm font-medium inline-block mb-4">لماذا تختارنا</span>
-                        <h2 class="text-4xl font-bold mb-4">لماذا تختار أكاديمية النخبة؟</h2>
-                        <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">نقدم لك تجربة تعليمية فريدة من نوعها مع أفضل المدربين والمحتوى التعليمي المميز</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div v-for="(feature, index) in features" :key="index" class="p-8 rounded-xl border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 bg-white dark:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800 group">
-                            <div class="bg-indigo-100 dark:bg-indigo-900 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 group-hover:bg-indigo-600 transition-colors duration-300">
-                                <i :class="feature.icon + ' text-indigo-600 dark:text-indigo-400 text-4xl group-hover:text-white transition-colors duration-300'"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-4 text-center group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ feature.title }}</h3>
-                            <p class="text-gray-600 dark:text-gray-400 text-center">{{ feature.description }}</p>
-                        </div>
-                    </div>
-                    <div class="mt-16 text-center">
-                        <div class="flex flex-wrap justify-center gap-4">
-                            <div class="flex items-center bg-gray-100 dark:bg-slate-700 px-6 py-3 rounded-lg">
-                                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mr-4">
-                                    <i class="fas fa-graduation-cap text-indigo-600 dark:text-indigo-400"></i>
-                                </div>
-                                <div class="text-left">
-                                    <span class="block text-3xl font-bold text-indigo-600 dark:text-indigo-400">+200</span>
-                                    <span class="text-gray-600 dark:text-gray-400">كورس تعليمي</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center bg-gray-100 dark:bg-slate-700 px-6 py-3 rounded-lg">
-                                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mr-4">
-                                    <i class="fas fa-users text-indigo-600 dark:text-indigo-400"></i>
-                                </div>
-                                <div class="text-left">
-                                    <span class="block text-3xl font-bold text-indigo-600 dark:text-indigo-400">+5000</span>
-                                    <span class="text-gray-600 dark:text-gray-400">طالب</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center bg-gray-100 dark:bg-slate-700 px-6 py-3 rounded-lg">
-                                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mr-4">
-                                    <i class="fas fa-chalkboard-teacher text-indigo-600 dark:text-indigo-400"></i>
-                                </div>
-                                <div class="text-left">
-                                    <span class="block text-3xl font-bold text-indigo-600 dark:text-indigo-400">+50</span>
-                                    <span class="text-gray-600 dark:text-gray-400">مدرب محترف</span>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Metrics Section -->
+        <section class="py-24 bg-gray-50 dark:bg-gray-900">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-12">
+                    <div v-for="metric in metrics" :key="metric.label" class="metric-card">
+                        <div class="text-5xl font-light text-gray-900 dark:text-white mb-2">{{ metric.value }}</div>
+                        <div class="text-lg font-light text-gray-500 dark:text-gray-400">{{ metric.label }}</div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- إضافة قسم "آراء متعلمينا" -->
-            <section class="py-20 bg-slate-100 dark:bg-slate-900 relative">
-                <div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-white dark:from-slate-800 to-transparent"></div>
-                <div class="container mx-auto px-4 relative z-10">
-                    <div class="text-center mb-16">
-                        <span class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 px-4 py-1 rounded-full text-sm font-medium inline-block mb-4">شهادات النجاح</span>
-                        <h2 class="text-4xl font-bold mb-4">آراء متعلمينا</h2>
-                        <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">استمع إلى تجارب طلابنا الناجحين وكيف ساعدتهم أكاديمية النخبة في تحقيق أهدافهم</p>
+        <!-- Features Section -->
+        <section class="py-32">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-24">
+                    <h2 class="text-5xl font-light text-gray-900 dark:text-white mb-6 tracking-tight">Why Choose Us</h2>
+                    <p class="text-xl font-light text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Everything you need to succeed in your learning journey</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+                    <div v-for="(feature, index) in features" :key="index" 
+                         class="feature-card" 
+                         @mouseenter="hoveredCard = index" 
+                         @mouseleave="hoveredCard = null">
+                        <div class="text-5xl mb-6">{{ feature.icon }}</div>
+                        <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-4 tracking-tight">{{ feature.title }}</h3>
+                        <p class="text-gray-500 dark:text-gray-400 font-light leading-relaxed">{{ feature.desc }}</p>
                     </div>
+                </div>
+            </div>
+        </section>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div v-for="(testimonial, index) in testimonials" :key="index" class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 relative">
-                            <div class="absolute top-6 right-8 text-indigo-200 dark:text-indigo-900 opacity-50">
-                                <i class="fas fa-quote-right text-6xl"></i>
-                            </div>
-                            <div class="relative z-10">
-                                <div class="flex text-yellow-400 mb-4">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                </div>
-                                <p class="text-gray-600 dark:text-gray-300 mb-6 text-lg leading-relaxed relative z-10">"{{ testimonial.quote }}"</p>
-                                <div class="flex items-center">
-                                    <div class="bg-indigo-100 dark:bg-indigo-900 w-16 h-16 rounded-full flex items-center justify-center mr-4 border-4 border-white dark:border-slate-700 shadow">
-                                        <i class="fas fa-user text-indigo-600 dark:text-indigo-400 text-2xl"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-bold text-xl text-gray-900 dark:text-white">{{ testimonial.name }}</h3>
-                                        <p class="text-indigo-600 dark:text-indigo-400">{{ testimonial.role }}</p>
+        <!-- Categories Section -->
+        <section class="py-32 bg-gray-50 dark:bg-gray-900">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-24">
+                    <h2 class="text-5xl font-light text-gray-900 dark:text-white mb-6 tracking-tight">Popular Categories</h2>
+                    <p class="text-xl font-light text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Explore our most in-demand courses</p>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+                    <div v-for="category in categories" :key="category.name" class="category-card">
+                        <div class="text-4xl mb-4">{{ category.icon }}</div>
+                        <h3 class="font-medium text-gray-900 dark:text-white mb-2 tracking-tight">{{ category.name }}</h3>
+                        <p class="text-sm font-light text-gray-500 dark:text-gray-400">{{ category.courses }} courses</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section class="py-32">
+            <div class="max-w-5xl mx-auto px-6">
+                <div class="text-center mb-24">
+                    <h2 class="text-5xl font-light text-gray-900 dark:text-white mb-6 tracking-tight">Student Success</h2>
+                    <p class="text-xl font-light text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Real stories from our community</p>
+                </div>
+                
+                <div class="relative">
+                    <div class="testimonial-slider">
+                        <div v-for="(testimonial, index) in testimonials" :key="index" 
+                             class="testimonial-slide" 
+                             :class="{ 'active': currentSlide === index }">
+                            <div class="testimonial-content">
+                                <blockquote class="text-2xl font-light text-gray-700 dark:text-gray-300 mb-8 leading-relaxed">
+                                    "{{ testimonial.quote }}"
+                                </blockquote>
+                                <div class="flex items-center justify-center space-x-6">
+                                    <img :src="testimonial.avatar" :alt="testimonial.name" class="w-16 h-16 rounded-full" />
+                                    <div class="text-left">
+                                        <div class="font-medium text-gray-900 dark:text-white text-lg">{{ testimonial.name }}</div>
+                                        <div class="font-light text-gray-500 dark:text-gray-400">{{ testimonial.role }} at {{ testimonial.company }}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="mt-12 text-center">
-                        <button class="bg-white dark:bg-slate-800 border border-indigo-600 text-indigo-600 dark:text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-600 hover:text-white transition duration-300 shadow-md">
-                            عرض المزيد من الآراء
-                        </button>
+                    
+                    <!-- Slide Indicators -->
+                    <div class="flex justify-center space-x-3 mt-12">
+                        <button v-for="(_, index) in testimonials" :key="index" 
+                                @click="currentSlide = index" 
+                                class="slide-indicator" 
+                                :class="{ 'active': currentSlide === index }"></button>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- إضافة قسم "جاهز لبدء رحلة التعلم الخاصة بك؟" -->
-            <section class="py-20 bg-gradient-to-r from-indigo-600 to-purple-600 text-white relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-full">
-                    <div class="absolute top-10 left-10 w-40 h-40 bg-white opacity-10 rounded-full"></div>
-                    <div class="absolute bottom-10 right-10 w-60 h-60 bg-white opacity-10 rounded-full"></div>
-                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white opacity-5 rounded-full"></div>
-                </div>
-                <div class="container mx-auto px-4 text-center relative z-10">
-                    <h2 class="text-4xl md:text-5xl font-bold mb-8 leading-tight">جاهز لبدء رحلة التعلم الخاصة بك؟</h2>
-                    <p class="text-indigo-100 mb-12 text-xl max-w-2xl mx-auto">
-                        انضم إلى آلاف المتعلمين وابدأ رحلتك التعليمية اليوم مع أفضل المدربين والمحتوى التعليمي
-                    </p>
-                    <div class="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link href="/courses" class="bg-white text-indigo-600 px-10 py-4 rounded-lg font-bold hover:bg-indigo-50 transition duration-300 text-lg shadow-lg flex items-center justify-center">
-                            <i class="fas fa-graduation-cap mr-2"></i>
-                            عرض جميع الكورسات
-                        </Link>
-                        <Link href="/register" class="bg-transparent border-2 border-white text-white px-10 py-4 rounded-lg font-bold hover:bg-white hover:text-indigo-600 transition duration-300 text-lg shadow-lg flex items-center justify-center">
-                            <i class="fas fa-user-plus mr-2"></i>
-                            سجل الآن مجاناً
-                        </Link>
-                    </div>
-                    <div class="mt-12 flex justify-center space-x-8 rtl:space-x-reverse">
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-indigo-200 mr-2"></i>
-                            <span>ضمان استرداد المال</span>
-                        </div>
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-indigo-200 mr-2"></i>
-                            <span>دعم فني على مدار الساعة</span>
-                        </div>
-                        <div class="flex items-center">
-                            <i class="fas fa-check-circle text-indigo-200 mr-2"></i>
-                            <span>شهادات معتمدة</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
+        <!-- CTA Section -->
+        <section class="py-32 bg-black dark:bg-gray-900">
+            <div class="max-w-4xl mx-auto text-center px-6">
+                <h2 class="text-5xl font-light text-white mb-8 tracking-tight">Start Your Journey Today</h2>
+                <p class="text-xl font-light text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">Join thousands of learners who are already transforming their careers</p>
+                <Link :href="canRegister ? route('register') : route('login')" class="btn-cta">
+                    Get Started Free
+                </Link>
+            </div>
+        </section>
 
-        <!-- الفوتر -->
         <Footer />
     </div>
 </template>
 
 <style scoped>
+/* Apple-inspired Button System */
 .btn-primary {
-    @apply px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200;
+    @apply px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-all duration-300 shadow-sm hover:shadow-md;
 }
 
-.btn-secondary {
-    @apply px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors duration-200;
+.btn-ghost {
+    @apply px-8 py-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 rounded-full font-medium transition-all duration-300;
 }
 
-.gradient-bg {
-    background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
+.btn-hero {
+    @apply px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium text-lg shadow-sm hover:shadow-lg transition-all duration-300;
 }
 
-.video-container {
-    position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
-    overflow: hidden;
+.btn-outline {
+    @apply px-12 py-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-blue-600 hover:text-blue-600 rounded-full font-medium transition-all duration-300;
 }
 
-.video-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+.btn-cta {
+    @apply px-12 py-4 bg-white text-black hover:bg-gray-50 rounded-full font-medium text-lg shadow-sm hover:shadow-lg transition-all duration-300;
+}
+
+/* Navigation */
+.nav-link {
+    @apply text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white font-light transition-colors duration-300;
+}
+
+/* Apple-inspired Card Components */
+.metric-card {
+    @apply text-center transition-all duration-300;
+}
+
+.feature-card {
+    @apply bg-white dark:bg-gray-800 rounded-3xl p-8 border-0 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer;
+}
+
+.category-card {
+    @apply bg-white dark:bg-gray-800 rounded-3xl p-8 text-center border-0 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer;
+}
+
+/* Apple-inspired Testimonial Slider */
+.testimonial-slider {
+    @apply relative h-64;
+}
+
+.testimonial-slide {
+    @apply absolute inset-0 opacity-0 transition-opacity duration-700;
+}
+
+.testimonial-slide.active {
+    @apply opacity-100;
+}
+
+.testimonial-content {
+    @apply bg-white dark:bg-gray-800 rounded-3xl p-12 border-0 shadow-sm h-full flex flex-col justify-center;
+}
+
+.slide-indicator {
+    @apply w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all duration-300;
+}
+
+.slide-indicator.active {
+    @apply bg-black dark:bg-white w-8;
+}
+
+/* Apple-inspired Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .btn-hero, .btn-outline {
+        @apply px-8 py-3 text-base;
+    }
+    
+    .feature-card, .category-card {
+        @apply p-6;
+    }
+    
+    .testimonial-content {
+        @apply p-8;
+    }
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Apple-inspired Scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Apple-inspired Transitions */
+* {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition-duration: 300ms;
+}
+
+/* Typography Enhancements */
+h1, h2, h3 {
+    letter-spacing: -0.02em;
+}
+
+/* Backdrop Blur for Header */
+.backdrop-blur-sm {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 </style>

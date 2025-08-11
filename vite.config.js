@@ -29,8 +29,9 @@ export default defineConfig({
   plugins: [
     laravel({
       input: [
-        'resources/js/app.js'
-          ],
+        'resources/js/app.js',
+        'resources/js/Pages/Index/Welcome.vue' // Explicitly include Welcome.vue
+      ],
       ssr: ['resources/js/ssr.js'],
       refresh: true,
     }),

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عارض الفلوشارت - Laravel Brive</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .header h1 {
+            color: #1f2937;
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        .header p {
+            color: #6b7280;
+            margin: 10px 0 0 0;
+            font-size: 1.1rem;
+        }
+        .svg-container {
+            text-align: center;
+            overflow-x: auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .zoom-info {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .download-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-btn {
+            background: #10b981 !important;
+        }
+        .dropdown-btn:hover {
+            background: #059669 !important;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            border-radius: 6px;
+            z-index: 1;
+            right: 0;
+            border: 1px solid #e5e7eb;
+        }
+        .dropdown-content a {
+            color: #374151;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.2s;
+        }
+        .dropdown-content a:hover {
+            background-color: #f3f4f6;
+        }
+        .dropdown-content a:first-child {
+            border-radius: 6px 6px 0 0;
+        }
+        .dropdown-content a:last-child {
+            border-radius: 0 0 6px 6px;
+        }
+        .show {
+            display: block;
+        }
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ خريطة موقع Laravel Brive</h1>
+            <p>مخطط تفاعلي لهيكل منصة التعلم الإلكتروني</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="zoomIn()">🔍 تكبير</button>
+            <button class="btn" onclick="zoomOut()">🔍 تصغير</button>
+            <button class="btn" onclick="resetZoom()">↻ إعادة تعيين</button>
+            <div class="download-dropdown">
+                <button class="btn dropdown-btn" onclick="toggleDropdown()">💾 تحميل ▼</button>
+                <div class="dropdown-content" id="downloadDropdown">
+                    <a href="#" onclick="downloadSVG()">📄 تحميل SVG</a>
+                    <a href="#" onclick="downloadPDF()">📋 تحميل PDF</a>
+                    <a href="#" onclick="downloadReport()">📊 تحميل التقرير</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="zoom-info">
+            <span>مستوى التكبير: <span id="zoomLevel">100%</span></span>
+        </div>
+        
+        <div class="svg-container" id="svgContainer">
+            <div id="loadingMessage">⏳ جاري تحميل الفلوشارت...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentZoom = 1;
+        let svgElement = null;
+        
+        // Load SVG file
+        async function loadSVG() {
+            try {
+                const response = await fetch('./sitemap-flowchart.svg');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const svgText = await response.text();
+                
+                const container = document.getElementById('svgContainer');
+                container.innerHTML = svgText;
+                
+                svgElement = container.querySelector('svg');
+                if (svgElement) {
+                    // Make SVG responsive
+                    svgElement.style.maxWidth = '100%';
+                    svgElement.style.height = 'auto';
+                    svgElement.style.transition = 'transform 0.3s ease';
+                    
+                    // Show success message
+                    showMessage('✅ تم تحميل الفلوشارت بنجاح!', 'success');
+                } else {
+                    throw new Error('لم يتم العثور على عنصر SVG في الملف');
+                }
+            } catch (error) {
+                console.error('Error loading SVG:', error);
+                document.getElementById('svgContainer').innerHTML = 
+                    `<div class="error-message">
+                        ❌ خطأ في تحميل الفلوشارت: ${error.message}<br>
+                        <small>تأكد من وجود ملف sitemap-flowchart.svg في نفس المجلد</small>
+                    </div>`;
+            }
+        }
+        
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'success-message' : 'error-message';
+            messageDiv.innerHTML = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(messageDiv, container.querySelector('.controls'));
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+        
+        function zoomIn() {
+            if (svgElement && currentZoom < 3) {
+                currentZoom += 0.2;
+                updateZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (svgElement && currentZoom > 0.5) {
+                currentZoom -= 0.2;
+                updateZoom();
+            }
+        }
+        
+        function resetZoom() {
+            if (svgElement) {
+                currentZoom = 1;
+                updateZoom();
+            }
+        }
+        
+        function updateZoom() {
+            if (svgElement) {
+                svgElement.style.transform = `scale(${currentZoom})`;
+                document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+            }
+        }
+        
+        function toggleDropdown() {
+            document.getElementById('downloadDropdown').classList.toggle('show');
+        }
+        
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown-btn')) {
+                const dropdowns = document.getElementsByClassName('dropdown-content');
+                for (let i = 0; i < dropdowns.length; i++) {
+                    const openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+        
+        function downloadSVG() {
+            const link = document.createElement('a');
+            link.href = './sitemap-flowchart.svg';
+            link.download = 'laravel-brive-sitemap.svg';
+            link.click();
+            document.getElementById('downloadDropdown').classList.remove('show');
+            showMessage('✅ تم تحميل ملف SVG بنجاح!', 'success');
+        }
+        
+        function downloadPDF() {
+            if (!svgElement) {
+                showMessage('❌ لم يتم تحميل الفلوشارت بعد!', 'error');
+                return;
+            }
+            
+            try {
+                // Create canvas element
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas size based on SVG dimensions
+                const svgRect = svgElement.getBoundingClientRect();
+                const svgWidth = parseInt(svgElement.getAttribute('width')) || 1400;
+                const svgHeight = parseInt(svgElement.getAttribute('height')) || 1800;
+                
+                canvas.width = svgWidth;
+                canvas.height = svgHeight;
+                
+                // Convert SVG to data URL
+                const svgData = new XMLSerializer().serializeToString(svgElement);
+                const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+                const svgUrl = URL.createObjectURL(svgBlob);
+                
+                // Create image and draw to canvas
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+                    
+                    // Convert canvas to PDF using jsPDF
+                    if (typeof window.jsPDF !== 'undefined') {
+                        const { jsPDF } = window.jsPDF;
+                        const pdf = new jsPDF({
+                            orientation: svgWidth > svgHeight ? 'landscape' : 'portrait',
+                            unit: 'px',
+                            format: [svgWidth, svgHeight]
+                        });
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        pdf.addImage(imgData, 'PNG', 0, 0, svgWidth, svgHeight);
+                        pdf.save('laravel-brive-sitemap.pdf');
+                        
+                        showMessage('✅ تم تحميل ملف PDF بنجاح!', 'success');
+                    } else {
+                        // Fallback: download as PNG if jsPDF is not available
+                        const link = document.createElement('a');
+                        link.download = 'laravel-brive-sitemap.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        
+                        showMessage('✅ تم تحميل ملف PNG بنجاح! (PDF غير متاح)', 'success');
+                    }
+                    
+                    URL.revokeObjectURL(svgUrl);
+                };
+                
+                img.onerror = function() {
+                    showMessage('❌ خطأ في تحويل SVG إلى صورة', 'error');
+                    URL.revokeObjectURL(svgUrl);
+                };
+                
+                img.src = svgUrl;
+                
+            } catch (error) {
+                console.error('Error converting to PDF:', error);
+                showMessage('❌ خطأ في تحويل الملف إلى PDF', 'error');
+            }
+            
+            document.getElementById('downloadDropdown').classList.remove('show');
+        }
+        
+        function downloadReport() {
+            const link = document.createElement('a');
+            link.href = './Laravel-Brive-Testing-Report.md';
+            link.download = 'Laravel-Brive-Testing-Report.md';
+            link.click();
+            document.getElementById('downloadDropdown').classList.remove('show');
+            showMessage('✅ تم تحميل تقرير الاختبار بنجاح!', 'success');
+        }
+        
+        // Load SVG when page loads
+        window.addEventListener('load', loadSVG);
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '=':
+                    case '+':
+                        e.preventDefault();
+                        zoomIn();
+                        break;
+                    case '-':
+                        e.preventDefault();
+                        zoomOut();
+                        break;
+                    case '0':
+                        e.preventDefault();
+                        resetZoom();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -92,4 +92,21 @@ class Course extends Model
             ? sprintf('%dh %02dm', $hours, $minutes)
             : sprintf('%dm', $minutes);
     }
+
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    // Get quizzes by domain
+    public function getQuizzesByDomain($domain)
+    {
+        return $this->quizzes()->byDomain($domain)->get();
+    }
+
+    // Get quizzes by chapter
+    public function getQuizzesByChapter($chapter)
+    {
+        return $this->quizzes()->byChapter($chapter)->get();
+    }
 }

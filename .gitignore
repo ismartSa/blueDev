@@ -18,3 +18,18 @@ yarn-error.log
 /.vscode
 .DS_Store
 .qodo
+
+# Backup files
+backups/
+*.tar.gz
+*.zip
+# Unwanted files
+Untitled-*
+quizzz*
+*-viewer.html
+*.tmp
+*.temp
+*.bak
+*.old
+test-*
+demo-*

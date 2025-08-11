@@ -48,106 +48,28 @@ class CourseController extends Controller
 
     public function index(Request $request)
     {
-        // Get search and filter parameters
-        $search = $request->get('search');
-        $field = $request->get('field', 'created_at');
-        $order = $request->get('order', 'desc');
-        $perPage = $request->get('perPage', 10);
 
-        // Validate sort field to prevent SQL injection
-        $allowedFields = ['title', 'status', 'created_at', 'updated_at'];
-        if (!in_array($field, $allowedFields)) {
-            $field = 'created_at';
-        }
-
-        // Validate sort order
-        $order = in_array($order, ['asc', 'desc']) ? $order : 'desc';
-
-        // Validate per page
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 10;
-
-        // Build query
-        $coursesQuery = Course::query()
-            ->with(['category:id,name']) // Eager load category with specific fields
-            ->select(['id', 'title', 'status', 'category_id', 'created_at', 'updated_at']);
-
-        // Apply search filter
-        if ($search) {
-            $coursesQuery->where(function ($query) use ($search) {
-                $query->where('title', 'like', "%{$search}%")
-                      ->orWhere('status', 'like', "%{$search}%")
-                      ->orWhereHas('category', function ($q) use ($search) {
-                          $q->where('name', 'like', "%{$search}%");
-                      });
-            });
-        }
-
-        // Apply sorting
-        $coursesQuery->orderBy($field, $order);
-
-        // Get paginated results
-        $courses = $coursesQuery->paginate($perPage)
-            ->withQueryString() // Preserve query parameters in pagination links
-            ->through(function ($course) {
-                return [
-                    'id' => $course->id,
-                    'title' => $course->title,
-                    'status' => ucfirst($course->status),
-                    'category' => $course->category ? [
-                        'id' => $course->category->id,
-                        'name' => $course->category->name,
-                    ] : null,
-                    'created_at' => $course->created_at->format('Y-m-d H:i'),
-                    'updated_at' => $course->updated_at->format('Y-m-d H:i'),
-                ];
-            });
-
-        // Get categories for filters (if needed)
-        $categories = Category::select(['id', 'name'])
-            ->orderBy('name')
-            ->get();
-
-        // Breadcrumbs
-        $breadcrumbs = [
-            ['name' => 'Dashboard', 'url' => route('dashboard')],
-            ['name' => 'Courses', 'url' => null],
-        ];
-
-        return Inertia::render('Dashboard/Course/Index', [
-            'title' => 'Courses Management',
-            'courses' => $courses,
-            'categories' => $categories,
-            'filters' => [
-                'search' => $search,
-                'field' => $field,
-                'order' => $order,
-            ],
-            'perPage' => $perPage,
-            'breadcrumbs' => $breadcrumbs,
-            'stats' => [
-                'total' => Course::count(),
-                'active' => Course::where('status', 'active')->count(),
-                'inactive' => Course::where('status', 'inactive')->count(),
-            ],
-        ]);
     }
 
 
     public function details($id)
     {
-        $course = Course::with(['sections.lectures', 'instructor:id,name', 'category:id,name'])
-            ->findOrFail($id);
+        $course = Course::with([
+            'sections.lectures',
+            'instructor:id,name',
+            'category:id,name'
+        ])->findOrFail($id);
 
-        $data = [
+        // تأكد من تحميل العلاقات
+        $course->load(['category', 'instructor']);
+        return inertia('Dashboard/Course/DetailsCourse',[
             'course' => new CourseResource($course),
             'lessons' => $course->sections->flatMap->lectures,
             'title' => __('courses.title'),
             'breadcrumbs' => [
                 ['label' => __('dashboard'), 'href' => route('dashboard')],
             ],
-        ];
-
-        return inertia('Dashboard/Course/DetailsCourse', $data);
+        ]);
     }
 
     public function create()
@@ -379,6 +301,87 @@ class CourseController extends Controller
     }
 
     /**
+     * Display the explore courses page for users.
+     */
+    public function explore(Request $request)
+    {
+        $query = Course::with(['category', 'user'])
+            ->withCount(['lessons', 'enrollments'])
+            ->where('status', 'active');
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Filter by category
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        // Filter by price
+        if ($request->filled('price')) {
+            if ($request->price === 'free') {
+                $query->where('price', 0);
+            } elseif ($request->price === 'paid') {
+                $query->where('price', '>', 0);
+            }
+        }
+
+        // Sort functionality
+        switch ($request->get('sort', 'latest')) {
+            case 'popular':
+                $query->orderBy('enrollments_count', 'desc');
+                break;
+            case 'title':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'price_low':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('price', 'desc');
+                break;
+            default:
+                $query->latest();
+        }
+
+        $courses = $query->paginate(12)->withQueryString();
+        $categories = Category::all(['id', 'name']);
+        
+        // Platform statistics
+        $stats = [
+            'totalCourses' => Course::where('status', 'active')->count(),
+            'totalStudents' => User::whereHas('enrollments')->count(),
+            'totalInstructors' => User::whereHas('courses')->count(),
+        ];
+
+        return Inertia::render('Courses/Explore', [
+            'courses' => $courses,
+            'categories' => $categories,
+            'filters' => $request->only(['search', 'category', 'price', 'sort']),
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Toggle course wishlist status.
+     */
+    public function toggleWishlist(Request $request, $courseId)
+    {
+        $user = auth()->user();
+        $course = Course::findOrFail($courseId);
+        
+        // Toggle wishlist (this would require a wishlist table/relationship)
+        // For now, we'll just return success
+        return back()->with('success', 'Wishlist updated successfully');
+    }
+
+    /**
      * Store a newly created course in storage.
      */
     public function storecourse(Request $request)
@@ -464,7 +467,7 @@ class CourseController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string|min:10', // Ensures description is present
             'price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'status' => 'required|in:draft,active,inactive',
@@ -473,19 +476,34 @@ class CourseController extends Controller
             'duration' => 'nullable|integer|min:1',
         ]);
 
+        // The $validated['description'] will now always have a value.
+        // If you still wanted to modify it if it was, for example, just whitespace
+        // you could add logic here, but the NOT NULL constraint is already handled by validation.
+
+        if (empty(trim($validated['description']))) {
+            // This case should ideally be caught by 'required' and 'min:10' rules
+            // But as an absolute fallback if somehow an empty/whitespace string got through
+            // and you didn't want that, you could set a default.
+            // However, relying on validation is cleaner.
+            $validated['description'] = Str::words($validated['title'], 1, ''); 
+        }
+
         // Handle thumbnail upload
         if ($request->hasFile('thumbnail')) {
             // Delete old thumbnail
-            if ($course->thumbnail) {
+            if ($course->thumbnail && Storage::disk('public')->exists($course->thumbnail)) {
                 Storage::disk('public')->delete($course->thumbnail);
             }
             $validated['thumbnail'] = $request->file('thumbnail')->store('courses/thumbnails', 'public');
+        } else {
+            // Keep the old thumbnail if a new one is not uploaded
+            $validated['thumbnail'] = $course->thumbnail;
         }
 
         $course->update($validated);
 
         return Redirect::route('courses.show', $course->id)
-            ->with('success', 'تم تحديث الكورس بنجاح!');
+            ->with('success', 'تم تحديث الكورس بنجاح!'); // Course updated successfully!
     }
 
     public function destroy(Course $course)

@@ -1,81 +1,137 @@
 
 <script setup>
-// يمكنك إضافة أي منطق أو بيانات مطلوبة هنا
+import { computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+import { HeartIcon, CodeBracketIcon, AcademicCapIcon, MapPinIcon, PhoneIcon, EnvelopeIcon } from '@heroicons/vue/24/outline'
+
+const page = usePage()
+const currentYear = new Date().getFullYear()
+const appName = computed(() => page.props.app.name)
+
+// Dynamic footer configuration
+const footerSections = {
+    courses: [
+        { name: 'Web Development', href: '/explore?category=web' },
+        { name: 'Data Science', href: '/explore?category=data' },
+        { name: 'Digital Marketing', href: '/explore?category=marketing' },
+        { name: 'Design', href: '/explore?category=design' },
+        { name: 'Business', href: '/explore?category=business' }
+    ],
+    quickLinks: [
+        { name: 'About', href: '/about' },
+        { name: 'Instructors', href: '/instructors' },
+        { name: 'FAQ', href: '/faq' },
+        { name: 'Privacy Policy', href: '/privacy' },
+        { name: 'Terms of Service', href: '/terms' }
+    ],
+    contact: [
+        { icon: MapPinIcon, text: 'Riyadh, Saudi Arabia' },
+        { icon: PhoneIcon, text: '+966 12 345 6789' },
+        { icon: EnvelopeIcon, text: 'info@brive.com' }
+    ]
+}
+
+const socialLinks = [
+    { name: 'GitHub', href: 'https://github.com/erikwibowo', icon: CodeBracketIcon },
+    { name: 'Website', href: 'https://brive.erikwibowo.com', icon: AcademicCapIcon }
+]
 </script>
 
 <template>
-    <footer class="bg-gray-900 text-gray-400 py-12">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <div class="flex items-center mb-4">
-                        <div class="bg-white rounded-full p-2 mr-3">
-                            <i class="fas fa-graduation-cap text-indigo-600"></i>
+    <footer class="bg-gray-900 dark:bg-black text-gray-400 py-16">
+        <!-- Main Footer Content -->
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+                <!-- Brand Section -->
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-blue-600 rounded-full">
+                            <AcademicCapIcon class="h-6 w-6 text-white" />
                         </div>
-                        <h3 class="text-white text-xl font-bold">أكاديمية النخبة</h3>
+                        <h3 class="text-white text-2xl font-bold tracking-tight">{{ appName }}</h3>
                     </div>
-                    <p class="mb-4">
-                        نقدم كورسات فيديو احترافية في مختلف المجالات لتطوير مهاراتك ومسيرتك المهنية.
+                    <p class="text-gray-400 leading-relaxed max-w-xs">
+                        Empowering learners worldwide with quality online education and professional development courses.
                     </p>
                     <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-youtube"></i>
+                        <a 
+                            v-for="social in socialLinks" 
+                            :key="social.name"
+                            :href="social.href" 
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-3 rounded-lg bg-gray-800 hover:bg-blue-600 text-gray-400 hover:text-white transition-all duration-300 group"
+                            :title="social.name"
+                        >
+                            <component :is="social.icon" class="h-5 w-5" />
                         </a>
                     </div>
                 </div>
 
-                <div>
-                    <h4 class="text-white text-lg font-bold mb-4">الكورسات</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-white transition">تطوير الويب</a></li>
-                        <li><a href="#" class="hover:text-white transition">تحليل البيانات</a></li>
-                        <li><a href="#" class="hover:text-white transition">التسويق الرقمي</a></li>
-                        <li><a href="#" class="hover:text-white transition">إدارة المشاريع</a></li>
-                        <li><a href="#" class="hover:text-white transition">التصميم الجرافيكي</a></li>
+                <!-- Courses Section -->
+                <div class="space-y-6">
+                    <h4 class="text-white text-lg font-semibold uppercase tracking-wider">Popular Courses</h4>
+                    <ul class="space-y-3">
+                        <li v-for="course in footerSections.courses" :key="course.name">
+                            <a 
+                                :href="course.href" 
+                                class="text-gray-400 hover:text-white hover:translate-x-1 transition-all duration-200 block"
+                            >
+                                {{ course.name }}
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
-                <div>
-                    <h4 class="text-white text-lg font-bold mb-4">روابط سريعة</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-white transition">عن الأكاديمية</a></li>
-                        <li><a href="#" class="hover:text-white transition">المدربون</a></li>
-                        <li><a href="#" class="hover:text-white transition">الأسئلة الشائعة</a></li>
-                        <li><a href="#" class="hover:text-white transition">سياسة الخصوصية</a></li>
-                        <li><a href="#" class="hover:text-white transition">شروط الاستخدام</a></li>
+                <!-- Quick Links Section -->
+                <div class="space-y-6">
+                    <h4 class="text-white text-lg font-semibold uppercase tracking-wider">Quick Links</h4>
+                    <ul class="space-y-3">
+                        <li v-for="link in footerSections.quickLinks" :key="link.name">
+                            <a 
+                                :href="link.href" 
+                                class="text-gray-400 hover:text-white hover:translate-x-1 transition-all duration-200 block"
+                            >
+                                {{ link.name }}
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
-                <div>
-                    <h4 class="text-white text-lg font-bold mb-4">اتصل بنا</h4>
-                    <ul class="space-y-2">
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2 text-indigo-400"></i>
-                            <span>الرياض، المملكة العربية السعودية</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-phone-alt mr-2 text-indigo-400"></i>
-                            <span>+966 12 345 6789</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope mr-2 text-indigo-400"></i>
-                            <span>info@elite-academy.com</span>
+                <!-- Contact Section -->
+                <div class="space-y-6">
+                    <h4 class="text-white text-lg font-semibold uppercase tracking-wider">Contact Info</h4>
+                    <ul class="space-y-4">
+                        <li v-for="contact in footerSections.contact" :key="contact.text" class="flex items-center space-x-3">
+                            <component :is="contact.icon" class="h-5 w-5 text-blue-400 flex-shrink-0" />
+                            <span class="text-gray-400">{{ contact.text }}</span>
                         </li>
                     </ul>
                 </div>
             </div>
+        </div>
 
-            <div class="border-t border-gray-800 mt-12 pt-8 text-center">
-                <p>© 2023 أكاديمية النخبة. جميع الحقوق محفوظة.</p>
+        <!-- Bottom Bar -->
+        <div class="border-t border-gray-800 mt-16 pt-8">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    <div class="text-gray-400 text-sm">
+                        © {{ currentYear }} {{ appName }}. All rights reserved.
+                    </div>
+                    <div class="flex items-center space-x-2 text-sm text-gray-400">
+                        <span>Made with</span>
+                        <HeartIcon class="h-4 w-4 text-red-500 animate-pulse" />
+                        <span>by</span>
+                        <a 
+                            href="https://github.com/erikwibowo" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            class="font-medium text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                        >
+                            Erik Wibowo
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>

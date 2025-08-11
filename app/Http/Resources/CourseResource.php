@@ -16,6 +16,17 @@ class CourseResource extends JsonResource
             'price' => $this->price,
             'status' => $this->status,
             'intro_video' => $this->intro_video,
+            'slug' => $this->slug,
+            'image' => $this->image,
+            'thumbnail' => $this->thumbnail,
+            'category' => $this->category ? [
+                'id' => $this->category->id,
+                'name' => $this->category->name,
+            ] : null,
+            'instructor' => $this->instructor ? [
+                'id' => $this->instructor->id,
+                'name' => $this->instructor->name,
+            ] : null,
             'sections' => $this->whenLoaded('sections', function() {
                 return SectionResource::collection($this->sections)->additional([
                     'total_count' => $this->sections->count(),
@@ -23,7 +34,7 @@ class CourseResource extends JsonResource
                         return $section->lectures && $section->lectures->isNotEmpty();
                     })
                 ]);
-            }, []),  // Add empty array as default value
+            }, []),
             'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
             'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null
         ];

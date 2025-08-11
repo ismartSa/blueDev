@@ -15,11 +15,14 @@ class CourseStoreRequest extends FormRequest
     {
         return [
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'duration' => 'required|integer|min:1',
-            'price' => 'required|numeric|min:0',
-            'status' => 'required|in:active,draft',
-            'intro_video' => 'nullable|url'
+            'description' => 'nullable|string',
+            'duration' => 'nullable|numeric|min:0.5', // Changed to nullable and numeric
+            'price' => 'nullable|numeric|min:0',      // Changed to nullable
+            'status' => 'required|in:active,draft,inactive',
+            'category_id' => 'nullable|exists:categories,id',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'level' => 'nullable|in:beginner,intermediate,advanced',
+            'language' => 'nullable|in:en,ar,fr,es'
         ];
     }
 

@@ -11,10 +11,13 @@ use App\Http\Controllers\{
     SectionController,
     GoogleController,
     QuizController,
-    QuestionController
+    QuestionController,
+    CategoryController,
+    SettingsController,
 };
+use App\Http\Controllers\Course\CourseContentController;
 use App\Http\Controllers\Opt\OptController;
-use Illuminate\Support\Facades\{Route, Session};
+use Illuminate\Support\Facades\{Route, Session, Cache, DB, App};
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
 
@@ -60,6 +63,10 @@ Route::post('/user/login-as', [UserController::class, 'loginAsUser'])->name('use
 | Public Course Routes
 |--------------------------------------------------------------------------
 */
+// Public explore route - no authentication required
+Route::get('/courses/explore', [CourseController::class, 'explore'])->name('courses.explore');
+
+// Protected course routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('courses')->name('courses.')->group(function () {
         Route::get('/', [CourseController::class, 'index'])->name('index');
@@ -69,6 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{courseId}/player/{courseSlug}', [CourseController::class, 'coursePlayer'])->name('player');
         Route::get('/{courseId}/player/{courseSlug}/watch/{lectureID}', [CourseController::class, 'watchLecture'])->name('watch');
         Route::post('/lectures/mark-completed', [CourseController::class, 'markLectureAsCompleted'])->name('lecture.complete');
+        Route::post('/{courseId}/wishlist/toggle', [CourseController::class, 'toggleWishlist'])->name('wishlist.toggle');
     });
 });
 
@@ -139,16 +147,16 @@ Route::get('/dashboard', function () {
         ->prefix('courses')
         ->name('courses.')
         ->group(function () {
-            Route::get('/create', [CourseController::class, 'create'])->name('create'); // تأكد من وجود هذا المسار
-            Route::post('/', [CourseController::class, 'store'])->name('store'); // تأكد من وجود هذا المسار
-           // Route::resource('', CourseController::class)->except(['index', 'show', 'create', 'store']);
+            Route::get('/create', [CourseController::class, 'create'])->name('create');
+            Route::post('/', [CourseController::class, 'store'])->name('store');
             Route::post('/destroy-bulk', [CourseController::class, 'destroyBulk'])->name('destroy-bulk');
             Route::get('{courseId}/details/', [CourseController::class, 'details'])->name('details.show');
-            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('edit'); // Fixed: removed duplicate 'courses.'
 
             // Lecture and Section Management
             Route::prefix('{course}')->group(function () {
                 Route::get('/lecture/create', [CourseController::class, 'createLecture'])->name('lecture.create');
+                Route::post('/lecture', [CourseContentController::class, 'storeLecture'])->name('lecture.store');
                 Route::post('/sections', [CourseController::class, 'storeSection'])->name('sections.store');
                 Route::post('/sections/{section}/lectures', [CourseController::class, 'storeLecture'])->name('sections.lectures.store');
                 Route::delete('/sections/{section}', [CourseController::class, 'destroySection'])->name('sections.destroy');
@@ -173,6 +181,22 @@ Route::get('/dashboard', function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Settings Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['can:manage courses'])
+        ->prefix('admin/settings')
+        ->name('admin.settings.')
+        ->group(function () {
+            Route::get('/', [SettingsController::class, 'index'])->name('index');
+            Route::post('/update', [SettingsController::class, 'update'])->name('update');
+            Route::post('/upload/{key}', [SettingsController::class, 'uploadFile'])->name('upload');
+            Route::get('/get/{key}', [SettingsController::class, 'getSetting'])->name('get');
+            Route::post('/reset', [SettingsController::class, 'reset'])->name('reset');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
     | Quiz Routes
     |--------------------------------------------------------------------------
     */
@@ -191,6 +215,7 @@ Route::get('/dashboard', function () {
 
             Route::prefix('{quiz}')->group(function () {
                 Route::get('/', [QuizController::class, 'show'])->name('show');
+                Route::get('/edit', [QuizController::class, 'edit'])->name('edit')->middleware('can:update quiz'); // Add this line
                 Route::put('/', [QuizController::class, 'update'])->name('update')->middleware('can:update quiz');
                 Route::delete('/', [QuizController::class, 'destroy'])->name('destroy')->middleware('can:delete quiz');
 
@@ -238,4 +263,40 @@ Route::middleware(['auth', 'admin'])
     // Main Opt Routes
     Route::get('/opt', [OptController::class, 'index'])->name('opt.index');
 Route::post('/opt/convert', [OptController::class, 'convertToSql'])->name('opt.convert');
+
+
+// Course Management Routes
+Route::prefix('courses')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'index'])->name('courses.index');
+    Route::get('/create', [\App\Http\Controllers\Course\CourseManagementController::class, 'create'])->name('courses.create');
+    Route::post('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'store'])->name('courses.store');
+
+    // Course Content Routes
+    Route::prefix('{course}')->group(function () {
+        Route::post('/sections', [\App\Http\Controllers\Course\CourseContentController::class, 'storeSection']);
+        Route::post('/lectures', [\App\Http\Controllers\Course\CourseContentController::class, 'storeLecture']);
+    });
+
+    // Enrollment Routes
+    Route::post('/{course}/enroll', [\App\Http\Controllers\Course\CourseEnrollmentController::class, 'enroll'])->name('courses.enroll');
+});
+
+// Quiz routes
+Route::get('/courses/{course}/quizzes', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuizzes'])->name('course.quizzes');
+Route::get('/courses/{course}/quiz/{quiz}', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuiz'])->name('course.quiz.show');
+Route::post('/quiz/{quiz}/submit', [\App\Http\Controllers\Course\CourseContentController::class, 'submitQuiz'])->name('quiz.submit');
+
+// Quiz management routes
+Route::post('/courses/{course}/quiz/create', [CourseContentController::class, 'createQuiz'])->name('course.quiz.create');
+Route::post('/quiz/{quiz}/question', [CourseContentController::class, 'storeQuestion'])->name('quiz.question.store');
+// Add this route for course updates
+Route::put('/courses/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'update'])->name('courses.update');
+// Add this in the admin middleware group around line 125
+Route::prefix('category')->name('category.')->group(function () {
+    Route::get('/', [CategoryController::class, 'index'])->name('index');
+    Route::post('/', [CategoryController::class, 'store'])->name('store');
+    Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+    Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+    Route::post('/destroy-bulk', [CategoryController::class, 'destroyBulk'])->name('destroy-bulk');
+});
 

@@ -1,0 +1,79 @@
+# Deployment ignore file
+# Files and directories to exclude from deployment
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Development files
+.env.example
+.editorconfig
+phpunit.xml
+phpunit.xml.bak
+
+# Node modules and build files
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Composer
+vendor/
+composer.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+storage/logs/
+*.log
+
+# Cache
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+backups/
+
+# Testing
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Documentation
+README.md
+*.md
+
+# Deployment scripts (optional)
+deployment/
+
+# Large files
+*.zip
+*.tar.gz
+*.sql
+
+# Unwanted development files
+Untitled-*
+quizzz*
+*-viewer.html
+test-*
+demo-*
+*.old
+
+# User uploads (be careful with this)
+# storage/app/public/uploads/

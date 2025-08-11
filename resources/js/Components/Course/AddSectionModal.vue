@@ -25,7 +25,7 @@
                         id="description"
                         class="mt-1 block w-full"
                         v-model="form.description"
-                        rows="4"
+                        rows="3"
                     />
                     <InputError class="mt-2" :message="form.errors.description" />
                 </div>

@@ -1,0 +1,23 @@
+Cleanup Report - Mon Aug 11 23:18:17 +03 2025
+================================
+
+Project: Laravel Brive
+Cleaned by: cleanup-unwanted-files.sh
+
+Files Removed:
+- Untitled-1
+- quizzz
+- report-viewer.html
+- unified-viewer.html
+
+Patterns Added to .gitignore:
+- # Unwanted files
+- Untitled-*
+- quizzz*
+- *-viewer.html
+- *.tmp
+- *.temp
+- *.bak
+- *.old
+- test-*
+- demo-*
