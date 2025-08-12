@@ -1,24 +1,23 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 group">
+  <div :class="cardClasses">
     <!-- Course Image -->
     <div class="relative overflow-hidden">
       <img
         :src="courseImage"
         :alt="course.title"
-        class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+        :class="imageClasses"
         loading="lazy"
       />
       
-      <!-- Price Badge -->
+      <!-- Dynamic Badges -->
       <div class="absolute top-3 right-3">
-        <span :class="priceClasses" class="px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
+        <span :class="badgeClasses.price">
           {{ priceText }}
         </span>
       </div>
       
-      <!-- Category Badge -->
       <div v-if="course.category" class="absolute top-3 left-3">
-        <span class="bg-black/50 text-white px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
+        <span :class="badgeClasses.category">
           {{ course.category.name }}
         </span>
       </div>
@@ -27,68 +26,51 @@
     <!-- Course Content -->
     <div class="p-6">
       <!-- Course Title -->
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+      <h3 :class="titleClasses">
         {{ course.title }}
       </h3>
       
       <!-- Course Description -->
-      <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+      <p :class="descriptionClasses">
         {{ course.description }}
       </p>
       
       <!-- Course Stats -->
-      <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
-        <div class="flex items-center gap-1">
-          <ClockIcon class="h-4 w-4" />
-          <span>{{ course.duration || '2h 30m' }}</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <UsersIcon class="h-4 w-4" />
-          <span>{{ course.enrollments_count || 0 }} {{ content.students }}</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <BookOpenIcon class="h-4 w-4" />
-          <span>{{ course.lessons_count || 0 }} {{ content.lessons }}</span>
+      <div :class="statsContainerClasses">
+        <div v-for="stat in courseStats" :key="stat.key" :class="statItemClasses">
+          <component :is="stat.icon" class="h-4 w-4" />
+          <span>{{ stat.value }}</span>
         </div>
       </div>
       
       <!-- Action Buttons -->
       <div class="space-y-2">
         <!-- Primary Action -->
-        <button
-          v-if="!course.user_enrolled"
-          @click="handleEnroll"
-          :disabled="enrolling"
-          class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+        <component
+          :is="primaryAction.component"
+          v-bind="primaryAction.props"
+          :class="primaryAction.classes"
+          @click="primaryAction.handler"
         >
-          <span v-if="enrolling" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-          {{ enrolling ? content.enrolling : content.enroll }}
-        </button>
-        
-        <Link
-          v-else
-          :href="route('courses.learn', { courseId: course.id, courseSlug: course.slug })"
-          class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <PlayIcon class="h-4 w-4" />
-          {{ content.continue }}
-        </Link>
+          <component v-if="primaryAction.icon" :is="primaryAction.icon" class="h-4 w-4" />
+          <span v-if="enrolling" :class="spinnerClasses"></span>
+          {{ primaryAction.text }}
+        </component>
         
         <!-- Secondary Actions -->
         <div class="flex gap-2">
           <Link
             :href="route('courses.details', { id: course.id, courseSlug: course.slug })"
-            class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2 px-4 rounded-lg transition-colors text-center text-sm"
+            :class="secondaryButtonClasses"
           >
             {{ content.details }}
           </Link>
           
           <button
             @click="toggleWishlist"
-            :class="wishlistClasses"
-            class="px-3 py-2 rounded-lg transition-colors"
+            :class="wishlistButtonClasses"
           >
-            <HeartIcon :class="course.is_wishlisted ? 'fill-current' : ''" class="h-4 w-4" />
+            <component :is="wishlistIcon" class="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -97,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import {
   ClockIcon,
@@ -106,6 +88,7 @@ import {
   PlayIcon,
   HeartIcon
 } from '@heroicons/vue/24/outline'
+import { HeartIcon as HeartIconSolid } from '@heroicons/vue/24/solid'
 
 // Props
 const props = defineProps({
@@ -120,34 +103,111 @@ const page = usePage()
 
 // Reactive state
 const enrolling = ref(false)
+const localWishlistStatus = ref(props.course.is_wishlisted)
+
+// Watch for prop changes to sync local state
+watch(() => props.course.is_wishlisted, (newValue) => {
+  localWishlistStatus.value = newValue
+})
 
 // Check if user is authenticated
 const isAuthenticated = computed(() => {
   return page.props.auth && page.props.auth.user
 })
 
-// Computed properties
-const courseImage = computed(() => {
-  if (props.course.image) return props.course.image
-  return `https://picsum.photos/seed/${props.course.id}/400/300`
-})
+// Dynamic computed properties for optimized rendering
+const courseImage = computed(() => 
+  props.course.image || `https://picsum.photos/seed/${props.course.id}/400/300`
+)
 
-const priceText = computed(() => {
-  if (props.course.price === 0 || !props.course.price) return content.value.free
-  return `$${props.course.price}`
-})
+const priceText = computed(() => 
+  (!props.course.price || props.course.price === 0) ? content.value.free : `$${props.course.price}`
+)
 
-const priceClasses = computed(() => {
-  const isFree = props.course.price === 0 || !props.course.price
-  return isFree
-    ? 'bg-green-500/90 text-white'
-    : 'bg-blue-500/90 text-white'
-})
+const isFree = computed(() => !props.course.price || props.course.price === 0)
+const isWishlisted = computed(() => localWishlistStatus.value)
+const isEnrolled = computed(() => props.course.user_enrolled)
 
-const wishlistClasses = computed(() => {
-  return props.course.is_wishlisted
-    ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400'
-    : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'
+// Dynamic class bindings for better performance
+const baseClasses = {
+  card: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 group',
+  image: 'w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105',
+  badge: 'px-3 py-1 rounded-full font-medium backdrop-blur-sm',
+  button: 'font-medium rounded-lg transition-colors flex items-center justify-center gap-2',
+  text: 'transition-colors'
+}
+
+const cardClasses = computed(() => baseClasses.card)
+const imageClasses = computed(() => baseClasses.image)
+
+const badgeClasses = computed(() => ({
+  price: `${baseClasses.badge} text-sm ${
+    isFree.value ? 'bg-green-500/90 text-white' : 'bg-blue-500/90 text-white'
+  }`,
+  category: `${baseClasses.badge} text-xs bg-black/50 text-white`
+}))
+
+const titleClasses = computed(() => 
+  `text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 ${baseClasses.text}`
+)
+
+const descriptionClasses = computed(() => 
+  'text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2'
+)
+
+const statsContainerClasses = computed(() => 
+  'flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4'
+)
+
+const statItemClasses = computed(() => 'flex items-center gap-1')
+
+const spinnerClasses = computed(() => 
+  'animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full'
+)
+
+const secondaryButtonClasses = computed(() => 
+  `flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 ${baseClasses.button} py-2 px-4 text-center text-sm`
+)
+
+const wishlistButtonClasses = computed(() => 
+  `px-3 py-2 rounded-lg ${baseClasses.text} ${
+    isWishlisted.value
+      ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400'
+      : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'
+  }`
+)
+
+// Dynamic icon rendering
+const wishlistIcon = computed(() => isWishlisted.value ? HeartIconSolid : HeartIcon)
+
+// Dynamic course stats
+const courseStats = computed(() => [
+  { key: 'duration', icon: ClockIcon, value: props.course.duration || '2h 30m' },
+  { key: 'students', icon: UsersIcon, value: `${props.course.enrollments_count || 0} ${content.value.students}` },
+  { key: 'lessons', icon: BookOpenIcon, value: `${props.course.lessons_count || 0} ${content.value.lessons}` }
+])
+
+// Dynamic primary action
+const primaryAction = computed(() => {
+  if (isEnrolled.value) {
+    return {
+      component: Link,
+      props: { href: route('courses.learn', { courseId: props.course.id, courseSlug: props.course.slug }) },
+      classes: `w-full bg-green-600 hover:bg-green-700 text-white ${baseClasses.button} py-2.5 px-4`,
+      icon: PlayIcon,
+      text: content.value.continue,
+      handler: null
+    }
+  }
+  
+  return {
+    component: 'button',
+    props: { disabled: enrolling.value },
+    classes: `w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white ${baseClasses.button} py-2.5 px-4`,
+    icon: null,
+    text: enrolling.value ? content.value.enrolling : content.value.enroll,
+    handler: handleEnroll
+  }
 })
 
 // Content
@@ -181,10 +241,19 @@ const toggleWishlist = () => {
     return
   }
   
+  // Optimistically update the local state
+  const originalStatus = localWishlistStatus.value
+  localWishlistStatus.value = !localWishlistStatus.value
+  
   router.post(route('courses.wishlist.toggle', props.course.id), {}, {
     preserveScroll: true,
     onSuccess: () => {
-      // Update handled by parent component
+      // Reload page data to reflect wishlist changes
+      router.reload({ only: ['courses'] })
+    },
+    onError: () => {
+      // Revert optimistic update on error
+      localWishlistStatus.value = originalStatus
     }
   })
 }

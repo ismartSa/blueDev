@@ -14,9 +14,9 @@ use App\Services\LectureCountService;
 use App\Services\LectureProgressService;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\CourseStoreRequest;
-use Illuminate\{Support\Str, Http\Request, Support\Facades\Log, Support\Facades\Storage, Support\Facades\DB, Support\Facades\Hash};
-use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt };
-use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository, Http\Requests\UserUpdateRequest};
+use Illuminate\{Support\Str, Http\Request, Support\Facades\Auth, Support\Facades\Log, Support\Facades\Storage, Support\Facades\DB, Support\Facades\Hash};
+use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt, Wishlist };
+use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
 
 class CourseController extends Controller
 {
@@ -86,7 +86,7 @@ class CourseController extends Controller
             // إنشاء الكورس
             $course = new Course($request->except('image', 'sections'));
             $course->slug = Str::slug($request->title);
-            $course->user_id = auth()->id(); // تعيين المستخدم الحالي كمدرس للكورس
+            $course->user_id = Auth::id(); // تعيين المستخدم الحالي كمدرس للكورس
 
             if ($request->hasFile('image')) {
                 $imagePath = $request->file('image')->store('course_images', 'public');
@@ -186,7 +186,7 @@ class CourseController extends Controller
                 'category:id,name'
             ])->findOrFail($id);
 
-            $user = auth()->user();
+            $user = Auth::user();
             $sections = $course->sections;
 
             $statistics = [
@@ -225,7 +225,7 @@ class CourseController extends Controller
 
     public function enroll($courseId)
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $course = Course::findOrFail($courseId);
 
         $enrollment = Enrollment::firstOrCreate(
@@ -246,7 +246,7 @@ class CourseController extends Controller
         ])->with('success', 'Successfully enrolled in the course.');
     }
 
-    public function update(UserUpdateRequest $request, $id)
+    public function update(Request $request, $id)
     {
         DB::beginTransaction();
         try {
@@ -261,7 +261,7 @@ class CourseController extends Controller
             return back()->with('success', __('app.label.updated_successfully', ['name' => $user->name]));
         } catch (\Throwable $th) {
             DB::rollback();
-            return back()->with('error', __('app.label.updated_error', ['name' => $user->name]) . $th->getMessage());
+            return back()->with('error', __('app.label.updated_error', ['name' => 'User']) . $th->getMessage());
         }
     }
 
@@ -270,8 +270,8 @@ class CourseController extends Controller
      */
     public function indexcourse(Request $request)
     {
-        $query = Course::with(['category', 'lessons'])
-            ->withCount(['lessons', 'enrollments'])
+        $query = Course::with(['category', 'lectures'])
+            ->withCount(['lectures', 'enrollments'])
             ->latest();
 
         // Search functionality
@@ -305,9 +305,10 @@ class CourseController extends Controller
      */
     public function explore(Request $request)
     {
-        $query = Course::with(['category', 'user'])
-            ->withCount(['lessons', 'enrollments'])
-            ->where('status', 'active');
+        $query = Course::select(['id', 'title', 'slug', 'description', 'image', 'duration', 'price', 'status', 'category_id', 'user_id'])
+            ->with(['category', 'instructor'])
+            ->withCount(['lectures as lessons_count', 'enrollments'])
+            ->where('status', 1); // Use numeric status: 1 for active, 0 for inactive
 
         // Search functionality
         if ($request->filled('search')) {
@@ -350,12 +351,26 @@ class CourseController extends Controller
                 $query->latest();
         }
 
-        $courses = $query->paginate(12)->withQueryString();
+        // Add user-specific data for authenticated users
+        $user = Auth::user();
+        if ($user) {
+            $query->addSelect([
+                'user_enrolled' => DB::raw('EXISTS(SELECT 1 FROM enrollments WHERE enrollments.course_id = courses.id AND enrollments.user_id = ' . $user->id . ') as user_enrolled'),
+                'is_wishlisted' => DB::raw('EXISTS(SELECT 1 FROM wishlists WHERE wishlists.course_id = courses.id AND wishlists.user_id = ' . $user->id . ') as is_wishlisted')
+            ]);
+        } else {
+            $query->addSelect([
+                'user_enrolled' => DB::raw('0 as user_enrolled'),
+                'is_wishlisted' => DB::raw('0 as is_wishlisted')
+            ]);
+        }
+
+        $courses = $query->paginate(12)->appends(request()->query());
         $categories = Category::all(['id', 'name']);
-        
+
         // Platform statistics
         $stats = [
-            'totalCourses' => Course::where('status', 'active')->count(),
+            'totalCourses' => Course::where('status', 1)->count(), // Use numeric status
             'totalStudents' => User::whereHas('enrollments')->count(),
             'totalInstructors' => User::whereHas('courses')->count(),
         ];
@@ -373,12 +388,32 @@ class CourseController extends Controller
      */
     public function toggleWishlist(Request $request, $courseId)
     {
-        $user = auth()->user();
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login to add courses to wishlist');
+        }
+
+        $user = Auth::user();
         $course = Course::findOrFail($courseId);
-        
-        // Toggle wishlist (this would require a wishlist table/relationship)
-        // For now, we'll just return success
-        return back()->with('success', 'Wishlist updated successfully');
+
+        $existingWishlist = Wishlist::where('user_id', $user->id)
+            ->where('course_id', $courseId)
+            ->first();
+
+        if ($existingWishlist) {
+            // Remove from wishlist
+            $existingWishlist->delete();
+            $message = 'Course removed from wishlist';
+        } else {
+            // Add to wishlist
+            Wishlist::create([
+                'user_id' => $user->id,
+                'course_id' => $courseId,
+            ]);
+            $message = 'Course added to wishlist';
+        }
+
+        return back()->with('success', $message);
     }
 
     /**
@@ -403,7 +438,7 @@ class CourseController extends Controller
         }
 
         // Add creator
-        $validated['instructor_id'] = auth()->id();
+        $validated['instructor_id'] = Auth::id();
 
         $course = Course::create($validated);
 
@@ -485,7 +520,7 @@ class CourseController extends Controller
             // But as an absolute fallback if somehow an empty/whitespace string got through
             // and you didn't want that, you could set a default.
             // However, relying on validation is cleaner.
-            $validated['description'] = Str::words($validated['title'], 1, ''); 
+            $validated['description'] = Str::words($validated['title'], 1, '');
         }
 
         // Handle thumbnail upload
@@ -530,7 +565,7 @@ class CourseController extends Controller
     {
         $quizzes = $course->quizzes;
 
-        $quizHistory = QuizAttempt::where('user_id', auth()->id())
+        $quizHistory = QuizAttempt::where('user_id', Auth::id())
                                    ->where('course_id', $course->id)
                                    ->with('quiz:id,title')
                                    ->orderBy('created_at', 'desc')
@@ -693,11 +728,15 @@ class CourseController extends Controller
         }
 
         // إعداد بيانات المحاضرة مع خاصية 'completed'
-        $user = auth()->user();
-        $completedLectureIds = $user->lectureProgress()
-            ->where('completed', true)
-            ->pluck('lecture_id')
-            ->toArray();
+        $user = Auth::user();
+        $completedLectureIds = [];
+        if ($user) {
+            /** @var \App\Models\User $user */
+            $completedLectureIds = $user->lectureProgress()
+                ->where('completed', true)
+                ->pluck('lecture_id')
+                ->toArray();
+        }
 
         $lectureData = [
             'id' => $lecture->id,
@@ -878,11 +917,11 @@ class CourseController extends Controller
             // This would integrate with Laravel Excel package
             // For now, return basic course data as JSON
             $data = [
-                'course' => $course->load('lessons', 'enrollments.user'),
+                'course' => $course->load('lectures', 'enrollments.user'),
                 'stats' => [
                     'total_students' => $course->enrollments()->count(),
-                    'total_lessons' => $course->lessons()->count(),
-                    'total_duration' => $course->lessons()->sum('duration'),
+                    'total_lectures' => $course->lectures()->count(),
+                    'total_duration' => $course->lectures()->sum('duration'),
                  //   'completion_rate' => $this->calculateCompletionRate($course),
                 ]
             ];
@@ -891,23 +930,23 @@ class CourseController extends Controller
         }
 
         /**
-         * Reorder lessons within a course.
+         * Reorder lectures within a course.
          */
-        public function reorderLessons(Request $request, Course $course)
+        public function reordelecture(Request $request, Course $course)
         {
             $validated = $request->validate([
-                'lessons' => 'required|array',
-                'lessons.*.id' => 'required|exists:lessons,id',
-                'lessons.*.order' => 'required|integer|min:1',
+                'lectures' => 'required|array',
+                'lectures.*.id' => 'required|exists:lessons,id',
+                'lectures.*.order' => 'required|integer|min:1',
             ]);
 
             try {
                 DB::beginTransaction();
 
-                foreach ($validated['lessons'] as $lessonData) {
-                    Lecture::where('id', $lessonData['id'])
+                foreach ($validated['lectures'] as $lectureData) {
+                    Lecture::where('id', $lectureData['id'])
                         ->where('course_id', $course->id)
-                        ->update(['order' => $lessonData['order']]);
+                        ->update(['order' => $lectureData['order']]);
                 }
 
                 DB::commit();
@@ -963,7 +1002,7 @@ class CourseController extends Controller
          */
         private function getLessonCompletionRates(Course $course)
         {
-            return $course->lessons()
+            return $course->lectures()
                 ->withCount([
                     'progress',
                     'progress as completed_count' => function ($query) {
@@ -988,7 +1027,7 @@ class CourseController extends Controller
                 ->with(['user', 'progress.lesson'])
                 ->get()
                 ->map(function ($enrollment) {
-                    $totalLessons = $enrollment->course->lessons()->count();
+                    $totalLessons = $enrollment->course->lectures()->count();
                     $completedLessons = $enrollment->progress()->where('is_completed', true)->count();
 
                     $enrollment->progress_percentage = $totalLessons > 0

@@ -70,8 +70,29 @@
             <!-- Enrollment Section -->
             <div class="md:w-1/3 bg-gray-50 p-8 border-l border-gray-200">
               <div class="sticky top-8">
-                <div class="video-container mb-6 rounded-lg overflow-hidden">
-                  <iframe :src="course.preview_video" frameborder="0" allowfullscreen></iframe>
+                <div class="video-container mb-6 rounded-lg overflow-hidden bg-gray-100">
+                  <!-- Enhanced iframe with error handling -->
+                  <div v-if="isValidVideoUrl(course.preview_video)" class="relative">
+                    <iframe 
+                      :src="course.preview_video" 
+                      frameborder="0" 
+                      allowfullscreen
+                      class="w-full h-48 md:h-56"
+                      @error="handleIframeError"
+                      @load="handleIframeLoad"
+                    ></iframe>
+                    <!-- Loading overlay -->
+                     <div v-if="videoLoading" class="absolute inset-0 flex items-center justify-center bg-gray-100">
+                       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                     </div>
+                  </div>
+                  <!-- Fallback content for invalid or missing video -->
+                  <div v-else class="h-48 md:h-56 flex items-center justify-center bg-gray-100 text-gray-500">
+                    <div class="text-center">
+                      <i class="fas fa-video text-4xl mb-2 text-gray-400"></i>
+                      <p class="text-sm">Preview video not available</p>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="bg-indigo-50 p-4 rounded-lg mb-6" v-if="enrollmentStatus?.enrolled">
@@ -280,9 +301,11 @@
 
     data() {
       return {
-        activeTab: 'overview',
-        openSections: []
-      }
+         activeTab: 'overview',
+         openSections: [],
+         videoLoading: true,
+         videoError: false
+       }
     },
 
     methods: {
@@ -321,6 +344,27 @@
         } else {
           this.$inertia.post(route('enrollments.store', { course_id: this.course.id }))
         }
+      },
+
+      isValidVideoUrl(url) {
+        if (!url) return false
+        const validDomains = ['youtube.com', 'youtu.be', 'vimeo.com', 'wistia.com']
+        try {
+          const urlObj = new URL(url)
+          return validDomains.some(domain => urlObj.hostname.includes(domain))
+        } catch {
+          return false
+        }
+      },
+
+      handleIframeLoad() {
+        this.videoLoading = false
+        this.videoError = false
+      },
+
+      handleIframeError() {
+        this.videoLoading = false
+        this.videoError = true
       }
     }
   }

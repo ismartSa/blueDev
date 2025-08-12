@@ -76,7 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{courseId}/player/{courseSlug}', [CourseController::class, 'coursePlayer'])->name('player');
         Route::get('/{courseId}/player/{courseSlug}/watch/{lectureID}', [CourseController::class, 'watchLecture'])->name('watch');
         Route::post('/lectures/mark-completed', [CourseController::class, 'markLectureAsCompleted'])->name('lecture.complete');
-        Route::post('/{courseId}/wishlist/toggle', [CourseController::class, 'toggleWishlist'])->name('wishlist.toggle');
+        Route::post('/{courseId}/wishlist/toggle', [CourseController::class, 'toggleWishlist'])->name('courses.wishlist.toggle');
     });
 });
 

@@ -98,6 +98,11 @@ class Course extends Model
         return $this->hasMany(Quiz::class);
     }
 
+    public function lectures(): HasMany
+    {
+        return $this->hasMany(Lecture::class);
+    }
+
     // Get quizzes by domain
     public function getQuizzesByDomain($domain)
     {

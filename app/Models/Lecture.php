@@ -23,6 +23,11 @@ class Lecture extends Model
         'section_id'
     ];
 
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
     public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class);
