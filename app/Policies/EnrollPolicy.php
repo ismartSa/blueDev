@@ -12,31 +12,31 @@ class EnrollPolicy
     use HandlesAuthorization;
 
     /**
-     * تحديد ما إذا كان يمكن للمستخدم التسجيل في الدورة
+     * Determine if user can enroll in the course
      */
     public function enroll(User $user, Course $course): bool
     {
-        // التحقق من عدم وجود تسجيل سابق
-        $existingEnrollment = Enrollment::where('user_id', $user->id)
-            ->where('course_id', $course->id)
+        // Check for no existing enrollment
+        $existingEnrollment = Enrollment::where('user_id', $user->getKey())
+            ->where('course_id', $course->getKey())
             ->first();
 
         return !$existingEnrollment && $course->status;
     }
 
     /**
-     * تحديد ما إذا كان يمكن للمستخدم إلغاء التسجيل
+     * Determine if user can unenroll from course
      */
     public function unenroll(User $user, Enrollment $enrollment): bool
     {
-        return $user->id === $enrollment->user_id;
+        return $user->getKey() === $enrollment->user_id;
     }
 
     /**
-     * تحديد ما إذا كان يمكن للمستخدم عرض تقدمه
+     * Determine if user can view enrollment progress
      */
     public function viewProgress(User $user, Enrollment $enrollment): bool
     {
-        return $user->id === $enrollment->user_id || $user->hasRole('admin');
+        return $user->getKey() === $enrollment->user_id || $user->hasRole('admin');
     }
 }

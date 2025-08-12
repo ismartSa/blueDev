@@ -215,7 +215,8 @@ Route::get('/dashboard', function () {
                 ->middleware('can:view quiz reports');
 
             Route::prefix('{quiz}')->group(function () {
-                Route::get('/', [QuizController::class, 'show'])->name('show');
+
+                Route::get('/show', [QuizController::class, 'show'])->name('show');
                 Route::get('/edit', [QuizController::class, 'edit'])->name('edit')->middleware('can:update quiz'); // Add this line
                 Route::put('/', [QuizController::class, 'update'])->name('update')->middleware('can:update quiz');
                 Route::delete('/', [QuizController::class, 'destroy'])->name('destroy')->middleware('can:delete quiz');
@@ -239,7 +240,6 @@ Route::get('/dashboard', function () {
 
             Route::get('/template/download', [QuizController::class, 'downloadTemplate'])->name('template.download');
         });
-});
 
 /*
 |--------------------------------------------------------------------------

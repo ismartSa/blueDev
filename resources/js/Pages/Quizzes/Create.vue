@@ -26,57 +26,73 @@
 
             <!-- Step 1: Basic Information -->
             <div v-if="currentStep === 1">
-              <h3 class="text-lg font-semibold mb-4">Basic Information</h3>
-              <div class="mb-4">
-                <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
-                <input v-model="form.title" type="text" id="title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              </div>
-              <div class="mb-4">
-                <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Description</label>
-                <textarea v-model="form.description" id="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-              </div>
+              <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Basic Information</h3>
+              <FormField
+                v-model="form.title"
+                type="text"
+                label="Title"
+                field-id="title"
+                placeholder="Enter quiz title"
+                required
+              />
+              <FormField
+                v-model="form.description"
+                type="textarea"
+                label="Description"
+                field-id="description"
+                placeholder="Enter quiz description"
+                :rows="4"
+              />
             </div>
 
             <!-- Step 2: Quiz Settings -->
             <div v-if="currentStep === 2">
-              <h3 class="text-lg font-semibold mb-4">Quiz Settings</h3>
-              <div class="mb-4">
-                <label for="time_limit" class="block text-gray-700 text-sm font-bold mb-2">Time Limit (minutes)</label>
-                <input v-model="form.time_limit" type="number" id="time_limit" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              </div>
-              <div class="mb-4">
-                <label for="passing_score" class="block text-gray-700 text-sm font-bold mb-2">Passing Score (%)</label>
-                <input v-model="form.passing_score" type="number" id="passing_score" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              </div>
-              <div class="mb-4">
-                <label for="is_active" class="block text-gray-700 text-sm font-bold mb-2">
-                  <input v-model="form.is_active" type="checkbox" id="is_active" class="mr-2">
-                  Active Quiz
-                </label>
-              </div>
+              <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quiz Settings</h3>
+              <FormField
+                v-model="form.time_limit"
+                type="number"
+                label="Time Limit (minutes)"
+                field-id="time_limit"
+                placeholder="Enter time limit in minutes"
+                required
+              />
+              <FormField
+                v-model="form.passing_score"
+                type="number"
+                label="Passing Score (%)"
+                field-id="passing_score"
+                placeholder="Enter passing score percentage"
+                required
+              />
+              <FormField
+                v-model="form.is_active"
+                type="checkbox"
+                label="Quiz Status"
+                field-id="is_active"
+                checkbox-label="Active Quiz"
+              />
             </div>
 
             <!-- Step 3: Course Section (Optional) -->
             <div v-if="currentStep === 3">
-              <h3 class="text-lg font-semibold mb-4">Course Section (Optional)</h3>
-              <div class="mb-4">
-                <label for="course_id" class="block text-gray-700 text-sm font-bold mb-2">Course (Optional)</label>
-                <select v-model="form.course_id" id="course_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                  <option value="">Select a course (optional)</option>
-                  <option v-for="course in courses" :key="course.id" :value="course.id">
-                    {{ course.title }}
-                  </option>
-                </select>
-              </div>
-              <div v-if="form.course_id" class="mb-4">
-                <label for="section_id" class="block text-gray-700 text-sm font-bold mb-2">Section (Optional)</label>
-                <select v-model="form.section_id" id="section_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                  <option value="">Select a section (optional)</option>
-                  <option v-for="section in currentCourseSections" :key="section.id" :value="section.id">
-                    {{ section.title }}
-                  </option>
-                </select>
-              </div>
+              <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Course Section (Optional)</h3>
+              <FormField
+                v-model="form.course_id"
+                type="select"
+                label="Course (Optional)"
+                field-id="course_id"
+                placeholder="Select a course (optional)"
+                :options="courseOptions"
+              />
+              <FormField
+                v-if="form.course_id"
+                v-model="form.section_id"
+                type="select"
+                label="Section (Optional)"
+                field-id="section_id"
+                placeholder="Select a section (optional)"
+                :options="sectionOptions"
+              />
             </div>
 
             <!-- Step 4: Review -->
@@ -118,11 +134,13 @@
 <script>
 import { ref, computed } from 'vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormField from '@/Components/Form/FormField.vue'
 import { useForm } from '@inertiajs/vue3'
 
 export default {
   components: {
     AuthenticatedLayout,
+    FormField,
   },
   props: {
     courses: Array,
@@ -138,6 +156,16 @@ export default {
       is_active: true,
       course_id: '',
       section_id: '',
+    })
+
+    const courseOptions = computed(() => 
+      props.courses.map(course => ({ value: course.id, label: course.title }))
+    )
+
+    const sectionOptions = computed(() => {
+      if (!form.course_id) return []
+      const course = props.courses.find(c => c.id === form.course_id)
+      return course?.sections?.map(section => ({ value: section.id, label: section.title })) || []
     })
 
     const currentCourseSections = computed(() => {
@@ -184,6 +212,8 @@ export default {
       previousStep,
       submit,
       courses: props.courses,
+      courseOptions,
+      sectionOptions,
       currentCourseSections,
       getCourseTitle,
       getSectionTitle

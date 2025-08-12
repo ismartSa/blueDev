@@ -1,64 +1,58 @@
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue';
-import Modal from '@/Components/Modal.vue';
-import {
-    PlayIcon,
-    PauseIcon,
-    SpeakerWaveIcon,
-    SpeakerXMarkIcon,
-    ForwardIcon,
-    BackwardIcon,
-    XMarkIcon
-} from '@heroicons/vue/24/solid';
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 
-// Props definition
+// Props
 const props = defineProps({
-    show: { type: Boolean, default: false },
-    lesson: { type: Object, default: null },
+    lesson: { type: Object, required: true },
     lessons: { type: Array, default: () => [] },
     currentIndex: { type: Number, default: 0 },
-});
+    autoplay: { type: Boolean, default: false }
+})
 
-const emit = defineEmits(['close', 'next', 'previous']);
+// Emits
+const emit = defineEmits(['next', 'previous', 'progress', 'completed'])
 
 // Refs
-const videoPlayer = ref(null);
-const videoContainer = ref(null);
+const videoPlayer = ref(null)
+const progressBar = ref(null)
+const volumeBar = ref(null)
+const videoContainer = ref(null)
 
-// Reactive state - optimized structure
+// Reactive state - consolidated and optimized
 const state = reactive({
     isPlaying: false,
     currentTime: 0,
     duration: 0,
     volume: 1,
     isMuted: false,
+    isFullscreen: false,
     showControls: true,
+    buffered: 0,
     playbackRate: 1,
-    controlsTimeout: null,
-});
+    isLoading: true,
+    hasError: false,
+    controlsTimeout: null
+})
 
-// Computed properties - enhanced with better performance
-const progressPercentage = computed(() => 
-    state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0
-);
-
-const volumePercentage = computed(() => 
-    state.isMuted ? 0 : state.volume * 100
-);
-
-const currentIcon = computed(() => state.isPlaying ? PauseIcon : PlayIcon);
-const volumeIcon = computed(() => 
-    !state.isMuted && state.volume > 0 ? SpeakerWaveIcon : SpeakerXMarkIcon
-);
-
-const timeDisplay = computed(() => 
-    `${formatTime(state.currentTime)} / ${formatTime(state.duration)}`
-);
-
-const lessonInfo = computed(() => ({
+// Computed properties
+const videoInfo = computed(() => ({
     title: props.lesson?.title || '',
     position: `Lesson ${props.currentIndex + 1} of ${props.lessons.length}`
-}));
+}))
+
+const progressPercentage = computed(() => 
+    state.duration ? (state.currentTime / state.duration) * 100 : 0
+)
+
+const bufferedPercentage = computed(() => 
+    state.duration ? (state.buffered / state.duration) * 100 : 0
+)
+
+const formattedCurrentTime = computed(() => formatTime(state.currentTime))
+const formattedDuration = computed(() => formatTime(state.duration))
+const canGoNext = computed(() => props.currentIndex < props.lessons.length - 1)
+const canGoPrevious = computed(() => props.currentIndex > 0)
 
 // Helper functions
 const formatTime = (seconds) => {

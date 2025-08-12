@@ -13,12 +13,12 @@ class QuizPolicy
     use HandlesAuthorization;
 
     /**
-     * تحديد ما إذا كان يمكن للمستخدم بدء الاختبار
+     * Determine if user can attempt the quiz
      */
     public function attempt(User $user, Quiz $quiz): bool
     {
-        // التحقق من وجود تسجيل نشط
-        $enrollment = Enrollment::where('user_id', $user->id)
+        // Check for active enrollment
+        $enrollment = Enrollment::where('user_id', $user->getKey())
             ->where('course_id', $quiz->course_id)
             ->where('enrollment_status', 'confirmed')
             ->first();
@@ -27,19 +27,19 @@ class QuizPolicy
             return false;
         }
 
-        // التحقق من عدد المحاولات السابقة
-        $attempts = QuizAttempt::where('user_id', $user->id)
-            ->where('quiz_id', $quiz->id)
+        // Check previous attempts count
+        $attempts = QuizAttempt::where('user_id', $user->getKey())
+            ->where('quiz_id', $quiz->getKey())
             ->count();
 
-        return $attempts < 3; // السماح بثلاث محاولات كحد أقصى
+        return $attempts < 3; // Allow maximum 3 attempts
     }
 
     /**
-     * تحديد ما إذا كان يمكن للمستخدم عرض نتائج الاختبار
+     * Determine if user can view quiz results
      */
     public function viewResults(User $user, Quiz $quiz): bool
     {
-        return $user->id === $quiz->course->user_id || $user->hasRole('admin');
+        return $user->getKey() === $quiz->course->user_id || $user->hasRole('admin');
     }
 }

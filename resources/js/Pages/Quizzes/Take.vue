@@ -10,47 +10,22 @@
         <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <!-- Quiz Header -->
-            <div class="mb-8">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {{ quiz.title }}
-                </h2>
-                <div class="text-lg font-medium text-gray-900 dark:text-white">
-                  Time Remaining: {{ formatTime(timeRemaining) }}
-                </div>
-              </div>
-              <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5">
-                <div class="bg-indigo-600 h-2.5 rounded-full"
-                     :style="{ width: `${progress}%` }">
-                </div>
-              </div>
-            </div>
+            <QuizTimer 
+              :title="quiz.title"
+              :time-remaining="timeRemaining"
+              :current-question="currentQuestionIndex"
+              :total-questions="quiz.questions.length"
+            />
 
             <!-- Question -->
-            <div v-if="currentQuestion" class="mb-8">
-              <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Question {{ currentQuestionIndex + 1 }} of {{ quiz.questions.length }}
-              </h3>
-              <p class="text-gray-700 dark:text-gray-300 mb-6">
-                {{ currentQuestion.text }}
-              </p>
-              <div class="space-y-4">
-                <div v-for="answer in currentQuestion.answers"
-                     :key="answer.id"
-                     class="flex items-center p-4 border rounded-lg cursor-pointer transition-colors"
-                     :class="{
-                         'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/50': form.answers.find(a => a.question_id === currentQuestion.id && a.answer_id === answer.id),
-                         'border-gray-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500': !form.answers.find(a => a.question_id === currentQuestion.id && a.answer_id === answer.id)
-                     }"
-                     @click="selectAnswer(answer.id)">
-                  <div class="flex-1">
-                    <p class="text-gray-900 dark:text-white">
-                      {{ answer.text }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <QuizQuestion 
+              v-if="currentQuestion"
+              :question="currentQuestion"
+              :question-number="currentQuestionIndex + 1"
+              :total-questions="quiz.questions.length"
+              :selected-answers="form.answers"
+              @select-answer="handleAnswerSelect"
+            />
 
             <!-- Navigation -->
             <div class="flex justify-between">
@@ -86,12 +61,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Breadcrumb from '@/Components/Breadcrumb.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
-import { calculateScore, formatTime, calculateRemainingTime } from '@/Pages/Quizzes/utils/quizHelpers'
+import QuizTimer from '@/Components/Quiz/QuizTimer.vue'
+import QuizQuestion from '@/Components/Quiz/QuizQuestion.vue'
 
 const props = defineProps({
     quiz: {
@@ -113,15 +89,11 @@ const form = useForm({
 })
 
 const currentQuestionIndex = ref(0)
-const timeRemaining = ref(calculateRemainingTime(props.quiz.time_limit, 0))
+const timeRemaining = ref(props.quiz.time_limit * 60) // Convert minutes to seconds
 const timer = ref(null)
 const isSubmitting = ref(false)
 
 const currentQuestion = computed(() => props.quiz.questions[currentQuestionIndex.value])
-
-const progress = computed(() => {
-    return Math.round((currentQuestionIndex.value / props.quiz.questions.length) * 100)
-})
 
 const startTimer = () => {
     timer.value = setInterval(() => {
@@ -138,17 +110,13 @@ const stopTimer = () => {
     }
 }
 
-const selectAnswer = (answerId) => {
-    const questionId = currentQuestion.value.id
-    const existingAnswerIndex = form.answers.findIndex(a => a.question_id === questionId)
+const handleAnswerSelect = (answerData) => {
+    const existingAnswerIndex = form.answers.findIndex(a => a.question_id === answerData.question_id)
 
     if (existingAnswerIndex !== -1) {
-        form.answers[existingAnswerIndex].answer_id = answerId
+        form.answers[existingAnswerIndex] = answerData
     } else {
-        form.answers.push({
-            question_id: questionId,
-            answer_id: answerId
-        })
+        form.answers.push(answerData)
     }
 }
 
@@ -183,4 +151,13 @@ onMounted(() => {
 onUnmounted(() => {
     stopTimer()
 })
+</script>
+
+<script>
+export default {
+    components: {
+        QuizTimer,
+        QuizQuestion
+    }
+}
 </script>

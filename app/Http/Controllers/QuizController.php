@@ -6,35 +6,46 @@ use App\Models\Quiz;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\Course;
+use App\Models\Lecture;
 use App\Models\QuizAttempt;
 use App\Imports\QuestionsImport;
+use App\Services\QuizService;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
-class QuizController extends Controller
+class QuizController extends BaseController
 {
-    public function index(Request $request)
+    protected string $model = Quiz::class;
+    protected string $routePrefix = 'quizzes';
+    protected string $viewPrefix = 'Quizzes';
+    protected array $relationships = ['course', 'lecture', 'questions'];
+
+    protected QuizService $quizService;
+
+    public function __construct(QuizService $quizService)
     {
-        $filters = $request->only(['search', 'course_id', 'perPage']);
-        $perPage = $request->input('perPage', 10);
+        $this->quizService = $quizService;
+    }
 
-        $quizzes = Quiz::withCount('questions')
-            ->with('course:id,title')
-            ->when($filters['search'] ?? null, fn($query, $search) =>
-                $query->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-            )
-            ->when($filters['course_id'] ?? null, fn($query, $courseId) =>
-                $query->where('course_id', $courseId)
-            )
-            ->paginate($perPage);
+    /**
+     * Display a listing of quizzes
+     */
+    public function index(Request $request): Response
+    {
 
-        return Inertia::render('Quizzes/Index', [
+        $quizzes = $this->quizService->getPaginated($request);
+        $stats = $this->quizService->getStats();
+
+        return $this->inertiaResponse('Index', [
             'quizzes' => $quizzes,
-            'courses' => Course::select('id', 'title')->orderBy('title')->get(),
-            'filters' => $filters
+            'stats' => $stats,
+            'courses' => Course::select('id', 'title')->get(),
+            'lectures' => Lecture::select('id', 'title')->get(),
+            'filters' => $request->only(['search', 'course', 'lecture', 'status', 'field', 'order'])
         ]);
     }
 
@@ -45,54 +56,88 @@ class QuizController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created quiz
+     */
+    public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'time_limit' => 'required|integer|min:1',
-            'passing_score' => 'required|integer|min:0|max:100',
-            'is_active' => 'boolean',
-            'course_id' => 'nullable|exists:courses,id',
-            'section_id' => 'nullable|exists:sections,id',
-        ]);
+        $validated = $request->validate($this->getValidationRules());
+        $quiz = $this->quizService->create($validated);
 
-        $quiz = Quiz::create($validated);
-
-        return redirect()->route('quizzes.show', $quiz)
-            ->with('success', 'Quiz created successfully. Now add some questions!');
+        return $this->successResponse(
+            route('quizzes.show', $quiz->getKey()),
+            'Quiz created successfully'
+        );
     }
 
-    public function show(Quiz $quiz)
+    /**
+     * Display the specified quiz with optimized data loading
+     */
+    public function show(Quiz $quiz): Response
     {
-        return Inertia::render('Quizzes/Show', [
-            'quiz' => $quiz->load('questions.answers')
-        ]);
+        // Load quiz with relationships in single query using route model binding
+        $quiz->load(['course', 'lecture', 'questions.answers']);
+
+        // Get cached stats efficiently
+        $stats = $this->quizService->getQuizStats($quiz->getKey());
+
+        return $this->inertiaResponse('Show', compact('quiz', 'stats'));
     }
 
-    public function update(Request $request, Quiz $quiz)
+    /**
+     * Update the specified quiz
+     */
+    public function update(Request $request, Quiz $quiz): RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'time_limit' => 'required|integer|min:1',
-            'passing_score' => 'required|integer|min:0|max:100',
-            'is_active' => 'boolean',
-            'course_id' => 'nullable|exists:courses,id',
-            'section_id' => 'nullable|exists:sections,id',
-        ]);
+        $validated = $request->validate($this->getValidationRules());
+        $updatedQuiz = $this->quizService->update($quiz->getKey(), $validated);
 
-        $quiz->update($validated);
+        if (!$updatedQuiz) {
+            return back()->withErrors(['error' => 'Quiz not found']);
+        }
 
-        return redirect()->route('quizzes.show', $quiz)
-            ->with('success', 'Quiz updated successfully.');
+        return $this->successResponse(
+            route('quizzes.show', $updatedQuiz->getKey()),
+            'Quiz updated successfully'
+        );
     }
 
     public function destroy(Quiz $quiz)
     {
         $quiz->delete();
-        return redirect()->route('quizzes.index')
-            ->with('success', 'Quiz deleted successfully.');
+        return $this->successResponse('quizzes.index', 'Quiz deleted successfully.');
+    }
+
+    /**
+     * Get validation rules for quiz
+     */
+    protected function getValidationRules(): array
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'time_limit' => 'required|integer|min:1',
+            'passing_score' => 'required|integer|min:0|max:100',
+            'is_active' => 'boolean',
+            'course_id' => 'nullable|exists:courses,id',
+            'section_id' => 'nullable|exists:sections,id',
+        ];
+    }
+
+    /**
+     * Get search fields for quiz
+     */
+    protected function getSearchFields(): array
+    {
+        return ['title', 'description'];
+    }
+
+    /**
+     * Get filters including course_id
+     */
+    protected function getFilters(\Illuminate\Http\Request $request): array
+    {
+        return $request->only(['search', 'field', 'order', 'perPage', 'course_id']);
     }
 
     public function reports()
@@ -138,27 +183,27 @@ class QuizController extends Controller
     public function startQuiz(Request $request, Quiz $quiz)
     {
         $ongoingAttempt = QuizAttempt::where([
-            ['user_id', auth()->id()],
-            ['quiz_id', $quiz->id],
+            ['user_id', auth()->user()->getKey()],
+            ['quiz_id', $quiz->getKey()],
             ['completed_at', null]
         ])->first();
 
         if ($ongoingAttempt) {
             return redirect()->route('quizzes.take', [
-                'quiz' => $quiz->id,
-                'attempt' => $ongoingAttempt->id
+                'quiz' => $quiz->getKey(),
+                'attempt' => $ongoingAttempt->getKey()
             ]);
         }
 
         $attempt = QuizAttempt::create([
-            'user_id' => auth()->id(),
-            'quiz_id' => $quiz->id,
+            'user_id' => auth()->user()->getKey(),
+            'quiz_id' => $quiz->getKey(),
             'started_at' => now(),
         ]);
 
         return redirect()->route('quizzes.take', [
-            'quiz' => $quiz->id,
-            'attempt' => $attempt->id
+            'quiz' => $quiz->getKey(),
+            'attempt' => $attempt->getKey()
         ]);
     }
 
@@ -183,7 +228,7 @@ class QuizController extends Controller
         }
 
         $correctAnswers = $quiz->questions->filter(function ($question) use ($validated) {
-            $userAnswers = (array) ($validated['answers'][$question->id] ?? []);
+            $userAnswers = (array) ($validated['answers'][$question->getKey()] ?? []);
             $correctAnswerIds = $question->answers()->where('is_correct', true)->pluck('id')->toArray();
             $userAnswerIds = array_map('intval', $userAnswers);
 
@@ -209,7 +254,7 @@ class QuizController extends Controller
         ]);
 
         try {
-            Excel::import(new QuestionsImport($quiz->id), $request->file('file'));
+            Excel::import(new QuestionsImport($quiz->getKey()), $request->file('file'));
             return back()->with('success', 'Questions imported successfully.');
         } catch (\Exception $e) {
             Log::error('Question import failed: ' . $e->getMessage());
@@ -274,11 +319,15 @@ class QuizController extends Controller
         ]);
     }
 
-    public function edit(Quiz $quiz)
+    /**
+     * Show the form for editing the specified quiz
+     */
+    public function edit(Quiz $quiz): Response
     {
-        return Inertia::render('Quizzes/Edit', [
-            'quiz' => $quiz,
-            'courses' => Course::with('sections:id,title,course_id')->get(['id', 'title']),
+        return $this->inertiaResponse('Edit', [
+            'quiz' => $quiz->load('course', 'lecture'),
+            'courses' => Course::select('id', 'title')->orderBy('title')->get(),
+            'lectures' => Lecture::select('id', 'title')->orderBy('title')->get()
         ]);
     }
 }

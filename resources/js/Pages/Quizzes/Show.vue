@@ -12,44 +12,50 @@
           <div class="p-6 bg-white border-b border-gray-200">
             <!-- Quiz details -->
             <h3 class="text-lg font-semibold mb-4">Quiz Details</h3>
-            <p><strong>Description:</strong> {{ quiz.description }}</p>
-            <p><strong>Time Limit:</strong> {{ quiz.time_limit }} minutes</p>
-            <p><strong>Passing Score:</strong> {{ quiz.passing_score }}%</p>
-            <p><strong>Total Questions:</strong> {{ quiz.questions.length }}</p>
-
-            <!-- View Questions Button -->
-            <div class="mt-6">
-              <Link
-                :href="route('quizzes.questions.list', quiz.id)"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-              >
-                View Questions
-              </Link>
-              <Link
-                :href="route('quizzes.questions.create', quiz.id)"
-                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
-              >
-                Add New Question
-              </Link>
-              <button
-                @click="toggleImportQuestions"
-                class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-              >
-                {{ showImportQuestions ? 'Hide Import Options' : 'Import Questions' }}
-              </button>
+            <div class="mb-4">
+              <p class="text-gray-700 dark:text-gray-300 mb-4">{{ quiz.description }}</p>
+              <div class="flex flex-wrap gap-3">
+                <QuizBadge :count="quiz.time_limit" label="minutes" color="blue" />
+                <QuizBadge :count="quiz.passing_score" label="% passing" color="green" />
+                <QuizBadge :count="quiz.questions.length" label="questions" color="purple" />
+              </div>
             </div>
 
-            <!-- Start Quiz button -->
-            <button
-              v-if="quiz.questions.length > 0"
-              @click="startQuiz"
-              class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Start Quiz
-            </button>
-            <p v-else class="mt-4 text-red-600">
-              This quiz has no questions yet. Please add questions or import them.
-            </p>
+            <!-- Action Buttons -->
+            <div class="mt-6 flex flex-wrap gap-3">
+              <Link :href="route('quizzes.questions.list', quiz.id)">
+                <PrimaryButton class="bg-blue-600 hover:bg-blue-700">
+                  View Questions
+                </PrimaryButton>
+              </Link>
+              <Link :href="route('quizzes.questions.create', quiz.id)">
+                <PrimaryButton class="bg-green-600 hover:bg-green-700">
+                  Add New Question
+                </PrimaryButton>
+              </Link>
+              <PrimaryButton 
+                @click="toggleImportQuestions"
+                class="bg-purple-600 hover:bg-purple-700"
+              >
+                {{ showImportQuestions ? 'Hide Import Options' : 'Import Questions' }}
+              </PrimaryButton>
+            </div>
+
+            <!-- Start Quiz Section -->
+            <div class="mt-4">
+              <PrimaryButton 
+                v-if="quiz.questions.length > 0"
+                @click="startQuiz"
+                class="bg-green-600 hover:bg-green-700"
+              >
+                Start Quiz
+              </PrimaryButton>
+              <div v-else class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p class="text-red-600 dark:text-red-400">
+                  This quiz has no questions yet. Please add questions or import them.
+                </p>
+              </div>
+            </div>
 
             <!-- Import Questions Component -->
             <QuizImport v-if="showImportQuestions" :quizId="quiz.id" />
@@ -77,11 +83,13 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import QuizImport from './QuizImport.vue'
 import QuizEdit from './Edit.vue'
+import QuizBadge from '@/Components/Quiz/QuizBadge.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
 
 export default {
   components: {
@@ -89,6 +97,8 @@ export default {
     Link,
     QuizImport,
     QuizEdit,
+    QuizBadge,
+    PrimaryButton,
   },
   props: {
     quiz: Object,

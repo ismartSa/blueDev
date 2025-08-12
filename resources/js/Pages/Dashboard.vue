@@ -2,6 +2,8 @@
 import Breadcrumb from "@/Components/Breadcrumb.vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import {
+    AcademicCapIcon,
+    BookOpenIcon,
     ChevronRightIcon,
     KeyIcon,
     ShieldCheckIcon,
@@ -21,6 +23,14 @@ const props = defineProps({
     permissions: {
         type: Number,
         default: 0
+    },
+    courses: {
+        type: Number,
+        default: 0
+    },
+    quizzes: {
+        type: Number,
+        default: 0
     }
 });
 </script>
@@ -31,7 +41,7 @@ const props = defineProps({
         <Breadcrumb :title="'Dashboard'" :breadcrumbs="[]" />
         <div class="space-y-6">
             <div
-                class="text-white dark:text-slate-100 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 overflow-hidden shadow-sm"
+                class="text-white dark:text-slate-100 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 overflow-hidden shadow-sm"
             >
                 <div>
                     <div

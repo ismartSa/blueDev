@@ -12,12 +12,12 @@ class LecturePolicy
     use HandlesAuthorization;
 
     /**
-     * تحديد ما إذا كان يمكن للمستخدم عرض المحاضرة
+     * Determine if user can view the lecture
      */
     public function view(User $user, Lecture $lecture): bool
     {
-        // التحقق من وجود تسجيل نشط في الدورة
-        $enrollment = Enrollment::where('user_id', $user->id)
+        // Check for active enrollment in course
+        $enrollment = Enrollment::where('user_id', $user->getKey())
             ->where('course_id', $lecture->course_id)
             ->where('enrollment_status', 'confirmed')
             ->first();
@@ -26,11 +26,11 @@ class LecturePolicy
     }
 
     /**
-     * تحديد ما إذا كان يمكن للمستخدم تحديث تقدمه في المحاضرة
+     * Determine if user can update lecture progress
      */
     public function updateProgress(User $user, Lecture $lecture): bool
     {
-        $enrollment = Enrollment::where('user_id', $user->id)
+        $enrollment = Enrollment::where('user_id', $user->getKey())
             ->where('course_id', $lecture->course_id)
             ->where('enrollment_status', 'confirmed')
             ->first();

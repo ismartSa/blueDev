@@ -1,11 +1,8 @@
 <script setup>
-import { watchEffect } from 'vue'
+import { watchEffect, computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import Modal from '@/Components/Modal.vue'
-import InputLabel from '@/Components/InputLabel.vue'
-import InputError from '@/Components/InputError.vue'
-import TextInput from '@/Components/TextInput.vue'
-import Select from '@/Components/Select.vue'
+import FormField from '@/Components/Form/FormField.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 
@@ -42,6 +39,16 @@ const form = useForm({
     randomize_questions: false
 })
 
+const courseOptions = computed(() => [
+    { value: '', label: 'Select a course' },
+    ...props.courses.map(course => ({ value: course.id, label: course.title }))
+])
+
+const sectionOptions = computed(() => [
+    { value: '', label: 'Select a section (optional)' },
+    ...props.sections.map(section => ({ value: section.id, label: section.title }))
+])
+
 const update = () => {
     form.put(route('quizzes.update', props.quiz.id), {
         preserveScroll: true,
@@ -77,125 +84,92 @@ watchEffect(() => {
 
             <div class="mt-6 space-y-6">
                 <!-- Basic Information -->
-                <div>
-                    <InputLabel for="title" value="Quiz Title" />
-                    <TextInput
-                        id="title"
-                        v-model="form.title"
-                        type="text"
-                        class="mt-1 block w-full"
-                        required
-                    />
-                    <InputError :message="form.errors.title" class="mt-2" />
-                </div>
+                <FormField
+                    id="title"
+                    v-model="form.title"
+                    type="text"
+                    label="Quiz Title"
+                    :error="form.errors.title"
+                    required
+                />
 
-                <div>
-                    <InputLabel for="description" value="Description" />
-                    <TextInput
-                        id="description"
-                        v-model="form.description"
-                        type="textarea"
-                        class="mt-1 block w-full"
-                        required
-                    />
-                    <InputError :message="form.errors.description" class="mt-2" />
-                </div>
+                <FormField
+                    id="description"
+                    v-model="form.description"
+                    type="textarea"
+                    label="Description"
+                    :error="form.errors.description"
+                    required
+                />
 
                 <!-- Quiz Settings -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <InputLabel for="time_limit" value="Time Limit (minutes)" />
-                        <TextInput
-                            id="time_limit"
-                            v-model="form.time_limit"
-                            type="number"
-                            min="1"
-                            class="mt-1 block w-full"
-                            required
-                        />
-                        <InputError :message="form.errors.time_limit" class="mt-2" />
-                    </div>
+                    <FormField
+                        id="time_limit"
+                        v-model="form.time_limit"
+                        type="number"
+                        label="Time Limit (minutes)"
+                        :error="form.errors.time_limit"
+                        min="1"
+                        required
+                    />
 
-                    <div>
-                        <InputLabel for="passing_score" value="Passing Score (%)" />
-                        <TextInput
-                            id="passing_score"
-                            v-model="form.passing_score"
-                            type="number"
-                            min="0"
-                            max="100"
-                            class="mt-1 block w-full"
-                            required
-                        />
-                        <InputError :message="form.errors.passing_score" class="mt-2" />
-                    </div>
+                    <FormField
+                        id="passing_score"
+                        v-model="form.passing_score"
+                        type="number"
+                        label="Passing Score (%)"
+                        :error="form.errors.passing_score"
+                        min="0"
+                        max="100"
+                        required
+                    />
                 </div>
 
                 <!-- Course and Section -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <InputLabel for="course_id" value="Course" />
-                        <Select
-                            id="course_id"
-                            v-model="form.course_id"
-                            class="mt-1 block w-full"
-                            required
-                        >
-                            <option value="">Select a course</option>
-                            <option v-for="course in courses" :key="course.id" :value="course.id">
-                                {{ course.title }}
-                            </option>
-                        </Select>
-                        <InputError :message="form.errors.course_id" class="mt-2" />
-                    </div>
+                    <FormField
+                        id="course_id"
+                        v-model="form.course_id"
+                        type="select"
+                        label="Course"
+                        :options="courseOptions"
+                        :error="form.errors.course_id"
+                        required
+                    />
 
-                    <div>
-                        <InputLabel for="section_id" value="Section" />
-                        <Select
-                            id="section_id"
-                            v-model="form.section_id"
-                            class="mt-1 block w-full"
-                        >
-                            <option value="">Select a section (optional)</option>
-                            <option v-for="section in sections" :key="section.id" :value="section.id">
-                                {{ section.title }}
-                            </option>
-                        </Select>
-                        <InputError :message="form.errors.section_id" class="mt-2" />
-                    </div>
+                    <FormField
+                        id="section_id"
+                        v-model="form.section_id"
+                        type="select"
+                        label="Section"
+                        :options="sectionOptions"
+                        :error="form.errors.section_id"
+                    />
                 </div>
 
                 <!-- Additional Settings -->
                 <div class="space-y-4">
-                    <div class="flex items-center">
-                        <input
-                            id="allow_retake"
-                            v-model="form.allow_retake"
-                            type="checkbox"
-                            class="rounded border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800"
-                        >
-                        <InputLabel for="allow_retake" value="Allow Retake" class="ml-2" />
-                    </div>
+                    <FormField
+                        id="allow_retake"
+                        v-model="form.allow_retake"
+                        type="checkbox"
+                        label="Allow Retake"
+                    />
 
-                    <div class="flex items-center">
-                        <input
-                            id="show_correct_answers"
-                            v-model="form.show_correct_answers"
-                            type="checkbox"
-                            class="rounded border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800"
-                        >
-                        <InputLabel for="show_correct_answers" value="Show Correct Answers After Submission" class="ml-2" />
-                    </div>
+                    <FormField
+                        id="show_correct_answers"
+                        v-model="form.show_correct_answers"
+                        type="checkbox"
+                        label="Show Correct Answers After Submission"
+                    />
 
-                    <div class="flex items-center">
-                        <input
-                            id="randomize_questions"
-                            v-model="form.randomize_questions"
-                            type="checkbox"
-                            class="rounded border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800"
-                        >
-                        <InputLabel for="randomize_questions" value="Randomize Questions" class="ml-2" />
-                    </div>
+                    <FormField
+                        id="randomize_questions"
+                        v-model="form.randomize_questions"
+                        type="checkbox"
+                        label="Randomize Questions"
+                    />
                 </div>
             </div>
 

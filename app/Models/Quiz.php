@@ -2,25 +2,68 @@
 
 namespace App\Models;
 
+use App\Traits\HasCommonAttributes;
+use App\Traits\HasFilters;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Quiz extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, HasCommonAttributes, HasFilters {
+        HasCommonAttributes::getStatusField insteadof HasFilters;
+        HasCommonAttributes::getActiveField insteadof HasFilters;
+    }
 
     protected $fillable = [
         'title',
         'description',
+        'course_id',
+        'lecture_id',
         'time_limit',
+        'max_attempts',
         'passing_score',
         'is_active',
-        'course_id',
-        'section_id',
-        'domain', // New field for organizing quizzes
-        'chapter', // New field for chapter organization
-        'quiz_type', // e.g., 'practice', 'final', 'chapter_test'
-        'order', // For ordering quizzes within a domain/chapter
+        'instructions',
+        'show_results',
+        'randomize_questions',
+        'randomize_answers',
+        'slug'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'show_results' => 'boolean',
+        'randomize_questions' => 'boolean',
+        'randomize_answers' => 'boolean',
+        'time_limit' => 'integer',
+        'max_attempts' => 'integer',
+        'passing_score' => 'decimal:2'
+    ];
+
+    // Trait configuration
+    protected $slugSource = 'title';
+    protected $updateSlugOnChange = true;
+    protected $searchable = ['title', 'description', 'course.title', 'lecture.title'];
+    protected $sortable = ['id', 'title', 'created_at', 'updated_at', 'time_limit', 'max_attempts', 'passing_score'];
+    protected $statusField = 'is_active';
+    protected $activeField = 'is_active';
+    protected $defaultActiveState = true;
+    
+    protected $statusClasses = [
+        true => 'badge-success',
+        false => 'badge-secondary',
+        1 => 'badge-success',
+        0 => 'badge-secondary'
+    ];
+    
+    protected $statusLabels = [
+        true => 'Active',
+        false => 'Inactive',
+        1 => 'Active',
+        0 => 'Inactive'
     ];
 
     public function questions()
@@ -31,6 +74,11 @@ class Quiz extends Model
     public function course()
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function lecture()
+    {
+        return $this->belongsTo(Lecture::class);
     }
 
     public function section()
