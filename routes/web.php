@@ -94,6 +94,7 @@ Route::get('/dashboard', function () {
             'roles' => (int) DB::table('roles')->count(),
             'permissions' => (int) DB::table('permissions')->count(),
             'courses' => (int) DB::table('courses')->count(),
+            'quizzes' => (int) DB::table('quizzes')->count(),
         ];
     });
 
@@ -241,62 +242,58 @@ Route::get('/dashboard', function () {
             Route::get('/template/download', [QuizController::class, 'downloadTemplate'])->name('template.download');
         });
 
-/*
-|--------------------------------------------------------------------------
-| Admin Dashboard Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-        Route::prefix('quizzes')->name('quizzes.')->group(function () {
-            Route::get('/create', [QuizController::class, 'create'])->name('create');
-            Route::post('/', [QuizController::class, 'store'])->name('store');
-            Route::get('/{quiz}/edit', [QuizController::class, 'edit'])->name('edit');
-            Route::put('/{quiz}', [QuizController::class, 'update'])->name('update');
-            Route::delete('/{quiz}', [QuizController::class, 'destroy'])->name('destroy');
-            Route::get('/reports', [QuizController::class, 'reports'])->name('reports');
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Dashboard Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['admin'])
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+            Route::prefix('quizzes')->name('quizzes.')->group(function () {
+                Route::get('/create', [QuizController::class, 'create'])->name('create');
+                Route::post('/', [QuizController::class, 'store'])->name('store');
+                Route::get('/{quiz}/edit', [QuizController::class, 'edit'])->name('edit');
+                Route::put('/{quiz}', [QuizController::class, 'update'])->name('update');
+                Route::delete('/{quiz}', [QuizController::class, 'destroy'])->name('destroy');
+                Route::get('/reports', [QuizController::class, 'reports'])->name('reports');
+            });
         });
-    });
-
 
     // Main Opt Routes
     Route::get('/opt', [OptController::class, 'index'])->name('opt.index');
-Route::post('/opt/convert', [OptController::class, 'convertToSql'])->name('opt.convert');
+    Route::post('/opt/convert', [OptController::class, 'convertToSql'])->name('opt.convert');
 
-
-// Course Management Routes
-Route::prefix('courses')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'index'])->name('courses.index');
-    Route::get('/create', [\App\Http\Controllers\Course\CourseManagementController::class, 'create'])->name('courses.create');
-    Route::post('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'store'])->name('courses.store');
-
-    // Course Content Routes
-    Route::prefix('{course}')->group(function () {
-        Route::post('/sections', [\App\Http\Controllers\Course\CourseContentController::class, 'storeSection']);
-        Route::post('/lectures', [\App\Http\Controllers\Course\CourseContentController::class, 'storeLecture']);
+    // Category Management Routes
+    Route::prefix('category')->name('category.')->group(function () {
+        Route::get('/', [CategoryController::class, 'index'])->name('index');
+        Route::post('/', [CategoryController::class, 'store'])->name('store');
+        Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+        Route::post('/destroy-bulk', [CategoryController::class, 'destroyBulk'])->name('destroy-bulk');
     });
 
-    // Enrollment Routes (removed duplicate - already defined in courses group above)
-});
+    // Additional Course Management Routes
+    Route::prefix('courses')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'index'])->name('courses.index');
+        Route::get('/create', [\App\Http\Controllers\Course\CourseManagementController::class, 'create'])->name('courses.create');
+        Route::post('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'store'])->name('courses.store');
+        Route::put('/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'update'])->name('courses.update');
 
-// Quiz routes
-Route::get('/courses/{course}/quizzes', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuizzes'])->name('course.quizzes');
-Route::get('/courses/{course}/quiz/{quiz}', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuiz'])->name('course.quiz.show');
-Route::post('/quiz/{quiz}/submit', [\App\Http\Controllers\Course\CourseContentController::class, 'submitQuiz'])->name('quiz.submit');
+        // Course Content Routes
+        Route::prefix('{course}')->group(function () {
+            Route::post('/sections', [\App\Http\Controllers\Course\CourseContentController::class, 'storeSection']);
+            Route::post('/lectures', [\App\Http\Controllers\Course\CourseContentController::class, 'storeLecture']);
+            Route::get('/quizzes', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuizzes'])->name('course.quizzes');
+            Route::get('/quiz/{quiz}', [\App\Http\Controllers\Course\CourseContentController::class, 'showQuiz'])->name('course.quiz.show');
+            Route::post('/quiz/create', [CourseContentController::class, 'createQuiz'])->name('course.quiz.create');
+        });
+    });
 
-// Quiz management routes
-Route::post('/courses/{course}/quiz/create', [CourseContentController::class, 'createQuiz'])->name('course.quiz.create');
-Route::post('/quiz/{quiz}/question', [CourseContentController::class, 'storeQuestion'])->name('quiz.question.store');
-// Add this route for course updates
-Route::put('/courses/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'update'])->name('courses.update');
-// Add this in the admin middleware group around line 125
-Route::prefix('category')->name('category.')->group(function () {
-    Route::get('/', [CategoryController::class, 'index'])->name('index');
-    Route::post('/', [CategoryController::class, 'store'])->name('store');
-    Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
-    Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
-    Route::post('/destroy-bulk', [CategoryController::class, 'destroyBulk'])->name('destroy-bulk');
-});
+    // Quiz management routes
+    Route::post('/quiz/{quiz}/submit', [\App\Http\Controllers\Course\CourseContentController::class, 'submitQuiz'])->name('quiz.submit');
+    Route::post('/quiz/{quiz}/question', [CourseContentController::class, 'storeQuestion'])->name('quiz.question.store');
+
+}); // Close protected routes middleware group
 

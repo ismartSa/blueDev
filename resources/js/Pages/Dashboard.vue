@@ -123,6 +123,62 @@ const props = defineProps({
                         </Link>
                     </div>
                 </div>
+                <div>
+                    <div
+                        class="rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between bg-purple-600/70 dark:bg-purple-500/80 items-center overflow-hidden"
+                    >
+                        <div class="flex flex-col">
+                            <p class="text-4xl font-bold">
+                                {{ props.courses }}
+                            </p>
+                            <p class="text-md md:text-lg uppercase">
+                                Courses
+                            </p>
+                        </div>
+                        <div>
+                            <BookOpenIcon class="w-16 h-auto" />
+                        </div>
+                    </div>
+                    <div
+                        class="bg-purple-600 dark:bg-purple-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-purple-600/90 dark:hover:bg-purple-600/70"
+                    >
+                        <Link
+                            :href="route('courses.index')"
+                            class="flex justify-between items-center"
+                        >
+                            <p>More</p>
+                            <ChevronRightIcon class="w-5 h-5" />
+                        </Link>
+                    </div>
+                </div>
+                <div>
+                    <div
+                        class="rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between bg-teal-600/70 dark:bg-teal-500/80 items-center overflow-hidden"
+                    >
+                        <div class="flex flex-col">
+                            <p class="text-4xl font-bold">
+                                {{ props.quizzes }}
+                            </p>
+                            <p class="text-md md:text-lg uppercase">
+                                Quizzes
+                            </p>
+                        </div>
+                        <div>
+                            <AcademicCapIcon class="w-16 h-auto" />
+                        </div>
+                    </div>
+                    <div
+                        class="bg-teal-600 dark:bg-teal-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-teal-600/90 dark:hover:bg-teal-600/70"
+                    >
+                        <Link
+                            :href="route('quiz.index')"
+                            class="flex justify-between items-center"
+                        >
+                            <p>More</p>
+                            <ChevronRightIcon class="w-5 h-5" />
+                        </Link>
+                    </div>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
