@@ -171,7 +171,7 @@ const props = defineProps({
                         class="bg-teal-600 dark:bg-teal-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-teal-600/90 dark:hover:bg-teal-600/70"
                     >
                         <Link
-                            :href="route('quiz.index')"
+                            :href="route('quizzes.index')"
                             class="flex justify-between items-center"
                         >
                             <p>More</p>
