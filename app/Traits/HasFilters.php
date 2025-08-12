@@ -136,6 +136,11 @@ trait HasFilters
             $query->active($request->boolean('active'));
         }
         
+        // Apply course filter (for Quiz model)
+        if ($request->filled('course_id') && $query->getModel()->getTable() === 'quizzes') {
+            $query->where('course_id', $request->get('course_id'));
+        }
+        
         return $query->paginate($perPage);
     }
 

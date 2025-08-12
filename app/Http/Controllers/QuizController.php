@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 
@@ -45,7 +46,7 @@ class QuizController extends BaseController
             'stats' => $stats,
             'courses' => Course::select('id', 'title')->get(),
             'lectures' => Lecture::select('id', 'title')->get(),
-            'filters' => $request->only(['search', 'course', 'lecture', 'status', 'field', 'order'])
+            'filters' => $request->only(['search', 'course_id', 'lecture', 'status', 'field', 'order'])
         ]);
     }
 
@@ -183,7 +184,7 @@ class QuizController extends BaseController
     public function startQuiz(Request $request, Quiz $quiz)
     {
         $ongoingAttempt = QuizAttempt::where([
-            ['user_id', auth()->user()->getKey()],
+            ['user_id', Auth::user()->id],
             ['quiz_id', $quiz->getKey()],
             ['completed_at', null]
         ])->first();
@@ -196,7 +197,7 @@ class QuizController extends BaseController
         }
 
         $attempt = QuizAttempt::create([
-            'user_id' => auth()->user()->getKey(),
+            'user_id' => Auth::user()->id,
             'quiz_id' => $quiz->getKey(),
             'started_at' => now(),
         ]);

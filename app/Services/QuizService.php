@@ -47,6 +47,20 @@ class QuizService extends BaseService
     }
 
     /**
+     * Apply filters specific to Quiz model
+     */
+    protected function applyFilters($query, \Illuminate\Http\Request $request): void
+    {
+        // Apply parent filters (search, sorting, date range)
+        parent::applyFilters($query, $request);
+        
+        // Course filter
+        if ($request->filled('course_id')) {
+            $query->where('course_id', $request->get('course_id'));
+        }
+    }
+
+    /**
      * Get quizzes by lecture
      */
     public function getByLecture(int $lectureId, bool $activeOnly = true): Collection
