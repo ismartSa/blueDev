@@ -13,7 +13,8 @@ import InputError from '@/Components/InputError.vue';
 
 const props = defineProps({
     show: { type: Boolean, default: false },
-    course: { type: Object, required: true }
+    course: { type: Object, required: true },
+    categories: { type: Array, default: () => [] }
 });
 
 const emit = defineEmits(['close', 'success']);
@@ -200,7 +201,117 @@ const handleFileChange = (event) => {
                     <InputError :message="validationState.description.message" />
                 </div>
 
-                <!-- Add similar validation for other fields -->
+                <!-- Price Input -->
+                <div>
+                    <InputLabel for="price" value="Price" />
+                    <TextInput
+                        id="price"
+                        v-model="form.price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="mt-1 block w-full"
+                        @blur="validateField('price', form.price)"
+                        :class="{ 'border-red-500': !validationState.price.valid }"
+                    />
+                    <InputError :message="validationState.price.message" />
+                </div>
+
+                <!-- Category Input -->
+                <div>
+                    <InputLabel for="category_id" value="Category" />
+                    <SelectInput
+                        id="category_id"
+                        v-model="form.category_id"
+                        class="mt-1 block w-full"
+                        @blur="validateField('category_id', form.category_id)"
+                        :class="{ 'border-red-500': !validationState.category_id.valid }"
+                    >
+                        <option value="">Select a category</option>
+                        <option v-for="category in categories" :key="category.id" :value="category.id">
+                            {{ category.name }}
+                        </option>
+                    </SelectInput>
+                    <InputError :message="validationState.category_id.message" />
+                </div>
+
+                <!-- Status Input -->
+                <div>
+                    <InputLabel for="status" value="Status" />
+                    <SelectInput
+                        id="status"
+                        v-model="form.status"
+                        class="mt-1 block w-full"
+                        @blur="validateField('status', form.status)"
+                        :class="{ 'border-red-500': !validationState.status.valid }"
+                    >
+                        <option v-for="option in statusOptions" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </SelectInput>
+                    <InputError :message="validationState.status.message" />
+                </div>
+
+                <!-- Level Input -->
+                <div>
+                    <InputLabel for="level" value="Level" />
+                    <SelectInput
+                        id="level"
+                        v-model="form.level"
+                        class="mt-1 block w-full"
+                        @blur="validateField('level', form.level)"
+                        :class="{ 'border-red-500': !validationState.level.valid }"
+                    >
+                        <option v-for="option in levelOptions" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </SelectInput>
+                    <InputError :message="validationState.level.message" />
+                </div>
+
+                <!-- Duration Input -->
+                <div>
+                    <InputLabel for="duration" value="Duration (hours)" />
+                    <TextInput
+                        id="duration"
+                        v-model="form.duration"
+                        type="number"
+                        min="1"
+                        class="mt-1 block w-full"
+                        @blur="validateField('duration', form.duration)"
+                        :class="{ 'border-red-500': !validationState.duration.valid }"
+                    />
+                    <InputError :message="validationState.duration.message" />
+                </div>
+
+                <!-- Language Input -->
+                <div>
+                    <InputLabel for="language" value="Language" />
+                    <SelectInput
+                        id="language"
+                        v-model="form.language"
+                        class="mt-1 block w-full"
+                        @blur="validateField('language', form.language)"
+                        :class="{ 'border-red-500': !validationState.language.valid }"
+                    >
+                        <option v-for="option in languageOptions" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </SelectInput>
+                    <InputError :message="validationState.language.message" />
+                </div>
+
+                <!-- Thumbnail Input -->
+                <div>
+                    <InputLabel for="thumbnail" value="Thumbnail (optional)" />
+                    <FileInput
+                        id="thumbnail"
+                        @change="handleFileChange"
+                        accept="image/*"
+                        class="mt-1 block w-full"
+                    />
+                    <InputError :message="form.errors.thumbnail" />
+                </div>
 
                 <div class="flex justify-end mt-6 gap-x-4">
                     <SecondaryButton @click="closeModal">Cancel</SecondaryButton>

@@ -1,40 +1,29 @@
 <template>
   <div class="course-details">
-
-
     <!-- Course Main Info -->
-    <div class="course-header bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-8 rounded-lg shadow-lg">
+    <div class="course-header">
       <div class="container mx-auto px-4">
         <div class="flex flex-col md:flex-row items-center justify-between gap-8">
           <div class="md:w-1/2">
-            <h1 class="course-title text-4xl font-bold mb-4">{{ course.title }}</h1>
-            <p class="course-description text-lg opacity-90 mb-6">{{ course.description }}</p>
-            <div class="flex items-center space-x-4 mb-6">
-              <div class="flex items-center">
-                <i class="far fa-clock mr-2"></i>
-                <span>{{ statistics.durationFormatted }}</span>
-              </div>
-              <div class="flex items-center">
-                <i class="far fa-user mr-2"></i>
-                <span>{{ statistics.enrollmentsCount }} طالب</span>
-              </div>
-              <div class="flex items-center">
-                <i class="far fa-play-circle mr-2"></i>
-                <span>{{ statistics.lecturesCount }} درس</span>
+            <h1 class="course-title">{{ course.title }}</h1>
+            <p class="course-description">{{ course.description }}</p>
+            <div class="course-meta">
+              <div v-for="(item, index) in courseMetaItems" :key="index" class="meta-item">
+                <i :class="item.icon"></i>
+                <span>{{ item.value }}</span>
               </div>
             </div>
-            <div v-if="!enrollmentStatus.enrolled" class="enrollment-section">
-              <button @click="enrollInCourse" class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-bold hover:bg-indigo-50 transition duration-300 shadow-lg">
-                سجل الآن
-              </button>
-            </div>
+            <EnrollButton 
+              v-if="!enrollmentStatus.enrolled" 
+              :is-enrolling="isEnrolling" 
+              @enroll="enrollInCourse"
+              class="enrollment-section"
+            />
           </div>
           <div class="md:w-1/2">
-            <div class="relative">
-              <img :src="course.image" :alt="course.title" class="w-full h-auto rounded-xl shadow-2xl">
-              <div class="absolute -bottom-4 -left-4 bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-bold shadow-lg">
-                {{ course.category || 'كورس احترافي' }}
-              </div>
+            <div class="course-image-container">
+              <img :src="course.image" :alt="course.title" class="course-image">
+              <div class="course-category">{{ course.category || 'كورس احترافي' }}</div>
             </div>
           </div>
         </div>
@@ -43,32 +32,22 @@
 
     <!-- Course Statistics -->
     <div class="container mx-auto px-4 py-12">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-        <div class="p-6 rounded-lg border border-gray-200 bg-white shadow-md">
-          <div class="text-4xl font-bold text-indigo-600 mb-2">{{ statistics.lecturesCount }}+</div>
-          <div class="text-gray-600">درس تعليمي</div>
-        </div>
-        <div class="p-6 rounded-lg border border-gray-200 bg-white shadow-md">
-          <div class="text-4xl font-bold text-indigo-600 mb-2">{{ statistics.enrollmentsCount }}+</div>
-          <div class="text-gray-600">طالب مسجل</div>
-        </div>
-        <div class="p-6 rounded-lg border border-gray-200 bg-white shadow-md">
-          <div class="text-4xl font-bold text-indigo-600 mb-2">{{ statistics.completionRate }}%</div>
-          <div class="text-gray-600">نسبة الإكمال</div>
-        </div>
-        <div class="p-6 rounded-lg border border-gray-200 bg-white shadow-md">
-          <div class="text-4xl font-bold text-indigo-600 mb-2">{{ statistics.durationFormatted }}</div>
-          <div class="text-gray-600">مدة الدورة</div>
+      <div class="stats-grid">
+        <div v-for="(stat, index) in statisticsItems" :key="index" class="stat-card">
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
         </div>
       </div>
     </div>
 
-    <!-- Enrollment Status -->
-    <div v-if="!enrollmentStatus.enrolled" class="enrollment-section">
-      <button @click="enrollInCourse" class="enroll-button">
-        Enroll in Course
-      </button>
-    </div>
+    <!-- Secondary Enrollment Button -->
+    <EnrollButton 
+      v-if="!enrollmentStatus.enrolled" 
+      :is-enrolling="isEnrolling" 
+      @enroll="enrollInCourse"
+      :text="{ enrolling: 'Enrolling...', default: 'Enroll in Course' }"
+      class="enrollment-section secondary-enroll"
+    />
 
     <!-- User Progress -->
     <div v-if="enrollmentStatus.enrolled && progress" class="progress-section">
@@ -103,6 +82,7 @@
 
 <script>
 import Footer from '@/Pages/Index/Partials/Footer.vue'
+import EnrollButton from '@/Components/EnrollButton.vue'
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import SwitchDarkMode from "@/Components/SwitchDarkMode.vue";
 import { Head, Link } from "@inertiajs/vue3";
@@ -111,6 +91,7 @@ import SwitchLangNavbar from "@/Components/SwitchLangNavbar.vue";
 export default {
   components: {
     Footer,
+    EnrollButton,
     ApplicationLogo,
     SwitchDarkMode,
     SwitchLangNavbar
@@ -137,6 +118,53 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      isEnrolling: false
+    };
+  },
+
+  computed: {
+    // Dynamic course meta items for DRY principle
+    courseMetaItems() {
+      return [
+        {
+          icon: 'far fa-clock mr-2',
+          value: this.statistics.durationFormatted
+        },
+        {
+          icon: 'far fa-user mr-2',
+          value: `${this.statistics.enrollmentsCount} طالب`
+        },
+        {
+          icon: 'far fa-play-circle mr-2',
+          value: `${this.statistics.lecturesCount} درس`
+        }
+      ]
+    },
+
+    // Dynamic statistics items for DRY principle
+    statisticsItems() {
+      return [
+        {
+          value: `${this.statistics.lecturesCount}+`,
+          label: 'درس تعليمي'
+        },
+        {
+          value: `${this.statistics.enrollmentsCount}+`,
+          label: 'طالب مسجل'
+        },
+        {
+          value: `${this.statistics.completionRate}%`,
+          label: 'نسبة الإكمال'
+        },
+        {
+          value: this.statistics.durationFormatted,
+          label: 'مدة الدورة'
+        }
+      ]
+    }
+  },
 
   methods: {
     formatDuration(minutes) {
@@ -148,7 +176,20 @@ export default {
     },
 
     enrollInCourse() {
-      this.$inertia.post(route('course.enroll', this.course.id))
+      // Show loading state
+      this.isEnrolling = true;
+      
+      this.$inertia.post(route('courses.enroll', this.course.id), {}, {
+        onSuccess: () => {
+          this.isEnrolling = false;
+          // Update enrollment status locally for immediate UI feedback
+          this.enrollmentStatus.enrolled = true;
+        },
+        onError: (errors) => {
+          this.isEnrolling = false;
+          console.error('Enrollment failed:', errors);
+        }
+      });
     }
   }
 }
@@ -157,38 +198,93 @@ export default {
 <style>
 @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
 
+/* Base layout */
 .course-details {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
 }
 
+/* Header section */
 .course-header {
-  background-image: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  @apply bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-8 rounded-lg shadow-lg;
 }
 
 .course-title {
+  @apply text-4xl font-bold mb-4;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.stat-item {
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.course-description {
+  @apply text-lg opacity-90 mb-6;
 }
 
-.enroll-button {
-  box-shadow: 0 4px 15px rgba(74, 222, 128, 0.2);
+/* Course meta and statistics */
+.course-meta {
+  @apply flex items-center space-x-4 mb-6;
 }
 
+.meta-item {
+  @apply flex items-center;
+}
+
+.stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-4 gap-8 text-center;
+}
+
+.stat-card {
+  @apply p-6 rounded-lg border border-gray-200 bg-white shadow-md;
+}
+
+.stat-value {
+  @apply text-4xl font-bold text-indigo-600 mb-2;
+}
+
+.stat-label {
+  @apply text-gray-600;
+}
+
+/* Image container */
+.course-image-container {
+  @apply relative;
+}
+
+.course-image {
+  @apply w-full h-auto rounded-xl shadow-2xl;
+}
+
+.course-category {
+  @apply absolute -bottom-4 -left-4 bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-bold shadow-lg;
+}
+
+/* Enrollment sections */
+.enrollment-section {
+  @apply mb-4;
+}
+
+.secondary-enroll {
+  @apply text-center py-8;
+}
+
+/* Course content */
 .course-section {
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  @apply border border-gray-100 rounded-lg p-4 mb-4;
+}
+
+.lecture-item {
+  @apply flex justify-between items-center p-2 rounded hover:bg-gray-50 transition-colors;
 }
 
 .lecture-item:hover {
   box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.1);
 }
 
+/* Responsive design */
 @media (max-width: 640px) {
-  .course-stats {
-    grid-template-columns: repeat(1, 1fr);
+  .stats-grid {
+    @apply grid-cols-1;
+  }
+  
+  .course-meta {
+    @apply flex-col space-x-0 space-y-2;
   }
 }
 </style>

@@ -152,7 +152,8 @@ Route::get('/dashboard', function () {
             Route::post('/', [CourseController::class, 'store'])->name('store');
             Route::post('/destroy-bulk', [CourseController::class, 'destroyBulk'])->name('destroy-bulk');
             Route::get('{courseId}/details/', [CourseController::class, 'details'])->name('details.show');
-            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('edit'); // Fixed: removed duplicate 'courses.'
+            Route::get('/{course}/edit', [CourseController::class, 'editcourse'])->name('edit');
+            Route::put('/{course}', [CourseController::class, 'updatecourse'])->name('update');
 
             // Lecture and Section Management
             Route::prefix('{course}')->group(function () {
@@ -178,6 +179,12 @@ Route::get('/dashboard', function () {
         Route::post('/{courseId}/enroll', [EnrollmentController::class, 'enroll'])->name('enroll');
         Route::get('/{courseId}/check-enrollment', [EnrollmentController::class, 'checkEnrollment'])->name('check-enrollment');
         Route::post('/{courseId}/update-progress', [EnrollmentController::class, 'updateProgress'])->name('update-progress');
+    });
+
+    // Alternative Course Enrollment Routes (using CourseEnrollmentController)
+    Route::prefix('course')->name('course.')->group(function () {
+        Route::post('/{courseId}/enroll', [\App\Http\Controllers\Course\CourseEnrollmentController::class, 'enroll'])->name('enroll');
+        Route::get('/{courseId}/check-enrollment', [\App\Http\Controllers\Course\CourseEnrollmentController::class, 'checkEnrollment'])->name('check-enrollment');
     });
 
     /*

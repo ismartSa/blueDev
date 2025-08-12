@@ -8,6 +8,7 @@ import EditCourseModal from "@/Components/Course/EditCourseModal.vue";
 const props = defineProps({
     course: { type: Object, required: true },
     stats: { type: Object, default: () => ({}) },
+    categories: { type: Array, default: () => [] }
 });
 
 const emit = defineEmits(['success']);
@@ -110,6 +111,7 @@ const getCourseImage = () => {
     <EditCourseModal
         :show="data.editModalOpen"
         :course="course"
+        :categories="categories"
         @close="data.editModalOpen = false"
         @success="(msg) => { data.editModalOpen = false; emit('success', msg); }"
     />
