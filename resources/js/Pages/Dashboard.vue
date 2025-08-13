@@ -8,8 +8,20 @@ import {
     KeyIcon,
     ShieldCheckIcon,
     UserIcon,
+    UserGroupIcon,
 } from "@heroicons/vue/24/solid";
 import { Head, Link } from "@inertiajs/vue3";
+import { computed } from "vue";
+
+// Icon mapping for dynamic components
+const iconComponents = {
+    UserIcon,
+    KeyIcon,
+    ShieldCheckIcon,
+    BookOpenIcon,
+    AcademicCapIcon,
+    UserGroupIcon
+};
 
 const props = defineProps({
     users: {
@@ -31,7 +43,28 @@ const props = defineProps({
     quizzes: {
         type: Number,
         default: 0
+    },
+    enrollments: {
+        type: Number,
+        default: 0
     }
+});
+
+// DRY principle: Define reusable card configuration
+const cardConfigs = [
+    { key: 'users', label: 'Users', icon: UserIcon, color: 'blue', route: 'user.index' },
+    { key: 'roles', label: 'Roles', icon: KeyIcon, color: 'green', route: 'role.index' },
+    { key: 'permissions', label: 'Permissions', icon: ShieldCheckIcon, color: 'amber', route: 'permission.index' },
+    { key: 'courses', label: 'Courses', icon: BookOpenIcon, color: 'purple', route: 'courses.index' },
+    { key: 'quizzes', label: 'Quizzes', icon: AcademicCapIcon, color: 'teal', route: 'quizzes.index' },
+    { key: 'enrollments', label: 'Enrollments', icon: UserGroupIcon, color: 'indigo', route: 'dashboard' }
+];
+
+// Dynamic color classes generator
+const getColorClasses = (color) => ({
+    bg: `bg-${color}-600/70 dark:bg-${color}-500/80`,
+    bgSolid: `bg-${color}-600 dark:bg-${color}-600/80`,
+    hover: `hover:bg-${color}-600/90 dark:hover:bg-${color}-600/70`
 });
 </script>
 
@@ -40,140 +73,29 @@ const props = defineProps({
     <AuthenticatedLayout>
         <Breadcrumb :title="'Dashboard'" :breadcrumbs="[]" />
         <div class="space-y-6">
-            <div
-                class="text-white dark:text-slate-100 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 overflow-hidden shadow-sm"
-            >
-                <div>
-                    <div
-                        class="rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between bg-blue-600/70 dark:bg-blue-500/80 items-center overflow-hidden"
-                    >
+            <!-- Dynamic rendering with DRY principle -->
+            <div class="text-white dark:text-slate-100 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 sm:gap-6 lg:gap-8 overflow-hidden shadow-sm">
+                <div v-for="config in cardConfigs" :key="config.key" class="stat-card">
+                    <!-- Card Header -->
+                    <div :class="[
+                        'rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between items-center overflow-hidden',
+                        getColorClasses(config.color).bg
+                    ]">
                         <div class="flex flex-col">
-                            <p class="text-4xl font-bold">{{ props.users }}</p>
-                            <p class="text-md md:text-lg uppercase">
-                                Users
-                            </p>
+                            <p class="text-4xl font-bold">{{ props[config.key] }}</p>
+                            <p class="text-md md:text-lg uppercase">{{ config.label }}</p>
                         </div>
                         <div>
-                            <UserIcon class="w-16 h-auto" />
+                            <config.icon class="w-16 h-auto" />
                         </div>
                     </div>
-                    <div
-                        class="bg-blue-600 dark:bg-blue-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-blue-600/90 dark:hover:bg-blue-600/70"
-                    >
-                        <Link
-                            :href="route('user.index')"
-                            class="flex justify-between items-center"
-                        >
-                            <p>More</p>
-                            <ChevronRightIcon class="w-5 h-5" />
-                        </Link>
-                    </div>
-                </div>
-                <div>
-                    <div
-                        class="rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between bg-green-600/70 dark:bg-green-500/80 items-center overflow-hidden"
-                    >
-                        <div class="flex flex-col">
-                            <p class="text-4xl font-bold">{{ props.roles }}</p>
-                            <p class="text-md md:text-lg uppercase">
-                                Roles
-                            </p>
-                        </div>
-                        <div>
-                            <KeyIcon class="w-16 h-auto" />
-                        </div>
-                    </div>
-                    <div
-                        class="bg-green-600 dark:bg-green-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-green-600/90 dark:hover:bg-green-600/70"
-                    >
-                        <Link
-                            :href="route('role.index')"
-                            class="flex justify-between items-center"
-                        >
-                            <p>More</p>
-                            <ChevronRightIcon class="w-5 h-5" />
-                        </Link>
-                    </div>
-                </div>
-                <div>
-                    <div
-                        class="rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between bg-amber-600/70 dark:bg-amber-500/80 items-center overflow-hidden"
-                    >
-                        <div class="flex flex-col">
-                            <p class="text-4xl font-bold">
-                                {{ props.permissions }}
-                            </p>
-                            <p class="text-md md:text-lg uppercase">
-                                Permissions
-                            </p>
-                        </div>
-                        <div>
-                            <ShieldCheckIcon class="w-16 h-auto" />
-                        </div>
-                    </div>
-                    <div
-                        class="bg-amber-600 dark:bg-amber-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-amber-600/90 dark:hover:bg-amber-600/70"
-                    >
-                        <Link
-                            :href="route('permission.index')"
-                            class="flex justify-between items-center"
-                        >
-                            <p>More</p>
-                            <ChevronRightIcon class="w-5 h-5" />
-                        </Link>
-                    </div>
-                </div>
-                <div>
-                    <div
-                        class="rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between bg-purple-600/70 dark:bg-purple-500/80 items-center overflow-hidden"
-                    >
-                        <div class="flex flex-col">
-                            <p class="text-4xl font-bold">
-                                {{ props.courses }}
-                            </p>
-                            <p class="text-md md:text-lg uppercase">
-                                Courses
-                            </p>
-                        </div>
-                        <div>
-                            <BookOpenIcon class="w-16 h-auto" />
-                        </div>
-                    </div>
-                    <div
-                        class="bg-purple-600 dark:bg-purple-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-purple-600/90 dark:hover:bg-purple-600/70"
-                    >
-                        <Link
-                            :href="route('courses.index')"
-                            class="flex justify-between items-center"
-                        >
-                            <p>More</p>
-                            <ChevronRightIcon class="w-5 h-5" />
-                        </Link>
-                    </div>
-                </div>
-                <div>
-                    <div
-                        class="rounded-t-none sm:rounded-t-lg px-6 py-8 flex justify-between bg-teal-600/70 dark:bg-teal-500/80 items-center overflow-hidden"
-                    >
-                        <div class="flex flex-col">
-                            <p class="text-4xl font-bold">
-                                {{ props.quizzes }}
-                            </p>
-                            <p class="text-md md:text-lg uppercase">
-                                Quizzes
-                            </p>
-                        </div>
-                        <div>
-                            <AcademicCapIcon class="w-16 h-auto" />
-                        </div>
-                    </div>
-                    <div
-                        class="bg-teal-600 dark:bg-teal-600/80 rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden hover:bg-teal-600/90 dark:hover:bg-teal-600/70"
-                    >
-                        <Link
-                            :href="route('quizzes.index')"
-                            class="flex justify-between items-center"
-                        >
+                    <!-- Card Footer -->
+                    <div :class="[
+                        'rounded-b-none sm:rounded-b-lg px-6 py-3 overflow-hidden',
+                        getColorClasses(config.color).bgSolid,
+                        getColorClasses(config.color).hover
+                    ]">
+                        <Link :href="route(config.route)" class="flex justify-between items-center">
                             <p>More</p>
                             <ChevronRightIcon class="w-5 h-5" />
                         </Link>
@@ -183,3 +105,22 @@ const props = defineProps({
         </div>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+/* Performance optimization: Reduce layout shifts */
+.stat-card {
+    @apply transition-all duration-200 ease-in-out;
+}
+
+/* Better hover effects */
+.stat-card:hover {
+    @apply transform scale-105;
+}
+
+/* Responsive grid optimization */
+@media (max-width: 768px) {
+    .stat-card {
+        @apply transform-none;
+    }
+}
+</style>
