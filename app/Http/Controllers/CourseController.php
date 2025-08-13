@@ -14,7 +14,8 @@ use App\Services\LectureCountService;
 use App\Services\LectureProgressService;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\CourseStoreRequest;
-use Illuminate\{Support\Str, Http\Request, Support\Facades\Auth, Support\Facades\Log, Support\Facades\Storage, Support\Facades\DB, Support\Facades\Hash};
+use Illuminate\Support\Facades\DB;
+use Illuminate\{Support\Str, Http\Request, Support\Facades\Auth, Support\Facades\Log, Support\Facades\Storage, Support\Facades\Hash};
 use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt, Wishlist };
 use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
 
@@ -48,7 +49,63 @@ class CourseController extends Controller
 
     public function index(Request $request)
     {
+        // Get search and filter parameters
+        $search = $request->get('search');
+        $field = $request->get('field', 'created_at');
+        $order = $request->get('order', 'desc');
+        $perPage = $request->get('perPage', 10);
 
+        // Validate sort field to prevent SQL injection
+        $allowedFields = ['title', 'status', 'created_at', 'updated_at'];
+        if (!in_array($field, $allowedFields)) {
+            $field = 'created_at';
+        }
+
+        // Validate sort order and per page
+        $order = in_array($order, ['asc', 'desc']) ? $order : 'desc';
+        $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 10;
+
+        // Build optimized query
+        $coursesQuery = Course::query()
+            ->with(['category:id,name'])
+            ->select(['id', 'title', 'status', 'category_id', 'created_at', 'updated_at']);
+
+        // Apply search filter
+        if ($search) {
+            $coursesQuery->where(function ($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                      ->orWhere('status', 'like', "%{$search}%")
+                      ->orWhereHas('category', function ($q) use ($search) {
+                          $q->where('name', 'like', "%{$search}%");
+                      });
+            });
+        }
+
+        // Get paginated results with transformation
+        $courses = $coursesQuery->orderBy($field, $order)
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(function ($course) {
+                return [
+                    'id' => $course->id,
+                    'title' => $course->title,
+                    'status' => ucfirst($course->status),
+                    'category' => $course->category ? [
+                        'id' => $course->category->id,
+                        'name' => $course->category->name,
+                    ] : null,
+                    'created_at' => $course->created_at->format('Y-m-d H:i'),
+                    'updated_at' => $course->updated_at->format('Y-m-d H:i'),
+                ];
+            });
+
+        $categories = Category::select(['id', 'name'])->orderBy('name')->get();
+
+        return Inertia::render('Dashboard/Courses/Index', [
+            'courses' => $courses,
+            'categories' => $categories,
+            'filters' => compact('search', 'field', 'order'),
+        ]);
     }
 
 
@@ -60,7 +117,7 @@ class CourseController extends Controller
             'category:id,name'
         ])->findOrFail($id);
 
-        // تأكد من تحميل العلاقات
+        // Ensure relations are loaded
         $course->load(['category', 'instructor']);
         return inertia('Dashboard/Course/DetailsCourse',[
             'course' => new CourseResource($course),
@@ -225,45 +282,61 @@ class CourseController extends Controller
 
     public function enroll($courseId)
     {
-        $user = Auth::user();
-        $course = Course::findOrFail($courseId);
-
-        $enrollment = Enrollment::firstOrCreate(
-            [
-                'user_id' => $user->id,
-                'course_id' => $courseId
-            ],
-            [
-                'enrollment_status' => 'active',
-                'enrollment_date' => Carbon::now()
-            ]
-        );
-
-        // Redirect to course details page
-        return Redirect::route('courses.details', [
-            'course' => $course->id,
-            'slug' => $course->slug
-        ])->with('success', 'Successfully enrolled in the course.');
-    }
-
-    public function update(Request $request, $id)
-    {
-        DB::beginTransaction();
         try {
-            $user = User::findOrFail($id);
-            $user->update([
-                'name'      => $request->name,
-                'email'     => $request->email,
-                'password'  => $request->password ? Hash::make($request->password) : $user->password,
-            ]);
-            $user->syncRoles($request->role);
-            DB::commit();
-            return back()->with('success', __('app.label.updated_successfully', ['name' => $user->name]));
-        } catch (\Throwable $th) {
-            DB::rollback();
-            return back()->with('error', __('app.label.updated_error', ['name' => 'User']) . $th->getMessage());
+            $user = Auth::user();
+            $course = Course::findOrFail($courseId);
+
+            // Check if course is available for enrollment
+            if (!$course->isPublished()) {
+                return Redirect::back()
+                    ->with('error', 'This course is not available for enrollment currently.');
+            }
+
+            // Check existing enrollment
+            $existingEnrollment = Enrollment::where('user_id', $user->id)
+                ->where('course_id', $courseId)
+                ->first();
+
+            if ($existingEnrollment) {
+                return Redirect::route('courses.learn', $course->id)
+                    ->with('info', 'You are already enrolled in this course.');
+            }
+
+            // Handle enrollment based on course type
+            if ($course->isFree()) {
+                $this->createEnrollment($user->id, $courseId);
+                return Redirect::route('courses.learn', $course->id)
+                    ->with('success', 'Successfully enrolled in the free course!');
+            }
+
+            // Redirect to payment for paid courses
+            return Redirect::route('courses.payment', [
+                'course' => $course->id,
+                'slug' => $course->slug
+            ])->with('info', 'Please complete payment to enroll in this course.');
+
+        } catch (\Exception $e) {
+            Log::error('Course enrollment error: ' . $e->getMessage());
+            return Redirect::back()
+                ->with('error', 'Failed to enroll in the course. Please try again.');
         }
     }
+
+    /**
+     * Create enrollment record
+     */
+    private function createEnrollment($userId, $courseId)
+    {
+        return Enrollment::create([
+            'user_id' => $userId,
+            'course_id' => $courseId,
+            'enrollment_status' => 'active',
+            'enrollment_date' => Carbon::now(),
+            'progress_percentage' => 0
+        ]);
+    }
+
+
 
     /**
      * Display a listing of the courses.
@@ -485,42 +558,81 @@ class CourseController extends Controller
     /**
      * Show the form for editing the specified course.
      */
-    public function editcourse(Course $course)
+    public function edit(Course $course)
     {
+        $this->authorize('update', $course);
+
         $categories = Category::all();
 
-        return Inertia::render('Courses/Edit', [
+        return Inertia::render('Dashboard/Courses/Edit', [
             'course' => $course,
             'categories' => $categories,
         ]);
     }
 
     /**
+     * Display course enrollments management page.
+     */
+    public function enrollments(Course $course)
+    {
+        $this->authorize('update', $course);
+
+        // Calculate total lessons first
+        $totalLessons = $course->sections()->withCount('lectures')->get()->sum('lectures_count');
+
+        // Get enrollments with user data and pagination
+        $enrollments = $course->enrollments()
+            ->with(['user:id,name,email,created_at'])
+            ->select('*')
+            ->addSelect([
+                DB::raw("ROUND((progress_percentage / 100) * {$totalLessons}) as completed_lessons")
+            ])
+            ->latest()
+            ->paginate(20);
+
+        // Calculate course statistics
+        $stats = [
+            'total_enrollments' => $course->enrollments()->count(),
+            'active_students' => $course->enrollments()
+                ->where('updated_at', '>=', now()->subDays(30))
+                ->where('enrollment_status', 'confirmed')
+                ->count(),
+            'completion_rate' => $this->calculateCompletionRate($course),
+            'total_lessons' => $totalLessons,
+        ];
+
+        return Inertia::render('Dashboard/Courses/Enrollments', [
+            'course' => $course,
+            'enrollments' => $enrollments,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
      * Update the specified course in storage.
      */
-    public function updatecourse(Request $request, Course $course)
+    public function update(Request $request, Course $course)
     {
+        $this->authorize('update', $course);
+
+        // Debug: Log the request data
+        \Illuminate\Support\Facades\Log::info('Course update request data:', $request->all());
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string|min:10', // Ensures description is present
+            'description' => 'required|string|min:10',
             'price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'status' => 'required|in:draft,active,inactive',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'level' => 'nullable|in:beginner,intermediate,advanced',
             'duration' => 'nullable|integer|min:1',
+            'language' => 'nullable|string|in:en,ar,fr,es',
         ]);
 
-        // The $validated['description'] will now always have a value.
-        // If you still wanted to modify it if it was, for example, just whitespace
-        // you could add logic here, but the NOT NULL constraint is already handled by validation.
-
-        if (empty(trim($validated['description']))) {
-            // This case should ideally be caught by 'required' and 'min:10' rules
-            // But as an absolute fallback if somehow an empty/whitespace string got through
-            // and you didn't want that, you could set a default.
-            // However, relying on validation is cleaner.
-            $validated['description'] = Str::words($validated['title'], 1, '');
+        // Ensure description is not empty or null
+        if (empty($validated['description']) || is_null($validated['description'])) {
+            $validated['description'] = $course->description ?? 'Default course description';
         }
 
         // Handle thumbnail upload
@@ -538,7 +650,7 @@ class CourseController extends Controller
         $course->update($validated);
 
         return Redirect::route('courses.show', $course->id)
-            ->with('success', 'تم تحديث الكورس بنجاح!'); // Course updated successfully!
+            ->with('success', 'Course updated successfully!');
     }
 
     public function destroy(Course $course)
@@ -674,13 +786,72 @@ class CourseController extends Controller
             'course' => $data['course'],
             'sections' => $data['course']->sections,
             'lectures' => $data['course']->sections->flatMap->lectures,
-            'firstLecture' => $data['lectureData'],
+            'currentLectureId' => (int) $lectureID,
             'completionPercentage' => $data['completionPercentage'],
             'breadcrumbs' => [
                 ['label' => 'Course ', 'href' => route('courses.index')],
                 ['label' => $data['lectureData']['title'], 'href' => route('course.watchLecture', ['courseId' => $courseId, 'courseSlug' => $courseSlug, 'lectureID' => $lectureID])]
             ]
         ]);
+    }
+
+    /**
+     * Handle course learning page - displays course content for enrolled users
+     * Route: /courses/{courseId}/learn/{courseSlug}
+     */
+    public function learn($courseId, $courseSlug)
+    {
+        try {
+            // Validate user enrollment before allowing access
+            $user = Auth::user();
+            if (!$user) {
+                return redirect()->route('login')
+                    ->with('error', 'Please login to access course content.');
+            }
+
+            // Check if user is enrolled in the course
+            $enrollment = Enrollment::where('user_id', $user->id)
+                ->where('course_id', $courseId)
+                ->whereIn('enrollment_status', ['active', 'confirmed'])
+                ->first();
+
+            if (!$enrollment) {
+                return redirect()->route('courses.show', ['id' => $courseId, 'courseSlug' => $courseSlug])
+                    ->with('error', 'You must be enrolled to access this course.');
+            }
+
+            // Get course data using existing method
+            $data = $this->getCourseWithLectureData($courseId, $courseSlug);
+
+            return inertia('Course/Learn', [
+                'title' => $data['course']->title . ' - Learning',
+                'course' => $data['course'],
+                'sections' => $data['course']->sections,
+                'lectures' => $data['course']->sections->flatMap->lectures,
+                'user' => $user,
+                'enrolled' => true,
+                'firstLecture' => $data['lectureData'],
+                'completionPercentage' => $data['completionPercentage'],
+                'enrollment' => [
+                    'status' => $enrollment->enrollment_status,
+                    'progress' => $enrollment->progress_percentage ?? 0,
+                    'enrolled_date' => $enrollment->enrollment_date
+                ],
+                'breadcrumbs' => [
+                    ['label' => 'Courses', 'href' => route('courses.explore')],
+                    ['label' => $data['course']->title, 'href' => route('courses.learn', ['courseId' => $courseId, 'courseSlug' => $courseSlug])]
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Course learning access error: ' . $e->getMessage(), [
+                'courseId' => $courseId,
+                'courseSlug' => $courseSlug,
+                'userId' => Auth::id()
+            ]);
+            
+            return redirect()->route('courses.explore')
+                ->with('error', 'Unable to access course content. Please try again.');
+        }
     }
 
     private function getCourseWithLectureData($courseId, $courseSlug, $lectureID = null)
@@ -974,12 +1145,7 @@ class CourseController extends Controller
             }
 
             $completedEnrollments = $course->enrollments()
-                ->whereHas('progress', function ($query) use ($course) {
-                    $query->where('is_completed', true)
-                          ->whereHas('lesson', function ($q) use ($course) {
-                              $q->where('course_id', $course->id);
-                          });
-                })
+                ->where('progress_percentage', '>=', 100)
                 ->count();
 
             return round(($completedEnrollments / $totalEnrollments) * 100, 2);
@@ -1117,6 +1283,68 @@ class CourseController extends Controller
                 ->count();
 
             return round(($activeStudents / $totalEnrollments) * 100, 2);
+        }
+
+        /**
+         * Show design settings page for the course.
+         */
+        public function designSettings(Course $course)
+        {
+            $this->authorize('update', $course);
+
+            // Get current design settings or use defaults
+            $currentSettings = $course->design_settings ?? [];
+
+            return Inertia::render('Dashboard/Course/DesignSettings', [
+                'course' => $course,
+                'currentSettings' => $currentSettings,
+                'breadcrumbs' => [
+                    ['label' => __('dashboard'), 'href' => route('dashboard')],
+                    ['label' => __('courses.title'), 'href' => route('courses.index')],
+                    ['label' => $course->title, 'href' => route('courses.edit', $course)],
+                    ['label' => 'Design Settings', 'href' => null]
+                ]
+            ]);
+        }
+
+        /**
+         * Update design settings for the course.
+         */
+        public function updateDesignSettings(Request $request, Course $course)
+        {
+            $this->authorize('update', $course);
+
+            $validated = $request->validate([
+                'settings' => 'required|array',
+                'settings.primary_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+                'settings.secondary_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+                'settings.accent_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+                'settings.background_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+                'settings.text_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+                'settings.theme_mode' => 'nullable|string|in:light,dark,auto',
+                'settings.font_family' => 'nullable|string|in:inter,roboto,poppins',
+                'settings.font_size' => 'nullable|integer|min:12|max:20',
+                'settings.line_height' => 'nullable|numeric|min:1.2|max:2.0',
+                'settings.heading_weight' => 'nullable|string|in:400,500,600,700',
+                'settings.container_width' => 'nullable|string|in:sm,md,lg,xl',
+                'settings.border_radius' => 'nullable|integer|min:0|max:20',
+                'settings.card_shadow' => 'nullable|string|in:none,sm,md,lg',
+                'settings.spacing_scale' => 'nullable|numeric|min:0.8|max:1.5',
+                'settings.button_style' => 'nullable|string|in:rounded,square,pill',
+                'settings.input_style' => 'nullable|string|in:outlined,filled,underlined',
+                'settings.card_style' => 'nullable|string|in:elevated,outlined,filled'
+            ]);
+
+            try {
+                $course->update([
+                    'design_settings' => $validated['settings']
+                ]);
+
+                return Redirect::back()->with('success', 'Design settings updated successfully!');
+            } catch (\Exception $e) {
+                Log::error('Design settings update error: ' . $e->getMessage());
+                return Redirect::back()->with('error', 'Failed to update design settings. Please try again.');
+            }
         }
     }
 

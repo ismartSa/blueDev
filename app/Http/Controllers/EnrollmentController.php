@@ -7,6 +7,7 @@ use App\Models\Enrollment;
 use App\Services\EnrollmentService;
 use App\Http\Requests\EnrollmentRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class EnrollmentController extends Controller
@@ -14,15 +15,16 @@ class EnrollmentController extends Controller
     protected $enrollmentService;
 
     /**
-     * إنشاء مثيل جديد من المتحكم
+     * Create a new controller instance
      */
     public function __construct(EnrollmentService $enrollmentService)
     {
+        $this->middleware('auth');
         $this->enrollmentService = $enrollmentService;
     }
 
     /**
-     * تسجيل المستخدم في دورة معينة
+     * Enroll user in a specific course
      *
      * @param int $courseId
      * @return \Illuminate\Http\RedirectResponse
@@ -30,39 +32,40 @@ class EnrollmentController extends Controller
     public function enroll($courseId)
     {
         try {
-            $user = auth()->user();
+            $user = Auth::user();
             $course = Course::findOrFail($courseId);
 
-            // استخدام خدمة التسجيل لتنفيذ عملية التسجيل
+            // Use enrollment service to execute enrollment process
             $enrollment = $this->enrollmentService->enrollUserInCourse($user, $courseId);
 
-            // التحقق مما إذا كان التسجيل موجودًا مسبقًا
+            // Check if enrollment already exists
             if ($enrollment->wasRecentlyCreated === false) {
                 return redirect()->route('course.player', [
                     'courseId' => $course->id,
                     'courseSlug' => $course->slug
-                ])->with('info', 'أنت مسجل بالفعل في هذه الدورة');
+                ])->with('info', 'You are already enrolled in this course');
             }
 
             return redirect()->route('course.details', [
                 'id' => $course->id,
                 'courseSlug' => $course->slug
-            ])->with('success', 'تم التسجيل في الدورة بنجاح');
+            ])->with('success', 'Successfully enrolled in the course');
         } catch (\Exception $e) {
-            Log::error('خطأ في التسجيل بالدورة: ' . $e->getMessage());
-            return back()->with('error', 'حدث خطأ أثناء التسجيل في الدورة، يرجى المحاولة مرة أخرى');
+            Log::error('Course enrollment error: ' . $e->getMessage());
+            return back()->with('error', 'An error occurred during course enrollment, please try again');
         }
     }
 
     /**
-     * التحقق من حالة تسجيل المستخدم في دورة معينة
+     * Check user enrollment status in a specific course
      *
      * @param int $courseId
      * @return \Illuminate\Http\JsonResponse
      */
     public function checkEnrollment($courseId)
     {
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
         $isEnrolled = $user->enrollments()->where('course_id', $courseId)->exists();
 
         return response()->json(['isEnrolled' => $isEnrolled]);

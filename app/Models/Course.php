@@ -25,9 +25,16 @@ class Course extends Model
         'image',
         'status',
         'intro_video',
-        'user_id', // تم إضافته
-        'category_id', // تم إضافته
-        'price' // تم إضافته
+        'user_id', // Added
+        'category_id', // Added
+        'price', // Added
+        'level', // Added for course difficulty level
+        'language', // Added for course language
+        'design_settings' // Added for design customization
+    ];
+
+    protected $casts = [
+        'design_settings' => 'array'
     ];
 
     public function isFree()
@@ -76,10 +83,10 @@ class Course extends Model
         return $this->belongsTo(Category::class);
     }
 
-    // إضافة دالة للتحقق من حالة الدورة
+    // Check if course is published/available
     public function isPublished(): bool
     {
-        return $this->status === 'published';
+        return is_bool($this->status) ? $this->status : ($this->status === 'published');
     }
 
     // إضافة دالة للحصول على مدة الدورة بشكل منسق

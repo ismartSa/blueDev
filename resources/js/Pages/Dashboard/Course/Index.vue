@@ -1,7 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import TextInput from "@/Components/TextInput.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
@@ -9,9 +8,7 @@ import SelectInput from "@/Components/SelectInput.vue";
 import Checkbox from "@/Components/Checkbox.vue";
 import Pagination from "@/Components/Pagination.vue";
 import Modal from "@/Components/Modal.vue";
-import InputLabel from "@/Components/InputLabel.vue";
-import InputError from "@/Components/InputError.vue";
-import TextArea from "@/Components/TextArea.vue";
+import CourseFormModal from "@/Components/Course/CourseFormModal.vue";
 import { reactive, watch, computed, nextTick, ref } from "vue";
 import pkg from "lodash";
 import { router } from "@inertiajs/vue3";
@@ -38,11 +35,7 @@ const PER_PAGE_OPTIONS = [
     { value: 100, label: '100 per page' }
 ];
 
-const STATUS_OPTIONS = [
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'draft', label: 'Draft' }
-];
+// Constants removed - CourseFormModal manages its own options
 
 // Props with validation
 const props = defineProps({
@@ -78,31 +71,17 @@ const data = reactive({
     showSuccess: false,
     successMessage: '',
     courseToDelete: null,
+    courseToEdit: null,
 });
 
-// Form handling with Inertia useForm
-const createForm = useForm({
-    title: '',
-    category_id: null,
-    status: 'active',
-    description: '',
-});
-
-const editForm = useForm({
-    title: '',
-    category_id: null,
-    status: 'active',
-    description: '',
-});
+// Simplified form handling - CourseFormModal manages its own forms
 
 const deleteForm = useForm({});
 const bulkDeleteForm = useForm({
     ids: []
 });
 
-// Refs for form inputs
-const createTitleInput = ref(null);
-const editTitleInput = ref(null);
+// Refs removed - CourseFormModal manages its own form inputs
 
 // Computed properties
 const isAllSelected = computed(() =>
@@ -124,10 +103,7 @@ const sortableColumns = computed(() => [
     { key: 'updated_at', label: 'Updated At', sortable: true },
 ]);
 
-const categoriesForSelect = computed(() => [
-    { value: null, label: 'Select Category' },
-    ...props.categories.map(cat => ({ value: cat.id, label: cat.name }))
-]);
+// categoriesForSelect removed - CourseFormModal manages its own category options
 
 const filteredCoursesCount = computed(() => props.courses?.total || 0);
 
@@ -208,30 +184,12 @@ const goToCourseDetails = (course) => {
 
 // Modal methods
 const openCreateModal = () => {
-    createForm.reset();
-    createForm.clearErrors();
     data.createOpen = true;
-
-    nextTick(() => {
-        createTitleInput.value?.focus();
-    });
 };
 
 const openEditModal = (course) => {
-    editForm.reset();
-    editForm.clearErrors();
-
-    editForm.title = course.title;
-    editForm.category_id = course.category?.id || null;
-    editForm.status = course.status.toLowerCase();
-    editForm.description = course.description || '';
-
-    data.courseToDelete = course;
+    data.courseToEdit = course;
     data.editOpen = true;
-
-    nextTick(() => {
-        editTitleInput.value?.focus();
-    });
 };
 
 const openDeleteModal = (course) => {
@@ -250,31 +208,13 @@ const closeModals = () => {
     data.deleteOpen = false;
     data.deleteBulkOpen = false;
     data.courseToDelete = null;
+    data.courseToEdit = null;
 };
 
-// Form submission methods
-const submitCreate = () => {
-    createForm.post(route('courses.store'), {
-        onSuccess: () => {
-            closeModals();
-            showSuccessMessage('Course created successfully!');
-        },
-        onError: (errors) => {
-            console.error('Create error:', errors);
-        }
-    });
-};
-
-const submitEdit = () => {
-    editForm.put(route('courses.update', data.courseToDelete?.id), {
-        onSuccess: () => {
-            closeModals();
-            showSuccessMessage('Course updated successfully!');
-        },
-        onError: (errors) => {
-            console.error('Update error:', errors);
-        }
-    });
+// Form success handler for CourseFormModal
+const handleFormSuccess = (message) => {
+    closeModals();
+    showSuccessMessage(message);
 };
 
 const submitDelete = () => {
@@ -671,158 +611,23 @@ const cleanup = () => {
         </div>
 
         <!-- Create Course Modal -->
-        <Modal :show="data.createOpen" @close="closeModals" max-width="2xl">
-            <div class="p-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
-                    Create New Course
-                </h2>
-
-                <form @submit.prevent="submitCreate" class="space-y-6">
-                    <div>
-                        <InputLabel for="create-title" value="Course Title" />
-                        <TextInput
-                            id="create-title"
-                            ref="createTitleInput"
-                            v-model="createForm.title"
-                            type="text"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': createForm.errors.title }"
-                            placeholder="Enter course title"
-                            required
-                        />
-                        <InputError :message="createForm.errors.title" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <InputLabel for="create-category" value="Category" />
-                        <SelectInput
-                            id="create-category"
-                            v-model="createForm.category_id"
-                            :dataSet="categoriesForSelect"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': createForm.errors.category_id }"
-                        />
-                        <InputError :message="createForm.errors.category_id" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <InputLabel for="create-status" value="Status" />
-                        <SelectInput
-                            id="create-status"
-                            v-model="createForm.status"
-                            :dataSet="STATUS_OPTIONS"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': createForm.errors.status }"
-                        />
-                        <InputError :message="createForm.errors.status" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <InputLabel for="create-description" value="Description" />
-                        <TextArea
-                            id="create-description"
-                            v-model="createForm.description"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': createForm.errors.description }"
-                            rows="4"
-                            placeholder="Enter course description (optional)"
-                        />
-                        <InputError :message="createForm.errors.description" class="mt-2" />
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <SecondaryButton @click="closeModals" type="button">
-                            Cancel
-                        </SecondaryButton>
-                        <PrimaryButton
-                            type="submit"
-                            :disabled="createForm.processing"
-                            class="flex items-center gap-2"
-                        >
-                            <span v-if="createForm.processing" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                            {{ createForm.processing ? 'Creating...' : 'Create Course' }}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </div>
-        </Modal>
+        <CourseFormModal
+            :show="data.createOpen"
+            :categories="props.categories"
+            mode="create"
+            @close="closeModals"
+            @success="handleFormSuccess"
+        />
 
         <!-- Edit Course Modal -->
-        <Modal :show="data.editOpen" @close="closeModals" max-width="2xl">
-            <div class="p-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
-                    Edit Course
-                </h2>
-
-                <form @submit.prevent="submitEdit" class="space-y-6">
-                    <div>
-                        <InputLabel for="edit-title" value="Course Title" />
-                        <TextInput
-                            id="edit-title"
-                            ref="editTitleInput"
-                            v-model="editForm.title"
-                            type="text"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': editForm.errors.title }"
-                            placeholder="Enter course title"
-                            required
-                        />
-                        <InputError :message="editForm.errors.title" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <InputLabel for="edit-category" value="Category" />
-                        <SelectInput
-                            id="edit-category"
-                            v-model="editForm.category_id"
-                            :dataSet="categoriesForSelect"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': editForm.errors.category_id }"
-                        />
-                        <InputError :message="editForm.errors.category_id" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <InputLabel for="edit-status" value="Status" />
-                        <SelectInput
-                            id="edit-status"
-                            v-model="editForm.status"
-                            :dataSet="STATUS_OPTIONS"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': editForm.errors.status }"
-                        />
-                        <InputError :message="editForm.errors.status" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <InputLabel for="edit-description" value="Description" />
-                        <TextArea
-                            id="edit-description"
-                            v-model="editForm.description"
-                            class="mt-1 block w-full"
-                            :class="{ 'border-red-500': editForm.errors.description }"
-                            rows="4"
-                            placeholder="Enter course description (optional)"
-                        />
-                        <InputError :message="editForm.errors.description" class="mt-2" />
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <SecondaryButton @click="closeModals" type="button">
-                            Cancel
-                        </SecondaryButton>
-                        <PrimaryButton
-                            type="submit"
-                            :disabled="editForm.processing"
-                            class="flex items-center gap-2"
-                        >
-                            <span v-if="editForm.processing" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                            {{ editForm.processing ? 'Updating...' : 'Update Course' }}
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </div>
-        </Modal>
+        <CourseFormModal
+            :show="data.editOpen"
+            :categories="props.categories"
+            :course="data.courseToEdit"
+            mode="edit"
+            @close="closeModals"
+            @success="handleFormSuccess"
+        />
 
         <!-- Delete Confirmation Modal -->
         <Modal :show="data.deleteOpen" @close="closeModals" max-width="md">

@@ -11,7 +11,7 @@ class Enrollment extends Model
     use HasFactory;
 
     /**
-     * الخصائص التي يمكن تعيينها بشكل جماعي
+     * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
@@ -25,7 +25,7 @@ class Enrollment extends Model
     ];
 
     /**
-     * الخصائص التي يجب تحويلها
+     * The attributes that should be cast.
      *
      * @var array<string, string>
      */
@@ -36,7 +36,7 @@ class Enrollment extends Model
     ];
 
     /**
-     * علاقة المستخدم المرتبط بهذا التسجيل
+     * Get the user associated with this enrollment.
      */
     public function user(): BelongsTo
     {
@@ -44,7 +44,7 @@ class Enrollment extends Model
     }
 
     /**
-     * علاقة الدورة المرتبطة بهذا التسجيل
+     * Get the course associated with this enrollment.
      */
     public function course(): BelongsTo
     {
@@ -52,7 +52,7 @@ class Enrollment extends Model
     }
 
     /**
-     * التحقق مما إذا كان التسجيل نشطًا
+     * Check if the enrollment is active.
      */
     public function isActive(): bool
     {
@@ -60,7 +60,7 @@ class Enrollment extends Model
     }
 
     /**
-     * التحقق مما إذا كان التسجيل مكتملاً
+     * Check if the enrollment is completed.
      */
     public function isCompleted(): bool
     {

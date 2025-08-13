@@ -30,6 +30,7 @@ class CourseEnrollmentController extends Controller
     public function enroll($courseId)
     {
         try {
+       
             $user = Auth::user();
             $course = Course::findOrFail($courseId);
 

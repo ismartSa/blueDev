@@ -101,7 +101,7 @@ const emit = defineEmits(['enroll'])
 // Page data
 const page = usePage()
 
-// Reactive state
+// Reactive state with optimized initialization
 const enrolling = ref(false)
 const localWishlistStatus = ref(props.course.is_wishlisted)
 
@@ -110,42 +110,51 @@ watch(() => props.course.is_wishlisted, (newValue) => {
   localWishlistStatus.value = newValue
 })
 
-// Check if user is authenticated
-const isAuthenticated = computed(() => {
-  return page.props.auth && page.props.auth.user
-})
+// Authentication check with optional chaining for performance
+const isAuthenticated = computed(() => page.props.auth?.user)
 
-// Dynamic computed properties for optimized rendering
+// Optimized computed properties for better performance
 const courseImage = computed(() => 
   props.course.image || `https://picsum.photos/seed/${props.course.id}/400/300`
-)
-
-const priceText = computed(() => 
-  (!props.course.price || props.course.price === 0) ? content.value.free : `$${props.course.price}`
 )
 
 const isFree = computed(() => !props.course.price || props.course.price === 0)
 const isWishlisted = computed(() => localWishlistStatus.value)
 const isEnrolled = computed(() => props.course.user_enrolled)
 
-// Dynamic class bindings for better performance
+const priceText = computed(() => 
+  isFree.value ? content.value.free : `$${props.course.price}`
+)
+
+// Dynamic course state for better UX
+const courseState = computed(() => {
+  if (isEnrolled.value) return 'enrolled'
+  if (enrolling.value) return 'enrolling'
+  if (isFree.value) return 'free'
+  return 'paid'
+})
+
+// Optimized class system with DRY principles
 const baseClasses = {
   card: 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 group',
   image: 'w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105',
   badge: 'px-3 py-1 rounded-full font-medium backdrop-blur-sm',
   button: 'font-medium rounded-lg transition-colors flex items-center justify-center gap-2',
-  text: 'transition-colors'
+  text: 'transition-colors',
+  input: 'border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
 }
 
+// Dynamic class bindings with performance optimization
 const cardClasses = computed(() => baseClasses.card)
 const imageClasses = computed(() => baseClasses.image)
 
-const badgeClasses = computed(() => ({
-  price: `${baseClasses.badge} text-sm ${
-    isFree.value ? 'bg-green-500/90 text-white' : 'bg-blue-500/90 text-white'
-  }`,
-  category: `${baseClasses.badge} text-xs bg-black/50 text-white`
-}))
+const badgeClasses = computed(() => {
+  const priceColors = isFree.value ? 'bg-green-500/90 text-white' : 'bg-blue-500/90 text-white'
+  return {
+    price: `${baseClasses.badge} text-sm ${priceColors}`,
+    category: `${baseClasses.badge} text-xs bg-black/50 text-white`
+  }
+})
 
 const titleClasses = computed(() => 
   `text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 ${baseClasses.text}`
@@ -169,13 +178,12 @@ const secondaryButtonClasses = computed(() =>
   `flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 ${baseClasses.button} py-2 px-4 text-center text-sm`
 )
 
-const wishlistButtonClasses = computed(() => 
-  `px-3 py-2 rounded-lg ${baseClasses.text} ${
-    isWishlisted.value
-      ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400'
-      : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'
-  }`
-)
+const wishlistButtonClasses = computed(() => {
+  const colors = isWishlisted.value
+    ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400'
+    : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'
+  return `px-3 py-2 rounded-lg ${baseClasses.text} ${colors}`
+})
 
 // Dynamic icon rendering
 const wishlistIcon = computed(() => isWishlisted.value ? HeartIconSolid : HeartIcon)
@@ -187,75 +195,101 @@ const courseStats = computed(() => [
   { key: 'lessons', icon: BookOpenIcon, value: `${props.course.lessons_count || 0} ${content.value.lessons}` }
 ])
 
-// Dynamic primary action
+// Optimized primary action with state-based rendering
 const primaryAction = computed(() => {
-  if (isEnrolled.value) {
-    return {
+  const actionConfig = {
+    enrolled: {
       component: Link,
       props: { href: route('courses.learn', { courseId: props.course.id, courseSlug: props.course.slug }) },
       classes: `w-full bg-green-600 hover:bg-green-700 text-white ${baseClasses.button} py-2.5 px-4`,
       icon: PlayIcon,
       text: content.value.continue,
       handler: null
+    },
+    enrolling: {
+      component: 'button',
+      props: { disabled: true },
+      classes: `w-full bg-blue-400 text-white ${baseClasses.button} py-2.5 px-4 cursor-not-allowed`,
+      icon: null,
+      text: content.value.enrolling,
+      handler: null
+    },
+    free: {
+      component: 'button',
+      props: { disabled: false },
+      classes: `w-full bg-green-600 hover:bg-green-700 text-white ${baseClasses.button} py-2.5 px-4`,
+      icon: null,
+      text: content.value.enrollFree,
+      handler: handleEnroll
+    },
+    paid: {
+      component: 'button',
+      props: { disabled: false },
+      classes: `w-full bg-blue-600 hover:bg-blue-700 text-white ${baseClasses.button} py-2.5 px-4`,
+      icon: null,
+      text: content.value.enroll,
+      handler: handleEnroll
     }
   }
   
-  return {
-    component: 'button',
-    props: { disabled: enrolling.value },
-    classes: `w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white ${baseClasses.button} py-2.5 px-4`,
-    icon: null,
-    text: enrolling.value ? content.value.enrolling : content.value.enroll,
-    handler: handleEnroll
-  }
+  return actionConfig[courseState.value]
 })
 
-// Content
+// Optimized content with better organization
 const content = computed(() => ({
   free: 'FREE',
   students: 'students',
   lessons: 'lessons',
   enroll: 'Enroll Now',
+  enrollFree: 'Enroll Free',
   enrolling: 'Enrolling...',
   continue: 'Continue Learning',
   details: 'View Details'
 }))
 
-// Methods
+// Optimized methods with better error handling and performance
 const handleEnroll = async () => {
   if (enrolling.value) return
   
   enrolling.value = true
   try {
     emit('enroll', props.course.id)
+  } catch (error) {
+    console.error('Enrollment error:', error)
   } finally {
     enrolling.value = false
   }
 }
 
-const toggleWishlist = () => {
-  // Check if user is authenticated
+const toggleWishlist = async () => {
+  // Authentication check with early return
   if (!isAuthenticated.value) {
-    // Redirect to login page for guest users
     router.visit(route('login'))
     return
   }
   
-  // Optimistically update the local state
+  // Optimistic update with error recovery
   const originalStatus = localWishlistStatus.value
-  localWishlistStatus.value = !localWishlistStatus.value
+  localWishlistStatus.value = !originalStatus
   
-  router.post(route('courses.wishlist.toggle', props.course.id), {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      // Reload page data to reflect wishlist changes
-      router.reload({ only: ['courses'] })
-    },
-    onError: () => {
-      // Revert optimistic update on error
-      localWishlistStatus.value = originalStatus
-    }
-  })
+  try {
+    await router.post(route('courses.wishlist.toggle', props.course.id), {}, {
+      preserveScroll: true,
+      onSuccess: () => {
+        // Reload only necessary data for better performance
+        router.reload({ only: ['courses'] })
+      },
+      onError: (errors) => {
+        // Revert optimistic update and log error
+        localWishlistStatus.value = originalStatus
+        console.error('Wishlist toggle failed:', errors)
+      }
+    })
+  } catch (error) {
+    // Fallback error handling
+    localWishlistStatus.value = originalStatus
+    console.error('Wishlist operation failed:', error)
+  }
 }
 </script>
 

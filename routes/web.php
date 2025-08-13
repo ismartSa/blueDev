@@ -101,6 +101,17 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard', $stats);
 })->name('dashboard');
 
+    // Dashboard Course Management Routes
+    Route::middleware(['can:manage courses'])
+        ->prefix('dashboard/courses')
+        ->name('dashboard.courses.')
+        ->group(function () {
+            Route::get('/', [CourseController::class, 'index'])->name('index');
+            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('edit');
+            Route::put('/{course}', [CourseController::class, 'update'])->name('update');
+            Route::get('/{course}/enrollments', [CourseController::class, 'enrollments'])->name('enrollments');
+        });
+
     /*
     |--------------------------------------------------------------------------
     | Profile Routes
@@ -152,8 +163,12 @@ Route::get('/dashboard', function () {
             Route::post('/', [CourseController::class, 'store'])->name('store');
             Route::post('/destroy-bulk', [CourseController::class, 'destroyBulk'])->name('destroy-bulk');
             Route::get('{courseId}/details/', [CourseController::class, 'details'])->name('details.show');
-            Route::get('/{course}/edit', [CourseController::class, 'editcourse'])->name('edit');
-            Route::put('/{course}', [CourseController::class, 'updatecourse'])->name('update');
+            Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('edit');
+            Route::put('/{course}', [CourseController::class, 'update'])->name('update');
+
+            // Design Settings Routes
+            Route::get('/{course}/design', [CourseController::class, 'designSettings'])->name('design.settings');
+            Route::post('/{course}/design', [CourseController::class, 'updateDesignSettings'])->name('design.update');
 
             // Lecture and Section Management
             Route::prefix('{course}')->group(function () {
@@ -286,7 +301,7 @@ Route::get('/dashboard', function () {
         Route::get('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'index'])->name('courses.index');
         Route::get('/create', [\App\Http\Controllers\Course\CourseManagementController::class, 'create'])->name('courses.create');
         Route::post('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'store'])->name('courses.store');
-        Route::put('/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'update'])->name('courses.update');
+        Route::put('/{course}', [\App\Http\Controllers\CourseController::class, 'update'])->name('courses.update');
 
         // Course Content Routes
         Route::prefix('{course}')->group(function () {

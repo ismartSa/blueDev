@@ -11,61 +11,27 @@ use Exception;
 
 class EnrollmentService
 {
+    private const DEFAULT_ENROLLMENT_STATUS = 'confirmed';
+    private const COMPLETION_THRESHOLD = 100;
+
     /**
-     * تسجيل مستخدم في دورة
-     *
-     * @param User $user
-     * @param int $courseId
-     * @return Enrollment
-     * @throws Exception
+     * Enroll user in a course
      */
     public function enrollUserInCourse(User $user, int $courseId): Enrollment
     {
         try {
             $course = Course::findOrFail($courseId);
-
-            // التحقق من حالة الدورة
-            if ($course->status !== 'published') {
-                throw new Exception('هذه الدورة غير متاحة للتسجيل حالياً');
-            }
-
-            // التحقق من التسجيل المسبق
-            $existingEnrollment = Enrollment::where('user_id', $user->id)
-                ->where('course_id', $courseId)
-                ->first();
-
-            if ($existingEnrollment) {
-                return $existingEnrollment;
-            }
-
-            // إنشاء تسجيل جديد
-            $enrollment = Enrollment::create([
-                'user_id' => $user->id,
-                'course_id' => $courseId,
-                'enrollment_status' => 'active',
-                'enrollment_date' => Carbon::now(),
-                'progress_percentage' => 0,
-            ]);
-
-            // تسجيل النشاط
-            activity()
-                ->causedBy($user)
-                ->performedOn($course)
-                ->log('تم التسجيل في الدورة');
-
-            return $enrollment;
+            $this->validateCourseAvailability($course);
+            
+            return $this->findOrCreateEnrollment($user, $courseId);
         } catch (Exception $e) {
-            Log::error('خطأ في التسجيل بالدورة: ' . $e->getMessage());
+            Log::error('Course enrollment error: ' . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * التحقق من حالة تسجيل المستخدم في دورة
-     *
-     * @param User $user
-     * @param int $courseId
-     * @return bool
+     * Check if user is enrolled in a course
      */
     public function isUserEnrolled(User $user, int $courseId): bool
     {
@@ -73,27 +39,59 @@ class EnrollmentService
     }
 
     /**
-     * تحديث نسبة تقدم المستخدم في الدورة
-     *
-     * @param User $user
-     * @param int $courseId
-     * @param int $progressPercentage
-     * @return Enrollment
+     * Update user progress in course
      */
     public function updateProgress(User $user, int $courseId, int $progressPercentage): Enrollment
     {
-        $enrollment = Enrollment::where('user_id', $user->id)
+        $enrollment = $this->getUserEnrollment($user, $courseId);
+        
+        $enrollment->update([
+            'progress_percentage' => $progressPercentage,
+            'completion_date' => $progressPercentage >= self::COMPLETION_THRESHOLD ? Carbon::now() : null
+        ]);
+
+        return $enrollment->fresh();
+    }
+
+    /**
+     * Validate course availability for enrollment
+     */
+    private function validateCourseAvailability(Course $course): void
+    {
+        $isAvailable = match (true) {
+            is_bool($course->status) => $course->status,
+            is_int($course->status) => $course->status === 1,
+            is_string($course->status) => $course->status === '1',
+            default => false
+        };
+        
+        if (!$isAvailable) {
+            throw new Exception('This course is not available for enrollment currently');
+        }
+    }
+
+    /**
+     * Find existing enrollment or create new one
+     */
+    private function findOrCreateEnrollment(User $user, int $courseId): Enrollment
+    {
+        return Enrollment::firstOrCreate(
+            ['user_id' => $user->id, 'course_id' => $courseId],
+            [
+                'enrollment_status' => self::DEFAULT_ENROLLMENT_STATUS,
+                'enrollment_date' => Carbon::now(),
+                'progress_percentage' => 0,
+            ]
+        );
+    }
+
+    /**
+     * Get user enrollment for a specific course
+     */
+    private function getUserEnrollment(User $user, int $courseId): Enrollment
+    {
+        return Enrollment::where('user_id', $user->id)
             ->where('course_id', $courseId)
             ->firstOrFail();
-
-        $enrollment->progress_percentage = $progressPercentage;
-
-        if ($progressPercentage >= 100) {
-            $enrollment->completion_date = Carbon::now();
-        }
-
-        $enrollment->save();
-
-        return $enrollment;
     }
 }

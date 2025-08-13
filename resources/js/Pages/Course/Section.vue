@@ -11,7 +11,7 @@
             <p class="text-gray-600 dark:text-gray-300 mb-4">{{ section.description }}</p>
             <ul class="space-y-2">
                 <li v-for="lecture in lectures" :key="lecture.id" class="bg-white dark:bg-slate-700 rounded-lg shadow-sm p-4">
-                    <Lecture :lecture="lecture" />
+                    <Lecture :lecture="lecture" :course-slug="courseSlug" />
                 </li>
             </ul>
         </div>
@@ -30,6 +30,10 @@ const props = defineProps({
     lectures: {
         type: Array,
         default: () => []
+    },
+    courseSlug: {
+        type: String,
+        required: true
     }
 })
 

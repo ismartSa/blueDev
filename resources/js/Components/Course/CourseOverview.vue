@@ -101,7 +101,7 @@ const getCourseImage = () => {
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <Link
-                    :href="`/dashboard/courses/${course.id}/edit`"
+                    :href="route('courses.edit', course.id)"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg hover:scale-105"
                 >
                     <PencilIcon class="h-5 w-5" />

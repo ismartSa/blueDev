@@ -115,10 +115,12 @@
                     <span v-if="course.original_price" class="text-sm text-gray-500 line-through">${{ course.original_price }}</span>
                   </div>
                   <button
-                    @click="enrollCourse"
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
-                    {{ enrollmentStatus.enrolled ? 'Continue Course' : 'Enroll Now' }}
-                  </button>
+                     @click="enrollCourse"
+                     :class="buttonClasses"
+                   >
+                     <i class="fas fa-play-circle"></i>
+                     <span>{{ buttonText }}</span>
+                   </button>
                 </div>
 
                 <div class="border-t border-gray-200 pt-4">
@@ -185,49 +187,50 @@
                 </div>
               </div>
 
-              <div class="space-y-4">
-                <template v-if="course.sections && course.sections.length > 0">
-                  <div v-for="section in course.sections" :key="section.id"
-                       class="border border-gray-200 rounded-lg overflow-hidden">
-                    <button @click="toggleSection(section.id)"
-                            class="module-toggle w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100">
-                      <div class="flex items-center">
-                        <i class="fas fa-folder-open text-indigo-500 mr-3"></i>
-                        <span class="font-medium">{{ section.title }}</span>
-                      </div>
-                      <div class="flex items-center">
-                        <span class="text-sm text-gray-500 mr-4">
-                          {{ section.lectures_count || 0 }} lessons • {{ formatSectionDuration(section) }}
-                        </span>
-                        <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
-                           :class="{ 'rotate-180': openSections.includes(section.id) }"></i>
-                      </div>
-                    </button>
-                    <div v-show="openSections.includes(section.id)" class="module-content">
-                      <div class="divide-y divide-gray-200">
-                        <template v-if="section.lectures && section.lectures.length > 0">
-                          <div v-for="lecture in section.lectures" :key="lecture.id"
-                               class="module-item p-4 hover:bg-indigo-50 cursor-pointer flex items-center">
-                            <i class="fas fa-play-circle text-indigo-500 mr-4"></i>
-                            <div class="flex-grow">
-                              <div class="flex justify-between">
-                                <span>{{ lecture.title }}</span>
-                                <span class="text-sm text-gray-500">{{ formatDuration(lecture.duration || 0) }}</span>
-                              </div>
-                              <div v-if="lecture.is_preview" class="text-sm text-gray-500 mt-1">Free preview</div>
-                            </div>
+              <div v-if="hasContent" class="space-y-4">
+                <div v-for="section in sectionsWithLectures" :key="section.id"
+                     class="border border-gray-200 rounded-lg overflow-hidden">
+                  <button @click="toggleSection(section.id)"
+                          class="module-toggle w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100">
+                    <div class="flex items-center">
+                      <i class="fas fa-folder-open text-indigo-500 mr-3"></i>
+                      <span class="font-medium">{{ section.title }}</span>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="text-sm text-gray-500 mr-4">
+                        {{ section.lectures_count || 0 }} lessons • {{ formatSectionDuration(section) }}
+                      </span>
+                      <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
+                         :class="{ 'rotate-180': openSections.includes(section.id) }"></i>
+                    </div>
+                  </button>
+                  <div v-show="openSections.includes(section.id)" class="module-content">
+                    <div class="divide-y divide-gray-200">
+                      <template v-if="section.lectures && section.lectures.length > 0">
+                        <div v-for="lecture in section.lectures" :key="lecture.id"
+                             class="module-item p-4 hover:bg-indigo-50 cursor-pointer flex items-center">
+                          <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-play text-indigo-600 text-sm"></i>
                           </div>
-                        </template>
-                        <div v-else class="p-4 text-center text-gray-500">
-                          لا توجد محاضرات متاحة في هذا القسم حتى الآن.
+                          <div class="flex-grow">
+                            <div class="flex justify-between items-center mb-2">
+                              <span class="font-medium text-gray-800">{{ lecture.title }}</span>
+                              <span class="text-sm text-gray-500">{{ formatDuration(lecture.duration || 0) }}</span>
+                            </div>
+                            <div v-if="lecture.is_preview" class="text-sm text-gray-500">Free preview</div>
+                          </div>
                         </div>
+                      </template>
+                      <div v-else class="p-4 text-center text-gray-500">
+                        No lectures available in this section yet.
                       </div>
                     </div>
                   </div>
-                </template>
+                </div>
+              </div>
                 <div v-else class="text-center py-8 bg-white rounded-lg border border-gray-200">
                   <i class="fas fa-book-open text-indigo-400 text-4xl mb-4"></i>
-                  <p class="text-gray-500">لا توجد أقسام منهج دراسي متاحة لهذه الدورة حتى الآن.</p>
+                  <p class="text-gray-500">No curriculum sections available for this course yet.</p>
                 </div>
               </div>
             </div>
@@ -308,6 +311,28 @@
        }
     },
 
+    computed: {
+       buttonClasses() {
+         return 'w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2'
+       },
+       
+       buttonText() {
+         return this.enrollmentStatus.enrolled ? 'Continue Learning' : 'Enroll Now'
+       },
+       
+       isEnrolled() {
+         return this.enrollmentStatus.enrolled
+       },
+       
+       hasContent() {
+         return this.course.sections?.length > 0
+       },
+       
+       sectionsWithLectures() {
+         return this.course.sections?.filter(section => section.lectures?.length > 0) || []
+       }
+     },
+
     methods: {
       tabClasses(tabName) {
         return [
@@ -339,12 +364,20 @@
       },
 
       enrollCourse() {
-        if (this.enrollmentStatus.enrolled) {
-          // Navigate to first lecture
-        } else {
-          this.$inertia.post(route('enrollments.store', { course_id: this.course.id }))
-        }
-      },
+         const navigateToLearn = () => this.$inertia.visit(route('courses.learn', this.course.id));
+         
+         if (this.isEnrolled) {
+           navigateToLearn();
+         } else {
+           this.$inertia.post(route('courses.enroll', this.course.id), {}, {
+             onSuccess: () => {
+               this.enrollmentStatus.enrolled = true;
+               navigateToLearn();
+             },
+             onError: (errors) => console.error('Enrollment error:', errors)
+           });
+         }
+       },
 
       isValidVideoUrl(url) {
         if (!url) return false
