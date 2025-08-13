@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\{Support\Str, Http\Request, Support\Facades\Auth, Support\Facades\Log, Support\Facades\Storage, Support\Facades\Hash};
 use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt, Wishlist };
 use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CourseController extends Controller
 {
@@ -490,6 +491,40 @@ class CourseController extends Controller
     }
 
     /**
+     * Display user's wishlist.
+     */
+    public function wishlist()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        $wishlistCourses = $user->wishlists()
+            ->with(['course.category', 'course.instructor'])
+            ->get()
+            ->map(function ($wishlist) {
+                $course = $wishlist->course;
+                return [
+                    'id' => $course->id,
+                    'title' => $course->title,
+                    'slug' => $course->slug,
+                    'description' => $course->description,
+                    'image' => $course->image,
+                    'price' => $course->price,
+                    'rating' => $course->rating,
+                    'level' => $course->level,
+                    'category' => $course->category->name ?? 'Uncategorized',
+                    'instructor' => $course->instructor->name,
+                    'duration' => $course->duration,
+                    'is_free' => $course->price == 0,
+                ];
+            });
+
+        return Inertia::render('Courses/Wishlist', [
+            'courses' => $wishlistCourses,
+        ]);
+    }
+
+    /**
      * Store a newly created course in storage.
      */
     public function storecourse(Request $request)
@@ -767,14 +802,8 @@ class CourseController extends Controller
 
         return inertia('Course/CoursePlayer', [
             'title' => $data['course']->title,
-            'course' => $data['course'],
-            'sections' => $data['course']->sections,
-            'lectures' => $data['course']->sections->flatMap->lectures,
-            'firstLecture' => $data['lectureData'],
-            'completionPercentage' => $data['completionPercentage'],
-            'breadcrumbs' => [
-                ['label' => $data['lectureData']['title'], 'href' => route('course.player', ['courseId' => $courseId, 'courseSlug' => $courseSlug])]
-            ],
+            ...$data,
+            'breadcrumbs' => $this->buildBreadcrumbs('player', $data['lectureData']['title'], compact('courseId', 'courseSlug'))
         ]);
     }
 
@@ -783,15 +812,9 @@ class CourseController extends Controller
         $data = $this->getCourseWithLectureData($courseId, $courseSlug, $lectureID);
 
         return inertia('Course/CoursePlayer', [
-            'course' => $data['course'],
-            'sections' => $data['course']->sections,
-            'lectures' => $data['course']->sections->flatMap->lectures,
+            ...$data,
             'currentLectureId' => (int) $lectureID,
-            'completionPercentage' => $data['completionPercentage'],
-            'breadcrumbs' => [
-                ['label' => 'Course ', 'href' => route('courses.index')],
-                ['label' => $data['lectureData']['title'], 'href' => route('course.watchLecture', ['courseId' => $courseId, 'courseSlug' => $courseSlug, 'lectureID' => $lectureID])]
-            ]
+            'breadcrumbs' => $this->buildBreadcrumbs('watch', $data['lectureData']['title'], compact('courseId', 'courseSlug', 'lectureID'))
         ]);
     }
 
@@ -848,7 +871,7 @@ class CourseController extends Controller
                 'courseSlug' => $courseSlug,
                 'userId' => Auth::id()
             ]);
-            
+
             return redirect()->route('courses.explore')
                 ->with('error', 'Unable to access course content. Please try again.');
         }
@@ -856,80 +879,337 @@ class CourseController extends Controller
 
     private function getCourseWithLectureData($courseId, $courseSlug, $lectureID = null)
     {
-        // جلب الكورس مع الأقسام والمحاضرات
+        // Optimized single query with proper eager loading
         $course = Course::where('id', $courseId)
             ->where('slug', $courseSlug)
-            ->with(['sections.lectures'])
+            ->with([
+                'sections' => fn($q) => $q->orderBy('order'),
+                'sections.lectures' => fn($q) => $q->orderBy('order')->select(['id', 'title', 'video_url', 'section_id', 'course_id', 'order'])
+            ])
+            ->select(['id', 'title', 'slug', 'description', 'image'])
             ->firstOrFail();
 
-        // If no lecture is specified, get the first lecture by default
+        $lecture = $this->findLecture($course, $lectureID);
+        $this->validateLectureOwnership($lecture, $course);
+
+        $completedLectureIds = $this->getCompletedLectureIds();
+        $navigation = $this->buildLectureNavigation($course->sections, $lecture);
+
+        // Mark completion status efficiently
+        $this->enrichLecturesWithCompletion($course->sections, $completedLectureIds);
+
+        return [
+            'course' => $course,
+            'sections' => $course->sections,
+            'lectures' => $course->sections->flatMap->lectures,
+            'lectureData' => $this->buildLectureData($lecture, $navigation, $completedLectureIds),
+            'completionPercentage' => $this->calculateCompletionPercentage($course, $completedLectureIds)
+        ];
+    }
+
+    /**
+     * Find lecture by ID or return first available lecture
+     */
+    private function findLecture($course, $lectureID)
+    {
         if ($lectureID) {
-            $lecture = Lecture::findOrFail($lectureID);
-        } else {
-            // Check if course has sections and lectures
-            $firstSection = $course->sections->first();
-            if (!$firstSection || $firstSection->lectures->isEmpty()) {
-                abort(404, 'No lectures found in this course');
-            }
-            $lecture = $firstSection->lectures->first();
+            return Lecture::findOrFail($lectureID);
         }
 
+        $firstLecture = $course->sections->first()?->lectures->first();
+
+        if (!$firstLecture) {
+            abort(404, 'No lectures found in this course');
+        }
+
+        return $firstLecture;
+    }
+
+    /**
+     * Validate lecture belongs to course
+     */
+    private function validateLectureOwnership($lecture, $course)
+    {
         if (!$lecture || $lecture->course_id !== $course->id) {
             abort(404, 'Lecture not found or does not belong to the course');
         }
+    }
 
-        // إعداد بيانات المحاضرة
-        $sections = $course->sections->sortBy('order'); // ترتيب الأقسام حسب الترتيب
-        $currentSection = $sections->where('id', $lecture->section_id)->first();
-        $lecturesInCurrentSection = $currentSection->lectures->sortBy('order');
+    /**
+     * Build navigation for lectures with cross-section support
+     */
+    private function buildLectureNavigation($sections, $lecture)
+    {
+        $allLectures = $sections->flatMap->lectures->sortBy(['section.order', 'order']);
+        $currentIndex = $allLectures->search(fn($l) => $l->id === $lecture->id);
 
-        $previousLecture = $lecturesInCurrentSection->where('order', '<', $lecture->order)->last();
-        $nextLecture = $lecturesInCurrentSection->where('order', '>', $lecture->order)->first();
+        return [
+            'previous' => $currentIndex > 0 ? $allLectures->values()[$currentIndex - 1] : null,
+            'next' => $currentIndex < $allLectures->count() - 1 ? $allLectures->values()[$currentIndex + 1] : null
+        ];
+    }
 
-        // إذا لم تكن هناك محاضرة سابقة في نفس القسم، الانتقال إلى آخر محاضرة في القسم السابق
-        if (!$previousLecture) {
-            $previousSection = $sections->where('order', '<', $currentSection->order)->last();
-            $previousLecture = $previousSection ? $previousSection->lectures->sortByDesc('order')->first() : null;
-        }
-
-        // إذا لم تكن هناك محاضرة تالية في نفس القسم، الانتقال إلى أول محاضرة في القسم التالي
-        if (!$nextLecture) {
-            $nextSection = $sections->where('order', '>', $currentSection->order)->first();
-            $nextLecture = $nextSection ? $nextSection->lectures->sortBy('order')->first() : null;
-        }
-
-        // إعداد بيانات المحاضرة مع خاصية 'completed'
+    /**
+     * Get completed lecture IDs for current user
+     */
+    private function getCompletedLectureIds()
+    {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        $completedLectureIds = [];
-        if ($user) {
-            /** @var \App\Models\User $user */
-            $completedLectureIds = $user->lectureProgress()
-                ->where('completed', true)
-                ->pluck('lecture_id')
-                ->toArray();
-        }
 
-        $lectureData = [
+        return $user?->lectureProgress()
+            ->where('completed', true)
+            ->pluck('lecture_id')
+            ->toArray() ?? [];
+    }
+
+    /**
+     * Efficiently mark lectures as completed
+     */
+    private function enrichLecturesWithCompletion($sections, $completedLectureIds)
+    {
+        $completedSet = array_flip($completedLectureIds); // O(1) lookup
+
+        $sections->each(fn($section) =>
+            $section->lectures->each(fn($lecture) =>
+                $lecture->completed = isset($completedSet[$lecture->id])
+            )
+        );
+    }
+
+    /**
+     * Calculate course completion percentage
+     */
+    private function calculateCompletionPercentage($course, $completedLectureIds)
+    {
+        $totalLectures = $course->sections->sum(fn($section) => $section->lectures->count());
+
+        return $totalLectures > 0 ? round((count($completedLectureIds) / $totalLectures) * 100, 1) : 0;
+    }
+
+    /**
+     * Build lecture data with navigation and completion status
+     */
+    private function buildLectureData($lecture, $navigation, $completedLectureIds)
+    {
+        return [
             'id' => $lecture->id,
             'title' => $lecture->title,
             'video_url' => $lecture->video_url,
-            'completed' => in_array($lecture->id, $completedLectureIds), // تعيين حالة الإنجاز
-            'previous_lecture_id' => $previousLecture ? $previousLecture->id : null,
-            'next_lecture_id' => $nextLecture ? $nextLecture->id : null,
+            'completed' => in_array($lecture->id, $completedLectureIds),
+            'previous_lecture_id' => $navigation['previous']?->id,
+            'next_lecture_id' => $navigation['next']?->id,
+        ];
+    }
+
+    /**
+     * Unified breadcrumb builder for different contexts
+     */
+    private function buildBreadcrumbs($type, $title, $params = [])
+    {
+        $breadcrumbs = [
+            ['label' => 'Courses', 'href' => route('courses.index')]
         ];
 
-        // إعداد خاصية 'completed' لكل محاضرة في الأقسام
-        foreach ($sections as $section) {
-            foreach ($section->lectures as $lecture) {
-                $lecture->completed = in_array($lecture->id, $completedLectureIds);
+        switch ($type) {
+            case 'watch':
+                $breadcrumbs[] = [
+                    'label' => $title,
+                    'href' => route('courses.watch', $params)
+                ];
+                break;
+            case 'player':
+                $breadcrumbs[] = [
+                    'label' => $title,
+                    'href' => route('courses.player', $params)
+                ];
+                break;
+            default:
+                $breadcrumbs[] = ['label' => $title, 'href' => '#'];
+        }
+
+        return $breadcrumbs;
+    }
+
+    /**
+     * Display user's enrolled courses with progress and suggestions
+     */
+    public function myCourses()
+    {
+        $user = Auth::user();
+        /** @var \App\Models\User $user */
+
+        // Get enrolled courses with progress and quizzes
+        /** @var \App\Models\User $user */
+        $enrolledCourses = $user->enrollments()
+            ->with(['course.category', 'course.instructor', 'course.sections.lectures', 'course.quizzes'])
+            ->get()
+            ->map(fn($enrollment) => $this->formatCourseData($enrollment, $user));
+
+        // Get course suggestions
+        $suggestions = $this->generateCourseSuggestions($user, 6);
+
+        return Inertia::render('Courses/MyCourses', [
+            'enrolledCourses' => $enrolledCourses,
+            'suggestions' => $suggestions,
+            'stats' => [
+                'total_enrolled' => $enrolledCourses->count(),
+                'completed' => $enrolledCourses->where('is_completed', true)->count(),
+                'in_progress' => $enrolledCourses->where('progress', '>', 0)->where('is_completed', false)->count(),
+                'not_started' => $enrolledCourses->where('progress', 0)->count()
+            ]
+        ]);
+    }
+
+    /**
+     * Get course suggestions for the user
+     */
+    public function courseSuggestions(Request $request)
+    {
+        $user = Auth::user();
+        /** @var \App\Models\User $user */
+
+        $filters = $request->only(['category', 'level', 'price', 'sort', 'offset']);
+        $limit = $request->get('limit', 12);
+
+        $suggestions = $this->generateCourseSuggestions($user, $limit, $filters);
+
+        // Get all categories for filter dropdown
+        $categories = Course::with('category')
+            ->whereHas('category')
+            ->get()
+            ->pluck('category.name')
+            ->unique()
+            ->filter()
+            ->values();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'courses' => $suggestions,
+                'hasMore' => $suggestions->count() === $limit,
+            ]);
+        }
+
+        return Inertia::render('Courses/Suggestions', [
+            'courses' => $suggestions,
+            'categories' => $categories,
+            'totalCourses' => Course::where('status', true)->count(),
+            'hasMore' => $suggestions->count() === $limit,
+        ]);
+    }
+
+    /**
+     * Generate course suggestions based on user's enrolled courses
+     */
+    private function generateCourseSuggestions($user, $limit = 6, $filters = [])
+    {
+        // Get user's enrolled course categories
+        $enrolledCategoryIds = $user->enrollments()
+            ->with('course.category')
+            ->get()
+            ->pluck('course.category.id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        // Get enrolled course IDs to exclude
+        $enrolledCourseIds = $user->enrollments()->pluck('course_id');
+
+        // Build suggestion query
+        $suggestionsQuery = Course::with(['category', 'instructor'])
+            ->where('status', true)
+            ->whereNotIn('id', $enrolledCourseIds);
+
+        // Apply filters
+        if (!empty($filters['category'])) {
+            $suggestionsQuery->whereHas('category', function ($query) use ($filters) {
+                $query->where('name', $filters['category']);
+            });
+        } elseif ($enrolledCategoryIds->isNotEmpty()) {
+            // Prioritize courses from same categories
+            $suggestionsQuery->orderByRaw(
+                'CASE WHEN category_id IN (' . $enrolledCategoryIds->implode(',') . ') THEN 0 ELSE 1 END'
+            );
+        }
+
+        if (!empty($filters['level'])) {
+            $suggestionsQuery->where('level', $filters['level']);
+        }
+
+        if (!empty($filters['price'])) {
+            if ($filters['price'] === 'free') {
+                $suggestionsQuery->where('price', 0);
+            } elseif ($filters['price'] === 'paid') {
+                $suggestionsQuery->where('price', '>', 0);
             }
         }
 
-        // حساب النسبة المئوية للإنجاز
-        $totalLecturesCount = $course->sections->flatMap->lectures->count();
-        $completionPercentage = $totalLecturesCount > 0 ? (count($completedLectureIds) / $totalLecturesCount) * 100 : 0;
+        // Apply sorting
+        $sortBy = $filters['sort'] ?? 'relevance';
+        switch ($sortBy) {
+            case 'rating':
+                $suggestionsQuery->orderBy('rating', 'desc');
+                break;
+            case 'newest':
+                $suggestionsQuery->orderBy('created_at', 'desc');
+                break;
+            case 'popular':
+                $suggestionsQuery->withCount('enrollments')->orderBy('enrollments_count', 'desc');
+                break;
+            default:
+                $suggestionsQuery->orderBy('created_at', 'desc');
+        }
 
-        return compact('course', 'lectureData', 'completionPercentage');
+        if (isset($filters['offset'])) {
+            $suggestionsQuery->skip($filters['offset']);
+        }
+
+        return $suggestionsQuery
+            ->limit($limit)
+            ->get()
+            ->map(function ($course) use ($user) {
+                return [
+                    'id' => $course->id,
+                    'title' => $course->title,
+                    'slug' => $course->slug,
+                    'description' => Str::limit($course->description, 120),
+                    'image' => $course->image,
+                    'category' => $course->category?->name,
+                    'instructor' => $course->instructor?->name,
+                    'price' => $course->price,
+                    'is_free' => $course->isFree(),
+                    'duration' => $course->formattedDuration(),
+                    'level' => $course->level,
+                    'rating' => $course->rating ?? 0,
+                    'students_count' => $course->enrollments_count ?? 0,
+                    'is_enrolled' => $user->enrollments()->where('course_id', $course->id)->exists(),
+                ];
+            });
+    }
+
+    /**
+     * Enroll user in a course via API
+     */
+    public function enrollApi(Request $request, $courseId)
+    {
+        $user = Auth::user();
+        $course = Course::findOrFail($courseId);
+
+        // Check if already enrolled
+        /** @var User $user */
+        if ($user->enrollments()->where('course_id', $courseId)->exists()) {
+            return response()->json(['message' => 'Already enrolled in this course'], 400);
+        }
+
+        // Check if course is free
+        if (!$course->isFree()) {
+            return response()->json(['message' => 'This course requires payment'], 400);
+        }
+
+        // Create enrollment
+        $this->createEnrollment($user->id, $courseId);
+
+        return response()->json(['message' => 'Successfully enrolled in course']);
     }
 
 
@@ -1346,10 +1626,54 @@ class CourseController extends Controller
                 return Redirect::back()->with('error', 'Failed to update design settings. Please try again.');
             }
         }
+
+    /**
+     * Format course data for My Courses page
+     */
+    private function formatCourseData($enrollment, $user): array
+    {
+        $course = $enrollment->course;
+        $totalLectures = $course->sections->sum(fn($section) => $section->lectures->count());
+        $completedLectures = $user->lectureProgress()
+            ->whereHas('lecture', fn($query) => $query->where('course_id', $course->id))
+            ->where('completed', true)
+            ->count();
+
+        $progressPercentage = $totalLectures > 0 ? ($completedLectures / $totalLectures) * 100 : 0;
+
+        return [
+            'id' => $course->id,
+            'title' => $course->title,
+            'slug' => $course->slug,
+            'image' => $course->image,
+            'category' => $course->category?->name,
+            'instructor' => $course->instructor?->name,
+            'progress' => round($progressPercentage, 1),
+            'enrollment_date' => $enrollment->enrollment_date->format('M d, Y'),
+            'status' => $enrollment->enrollment_status,
+            'total_lectures' => $totalLectures,
+            'completed_lectures' => $completedLectures,
+            'is_completed' => $progressPercentage >= 100,
+            'quizzes' => $this->getQuizData($course->quizzes, $user)
+        ];
     }
 
+    /**
+     * Get quiz data with completion status
+     */
+    private function getQuizData($quizzes, $user): array
+    {
+        return $quizzes->map(function ($quiz) use ($user) {
+            $isCompleted = $user->quizAttempts()
+                ->where('quiz_id', $quiz->id)
+                ->where('completed_at', '!=', null)
+                ->exists();
 
-
-
-
-
+            return [
+                'id' => $quiz->id,
+                'title' => $quiz->title,
+                'is_completed' => $isCompleted
+            ];
+        })->toArray();
+    }
+}

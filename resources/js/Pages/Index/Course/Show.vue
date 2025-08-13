@@ -228,10 +228,9 @@
                   </div>
                 </div>
               </div>
-                <div v-else class="text-center py-8 bg-white rounded-lg border border-gray-200">
-                  <i class="fas fa-book-open text-indigo-400 text-4xl mb-4"></i>
-                  <p class="text-gray-500">No curriculum sections available for this course yet.</p>
-                </div>
+              <div v-else class="text-center py-8 bg-white rounded-lg border border-gray-200">
+                <i class="fas fa-book-open text-indigo-400 text-4xl mb-4"></i>
+                <p class="text-gray-500">No curriculum sections available for this course yet.</p>
               </div>
             </div>
 

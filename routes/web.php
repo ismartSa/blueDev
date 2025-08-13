@@ -8,12 +8,14 @@ use App\Http\Controllers\{
     PermissionController,
     CourseController,
     EnrollmentController,
+    CourseRecommendationController,
     SectionController,
     GoogleController,
     QuizController,
     QuestionController,
     CategoryController,
     SettingsController,
+    BackupController,
 };
 use App\Http\Controllers\Course\CourseContentController;
 use App\Http\Controllers\Opt\OptController;
@@ -86,6 +88,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Wishlist
+    Route::get('/my-wishlist', [CourseController::class, 'wishlist'])->name('wishlist');
+    
     // Dashboard
 Route::get('/dashboard', function () {
     $stats = Cache::remember('dashboard_stats', 60*60, function () {
@@ -189,12 +194,37 @@ Route::get('/dashboard', function () {
         Route::get('/{courseId}/learn/{courseSlug}', [CourseController::class, 'learn'])->name('learn');
     });
 
+    // My Courses Routes
+    Route::prefix('my-courses')->name('my-courses.')->group(function () {
+        Route::get('/', [EnrollmentController::class, 'myCourses'])->name('index');
+        Route::get('/suggestions', [CourseRecommendationController::class, 'suggestions'])->name('suggestions');
+    });
+
+    // API Enrollment Route
+    Route::post('/courses/{courseId}/enroll-api', [EnrollmentController::class, 'enrollApi'])->name('courses.enroll-api');
+
     // Course Enrollment Routes
     Route::prefix('courses')->name('courses.')->group(function () {
         Route::post('/{courseId}/enroll', [EnrollmentController::class, 'enroll'])->name('enroll');
         Route::get('/{courseId}/check-enrollment', [EnrollmentController::class, 'checkEnrollment'])->name('check-enrollment');
         Route::post('/{courseId}/update-progress', [EnrollmentController::class, 'updateProgress'])->name('update-progress');
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Backup Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['can:manage courses'])
+        ->prefix('backup')
+        ->name('backup.')
+        ->group(function () {
+            Route::get('/status', [BackupController::class, 'getStatus'])->name('status');
+            Route::post('/test-connection', [BackupController::class, 'testConnection'])->name('test');
+            Route::post('/user', [BackupController::class, 'backupUser'])->name('user');
+            Route::post('/users/bulk', [BackupController::class, 'bulkBackupUsers'])->name('users.bulk');
+            Route::post('/sync-all', [BackupController::class, 'syncAllData'])->name('sync.all');
+        });
 
     // Alternative Course Enrollment Routes (using CourseEnrollmentController)
     Route::prefix('course')->name('course.')->group(function () {

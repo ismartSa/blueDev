@@ -5,7 +5,7 @@ import { Head, Link } from "@inertiajs/vue3";
 import SwitchLangNavbar from "@/Components/SwitchLangNavbar.vue";
 import Footer from "@/Pages/Index/Partials/Footer.vue";
 import { computed, ref, onMounted } from 'vue';
-import { ChevronDownIcon, UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline';
+import { ChevronDownIcon, UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, BookOpenIcon } from '@heroicons/vue/24/outline';
 
 // Define Props
 defineProps({
@@ -58,6 +58,7 @@ const content = computed(() => ({
         login: 'Login',
         register: 'Register',
         dashboard: 'Dashboard',
+        myCourses: 'My Courses',
         profile: 'Profile',
         logout: 'Logout'
     }
@@ -183,6 +184,10 @@ const categories = [
                                     <Link :href="route('dashboard')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                         <Cog6ToothIcon class="w-4 h-4 mr-3" />
                                         {{ content.nav.dashboard }}
+                                    </Link>
+                                    <Link :href="route('my-courses.index')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <BookOpenIcon class="w-4 h-4 mr-3" />
+                                        {{ content.nav.myCourses }}
                                     </Link>
                                     <Link :href="route('profile.edit')" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                         <UserIcon class="w-4 h-4 mr-3" />

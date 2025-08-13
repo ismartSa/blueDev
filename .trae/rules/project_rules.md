@@ -13,4 +13,4 @@ Implement dynamic rendering
 Optimize for performance and maintainability
 Use a cleaner, more concise structure
 Ensure all comments are in English
-
+Don’t dump everything into one controller

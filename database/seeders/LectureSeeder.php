@@ -24,7 +24,7 @@ class LectureSeeder extends Seeder
                         'name' => "Lecture $i",
                         'title' => "Lecture $i for " . $section->title,
                         'description' => "Description for Lecture $i in " . $section->title,
-                        'video_url' => 'https://example.com/video' . rand(1, 100) . '.mp4',
+                        'video_url' => 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
                         'duration' => rand(10, 60), // Duration in minutes
                         'order' => $i,
                         'course_id' => $course->id,

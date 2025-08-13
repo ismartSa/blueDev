@@ -122,6 +122,12 @@ const lang = () => translations.value;
                                     <DropdownLink :href="route('profile.edit')">
                                         {{ lang().profile.profile }}
                                     </DropdownLink>
+                                    <DropdownLink :href="route('my-courses.index')">
+                                        {{ lang().profile.courses || 'My Courses' }}
+                                    </DropdownLink>
+                                    <DropdownLink :href="route('wishlist')">
+                                        {{ lang().profile.wishlist || 'My Wishlist' }}
+                                    </DropdownLink>
                                     <DropdownLink :href="route('logout')" method="post" as="button">
                                         {{ lang().profile.logout }}
                                     </DropdownLink>
