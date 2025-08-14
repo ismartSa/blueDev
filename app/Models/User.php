@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Enrollment;
 use App\Models\LectureUserProgress;
+use App\Models\QuizAttempt;
 use App\Models\Wishlist;
 use App\Traits\HasBackup;
 use Laravel\Sanctum\HasApiTokens;
@@ -80,5 +81,10 @@ class User extends Authenticatable
     public function wishlists(): HasMany
     {
         return $this->hasMany(Wishlist::class);
+    }
+
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
     }
 }

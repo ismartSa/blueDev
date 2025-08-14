@@ -15,7 +15,8 @@ use App\Services\LectureProgressService;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\CourseStoreRequest;
 use Illuminate\Support\Facades\DB;
-use Illuminate\{Support\Str, Http\Request, Support\Facades\Auth, Support\Facades\Log, Support\Facades\Storage, Support\Facades\Hash};
+use Illuminate\Support\Facades\Log;
+use Illuminate\{Support\Str, Http\Request, Support\Facades\Auth, Support\Facades\Storage, Support\Facades\Hash};
 use App\Models\{User, Course, Lecture, Section, Enrollment, QuizAttempt, Wishlist };
 use App\{Services\CourseService, Http\Resources\CourseResource, Repositories\CourseRepository};
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -1046,6 +1047,8 @@ class CourseController extends Controller
             ->get()
             ->map(fn($enrollment) => $this->formatCourseData($enrollment, $user));
 
+        // Quiz data loaded successfully
+
         // Get course suggestions
         $suggestions = $this->generateCourseSuggestions($user, 6);
 
@@ -1664,15 +1667,22 @@ class CourseController extends Controller
     private function getQuizData($quizzes, $user): array
     {
         return $quizzes->map(function ($quiz) use ($user) {
-            $isCompleted = $user->quizAttempts()
+            $latestAttempt = $user->quizAttempts()
                 ->where('quiz_id', $quiz->id)
                 ->where('completed_at', '!=', null)
-                ->exists();
+                ->latest('completed_at')
+                ->first();
+
+            $isCompleted = $latestAttempt !== null;
+            $lastScore = $isCompleted ? round($latestAttempt->score, 1) : null;
 
             return [
                 'id' => $quiz->id,
                 'title' => $quiz->title,
-                'is_completed' => $isCompleted
+                'is_completed' => $isCompleted,
+                'questions_count' => $quiz->questions()->count(),
+                'time_limit' => $quiz->time_limit ?? 30,
+                'last_score' => $lastScore
             ];
         })->toArray();
     }

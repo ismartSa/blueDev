@@ -89,28 +89,41 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Quizzes Section -->
-                                    <div v-if="course.quizzes && course.quizzes.length > 0" class="mb-4">
-                                        <h5 class="text-sm font-medium text-gray-700 mb-2">Course Quizzes</h5>
-                                        <div class="space-y-2">
-                                            <div v-for="quiz in course.quizzes" :key="quiz.id" 
-                                                 class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                                <div>
-                                                    <span class="text-sm font-medium">{{ quiz.title }}</span>
-                                                    <span v-if="quiz.is_completed" 
-                                                          class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                                                        Completed
-                                                    </span>
-                                                    <span v-else 
-                                                          class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                                                        Pending
+                                    <!-- Quiz Playlist Section -->
+                                    <div class="mb-4" v-if="course.quizzes && course.quizzes.length > 0">
+                                        <div class="mb-3">
+                                            <button 
+                                                @click="toggleQuizPlaylist(course.id)"
+                                                class="flex items-center justify-between w-full text-left p-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
+                                            >
+                                                <div class="flex items-center space-x-2">
+                                                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    <span class="text-sm font-medium text-gray-700">Quiz Playlist</span>
+                                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                        {{ getCompletedQuizCount(course.quizzes) }}/{{ course.quizzes.length }}
                                                     </span>
                                                 </div>
-                                                <Link :href="route('quizzes.show', quiz.id)" 
-                                                      class="text-blue-500 hover:text-blue-600 text-xs">
-                                                    {{ quiz.is_completed ? 'Review' : 'Take Quiz' }}
-                                                </Link>
-                                            </div>
+                                                <svg 
+                                                    class="w-4 h-4 text-gray-500 transition-transform"
+                                                    :class="{ 'rotate-180': expandedPlaylists.includes(course.id) }"
+                                                    fill="currentColor" 
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Expandable Quiz Playlist -->
+                                        <div v-if="expandedPlaylists.includes(course.id)" class="mt-3">
+                                            <QuizPlaylist 
+                                                :course="course"
+                                                :quizzes="course.quizzes"
+                                                @quiz-started="handleQuizStarted"
+                                                @quiz-selected="handleQuizSelected"
+                                            />
                                         </div>
                                     </div>
                                     
@@ -195,6 +208,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import QuizPlaylist from '@/Components/Quiz/QuizPlaylist.vue'
 import { ref } from 'vue'
 import axios from 'axios'
 
@@ -205,6 +219,33 @@ const props = defineProps({
 })
 
 const suggestions = ref(props.suggestions)
+
+// Playlist state management
+const expandedPlaylists = ref([])
+
+// Toggle playlist visibility
+const toggleQuizPlaylist = (courseId) => {
+    const index = expandedPlaylists.value.indexOf(courseId)
+    if (index > -1) {
+        expandedPlaylists.value.splice(index, 1)
+    } else {
+        expandedPlaylists.value.push(courseId)
+    }
+}
+
+// Get completed quiz count
+const getCompletedQuizCount = (quizzes) => {
+    return quizzes.filter(quiz => quiz.is_completed).length
+}
+
+// Handle quiz events
+const handleQuizStarted = (quiz) => {
+    console.log('Quiz started:', quiz.title)
+}
+
+const handleQuizSelected = (quiz) => {
+    console.log('Quiz selected:', quiz.title)
+}
 
 const loadMoreSuggestions = async () => {
     try {
