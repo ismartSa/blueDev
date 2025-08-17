@@ -180,7 +180,7 @@ class CourseController extends Controller
     public function destroy(Course $course)
     {
         try {
-            $course->delete();
+            $this->courseService->delete($course);
             return back()->with('success', __('app.label.deleted_successfully', ['name' => $course->title]));
         } catch (\Exception $e) {
             return back()->with('error', __('app.label.deleted_error', ['name' => $course->title]) . $e->getMessage());
@@ -380,8 +380,8 @@ class CourseController extends Controller
     public function destroyBulk(Request $request)
     {
         try {
-            Course::whereIn('id', $request->id)->delete();
-            return back()->with('success', __('app.label.deleted_successfully', ['name' => count($request->id) . ' ' . __('app.label.courses')]));
+            $deletedCount = $this->courseService->deleteBulk($request->id);
+            return back()->with('success', __('app.label.deleted_successfully', ['name' => $deletedCount . ' ' . __('app.label.courses')]));
         } catch (\Exception $e) {
             return back()->with('error', __('app.label.deleted_error', ['name' => count($request->id) . ' ' . __('app.label.courses')]) . $e->getMessage());
         }

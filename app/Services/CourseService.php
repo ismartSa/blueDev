@@ -58,6 +58,44 @@ class CourseService
     }
 
     /**
+     * Delete a course with thumbnail cleanup
+     */
+    public function delete(Course $course): bool
+    {
+        try {
+            // Delete thumbnail if exists
+            if ($course->thumbnail && Storage::disk('public')->exists($course->thumbnail)) {
+                Storage::disk('public')->delete($course->thumbnail);
+            }
+            
+            return $course->delete();
+        } catch (\Exception $e) {
+            throw new CourseException('Failed to delete course: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete multiple courses with thumbnail cleanup
+     */
+    public function deleteBulk(array $courseIds): int
+    {
+        try {
+            $courses = Course::whereIn('id', $courseIds)->get();
+            
+            // Delete thumbnails
+            foreach ($courses as $course) {
+                if ($course->thumbnail && Storage::disk('public')->exists($course->thumbnail)) {
+                    Storage::disk('public')->delete($course->thumbnail);
+                }
+            }
+            
+            return Course::whereIn('id', $courseIds)->delete();
+        } catch (\Exception $e) {
+            throw new CourseException('Failed to delete courses: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Get filtered and paginated courses
      */
     public function getFilteredCourses(array $filters = [], int $perPage = 12): LengthAwarePaginator

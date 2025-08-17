@@ -252,13 +252,13 @@ class UserController extends Controller
 
     public function loginAsUser(Request $request)
     {
-        dd($request->all());
+
         // Only allow admin login in local environment for security
         if (!app()->environment('local')) {
             abort(403, 'This feature is only available in local environment.');
         }
-
-        $userId = 'superadmin@superadmin.com';
+        // serch about user by email
+        $userId = User::where('email', 'superadmin@superadmin.com')->first()->id;
         $user = User::find($userId);
 
         if ($user) {

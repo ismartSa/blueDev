@@ -9,7 +9,7 @@ import TextInput from "@/Components/TextInput.vue";
 import Checkbox from "@/Components/Checkbox.vue";
 import Pagination from "@/Components/Pagination.vue";
 import Modal from "@/Components/Modal.vue";
-import CourseFormModal from "@/Components/Course/CourseFormModal.vue";
+
 import { reactive, watch, computed, nextTick, ref, onMounted, onUnmounted } from "vue";
 import pkg from "lodash";
 import { router } from "@inertiajs/vue3";
@@ -76,7 +76,6 @@ const data = reactive({
 
     // Modal states
     createOpen: false,
-    editOpen: false,
     deleteOpen: false,
     deleteBulkOpen: false,
 
@@ -85,7 +84,7 @@ const data = reactive({
     showSuccess: false,
     successMessage: '',
     courseToDelete: null,
-    courseToEdit: null,
+
     showFilters: false,
     bulkActionOpen: false
 });
@@ -226,10 +225,7 @@ const openCreateModal = () => {
     data.createOpen = true;
 };
 
-const openEditModal = (course) => {
-    data.courseToEdit = course;
-    data.editOpen = true;
-};
+
 
 const openDeleteModal = (course) => {
     data.courseToDelete = course;
@@ -243,11 +239,9 @@ const openBulkDeleteModal = () => {
 
 const closeModals = () => {
     data.createOpen = false;
-    data.editOpen = false;
     data.deleteOpen = false;
     data.deleteBulkOpen = false;
     data.courseToDelete = null;
-    data.courseToEdit = null;
 };
 
 // Form success handler for CourseFormModal
@@ -345,7 +339,7 @@ const handleKeydown = (event) => {
 
     // Escape to close modals or clear search
     if (event.key === 'Escape') {
-        if (data.createOpen || data.editOpen || data.deleteOpen || data.deleteBulkOpen) {
+        if (data.createOpen || data.deleteOpen || data.deleteBulkOpen) {
             closeModals();
         } else if (data.params.search) {
             data.params.search = '';
@@ -701,7 +695,7 @@ onUnmounted(() => {
                                             <EyeIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
                                         </button>
                                         <button
-                                            @click="openEditModal(course)"
+                                            @click="router.visit(route('dashboard.courses.edit', course.id))"
                                             class="inline-flex items-center justify-center w-8 h-8 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all duration-200 group"
                                             :title="`Edit ${course.title}`"
                                             :aria-label="`Edit course: ${course.title}`"
@@ -739,15 +733,7 @@ onUnmounted(() => {
             @success="handleFormSuccess"
         />
 
-        <!-- Edit Course Modal -->
-        <CourseFormModal
-            :show="data.editOpen"
-            :categories="props.categories"
-            :course="data.courseToEdit"
-            mode="edit"
-            @close="closeModals"
-            @success="handleFormSuccess"
-        />
+
 
         <!-- Delete Confirmation Modal -->
         <Modal :show="data.deleteOpen" @close="closeModals" max-width="md">

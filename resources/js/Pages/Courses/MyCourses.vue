@@ -142,7 +142,7 @@
                                               class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                                             {{ course.level }}
                                         </span>
-                                        <Link :href="route('courses.details', { id: course.id, courseSlug: course.slug })"
+                                        <Link :href="route('courses.player', { courseId: course.id, courseSlug: course.slug })"
                                               class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition-colors">
                                             View Details
                                         </Link>

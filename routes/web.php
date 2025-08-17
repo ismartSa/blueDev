@@ -78,7 +78,7 @@ Route::get('/courses/explore', [CourseController::class, 'explore'])->name('cour
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('courses')->name('courses.')->group(function () {
         Route::get('/', [CourseController::class, 'index'])->name('index');
-        Route::get('/{id}/details/{courseSlug}', [CourseController::class, 'show'])->name('details');
+        Route::get('/{id}/details/{courseSlug}', [CourseController::class, 'show'])->name('show');
         Route::get('/{courseId}/learn/{courseSlug}', [CourseController::class, 'learn'])->name('learn');
         Route::post('/{courseId}/enroll', [EnrollmentController::class, 'enroll'])->name('enroll');
         Route::get('/{courseId}/player/{courseSlug}', [CourseController::class, 'coursePlayer'])->name('player');
@@ -119,6 +119,7 @@ Route::get('/dashboard', function () {
         ->name('dashboard.courses.')
         ->group(function () {
             Route::get('/', [CourseController::class, 'index'])->name('index');
+            Route::post('/', [CourseController::class, 'store'])->name('store');
             Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('edit');
             Route::put('/{course}', [CourseController::class, 'update'])->name('update');
             Route::get('/{course}/enrollments', [CourseEnrollmentController::class, 'enrollments'])->name('enrollments');

@@ -84,7 +84,7 @@
         <!-- Secondary Actions -->
         <div class="flex gap-2">
           <Link
-            :href="route('courses.details', { id: course.id, courseSlug: course.slug })"
+            :href="route('courses.player', { courseId: course.id, courseSlug: course.slug })"
             :class="secondaryButtonClasses"
           >
             {{ content.details }}

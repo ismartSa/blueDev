@@ -29,11 +29,18 @@ class CourseUpdateRequest extends FormRequest
     public function messages()
     {
         return [
-            'title.required' => 'عنوان الدورة مطلوب',
-            'status.required' => 'حالة الدورة مطلوبة',
-            'category_id.exists' => 'الفئة المحددة غير موجودة',
-            'thumbnail.image' => 'يجب أن يكون الملف صورة',
-            'thumbnail.max' => 'حجم الصورة يجب أن يكون أقل من 2 ميجابايت'
+            'title.required' => 'Course title is required.',
+            'status.required' => 'Course status is required.',
+            'category_id.exists' => 'The selected category does not exist.',
+            'thumbnail.image' => 'The file must be an image.',
+            'thumbnail.max' => 'The image size must be less than 2MB.',
+            'duration.numeric' => 'Duration must be a valid number.',
+            'duration.min' => 'Duration must be at least 0.5 hours.',
+            'price.numeric' => 'Price must be a valid number.',
+            'price.min' => 'Price cannot be negative.',
+            'status.in' => 'Status must be active, draft, or inactive.',
+            'level.in' => 'Level must be beginner, intermediate, or advanced.',
+            'language.in' => 'Language must be en, ar, fr, or es.'
         ];
     }
 }

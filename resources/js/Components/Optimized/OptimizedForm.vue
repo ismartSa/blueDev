@@ -458,7 +458,11 @@ const handleSubmit = async () => {
         emit('success', { data, page })
       },
       onError: (errors) => {
-        notifications.error('Please check the form for errors')
+        const errorCount = Object.keys(errors).length
+        const message = errorCount === 1 
+          ? 'Please fix the validation error below.'
+          : `Please fix the ${errorCount} validation errors below.`
+        notifications.error(message)
         emit('error', { errors, data })
       }
     })

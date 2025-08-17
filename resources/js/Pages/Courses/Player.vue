@@ -14,7 +14,7 @@
                     <div class="flex items-center justify-between h-20 py-4">
                         <div class="flex items-center space-x-4 min-w-0 flex-1">
                             <!-- Mobile menu button moved to floating position -->
-                            <Link :href="route('courses.details', [course.id, course.slug])" :class="playerStyles.buttons.ghost + ' p-3'">
+                            <Link :href="route('courses.player', { courseId: course.id, courseSlug: course.slug })" :class="playerStyles.buttons.ghost + ' p-3'">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                 </svg>
@@ -26,10 +26,10 @@
                         </div>
                         <div class="flex items-center space-x-4 flex-shrink-0">
                             <div class="text-sm text-slate-700 hidden md:block font-medium whitespace-nowrap">
-                                Progress: {{ enrollment.progress }}%
+                                Progress: {{ overallProgress }}%
                             </div>
                             <div :class="playerStyles.progress.container + ' w-24 sm:w-32'">
-                                <div :class="getProgressBarClasses(enrollment.progress)" :style="{ width: enrollment.progress + '%' }"></div>
+                                <div :class="getProgressBarClasses(overallProgress)" :style="{ width: overallProgress + '%' }"></div>
                             </div>
                         </div>
                     </div>

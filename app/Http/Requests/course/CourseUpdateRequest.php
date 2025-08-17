@@ -3,7 +3,6 @@
 namespace App\Http\Requests\course;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
 class CourseUpdateRequest extends FormRequest
 {
@@ -25,11 +24,12 @@ class CourseUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'                  => ['required', 'string', 'max:255'],
-            'email'                 => 'required|unique:users,email,' . $this->user,
-            'password'              => ['nullable', 'confirmed', Password::defaults()],
-            'password_confirmation' => 'sometimes|required_with:password|same:password',
-            'role'                  => ['required'],
+            'title'       => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'price'       => ['required', 'numeric', 'min:0', 'max:999999.99'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'thumbnail'   => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'status'      => ['nullable', 'in:draft,published,archived'],
         ];
     }
 }

@@ -5,17 +5,21 @@ namespace App\Http\Controllers\Course;
 use Inertia\Inertia;
 use App\Models\Course;
 use App\Models\Category;
+use App\Services\CourseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Storage;
+
 use App\Http\Requests\CourseStoreRequest;
 use App\Http\Requests\CourseUpdateRequest;
 
 class CourseManagementController extends Controller
 {
-    public function __construct()
+    protected $courseService;
+
+    public function __construct(CourseService $courseService)
     {
+        $this->courseService = $courseService;
         $this->middleware('permission:view courses', ['only' => ['index']]);
         $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
         $this->middleware('permission:edit courses', ['only' => ['edit', 'update']]);
@@ -176,29 +180,20 @@ class CourseManagementController extends Controller
         
         $validated = $request->validated();
 
-        // Handle thumbnail upload
-        if ($request->hasFile('thumbnail')) {
-            // Delete old thumbnail
-            if ($course->thumbnail) {
-                Storage::disk('public')->delete($course->thumbnail);
-            }
-            $validated['thumbnail'] = $request->file('thumbnail')->store('courses/thumbnails', 'public');
+        try {
+            $this->courseService->update($course, $validated);
+            
+            return back()->with('success', 'Course updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Course update error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update course.');
         }
-
-        $course->update($validated);
-
-        return back()->with('success', 'Course updated successfully!');
     }
 
     public function destroy(Course $course)
     {
         try {
-            // Delete thumbnail if exists
-            if ($course->thumbnail) {
-                Storage::disk('public')->delete($course->thumbnail);
-            }
-            
-            $course->delete();
+            $this->courseService->delete($course);
             
             return back()->with('success', 'Course deleted successfully!');
         } catch (\Exception $e) {
@@ -215,18 +210,9 @@ class CourseManagementController extends Controller
         ]);
 
         try {
-            $courses = Course::whereIn('id', $request->id)->get();
+            $deletedCount = $this->courseService->deleteBulk($request->id);
             
-            // Delete thumbnails
-            foreach ($courses as $course) {
-                if ($course->thumbnail) {
-                    Storage::disk('public')->delete($course->thumbnail);
-                }
-            }
-            
-            Course::whereIn('id', $request->id)->delete();
-            
-            return back()->with('success', count($request->id) . ' courses deleted successfully!');
+            return back()->with('success', $deletedCount . ' courses deleted successfully!');
         } catch (\Exception $e) {
             Log::error('Bulk course deletion error: ' . $e->getMessage());
             return back()->with('error', 'Failed to delete courses.');

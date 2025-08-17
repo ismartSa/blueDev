@@ -3,7 +3,7 @@ import { reactive } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
 import { ArrowLeftIcon, PencilIcon } from "@heroicons/vue/24/solid";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
-import EditCourseModal from "@/Components/Course/EditCourseModal.vue";
+import CourseFormModal from "@/Components/Course/CourseFormModal.vue";
 
 const props = defineProps({
     course: { type: Object, required: true },
@@ -108,10 +108,13 @@ const getCourseImage = () => {
     </div>
 
     <!-- Edit Course Modal -->
-    <EditCourseModal
+    <CourseFormModal
         :show="data.editModalOpen"
+        mode="edit"
         :course="course"
         :categories="categories"
+        title="Edit Course"
+        max-width="3xl"
         @close="data.editModalOpen = false"
         @success="(msg) => { data.editModalOpen = false; emit('success', msg); }"
     />

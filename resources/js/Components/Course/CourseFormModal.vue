@@ -18,7 +18,8 @@ const props = defineProps({
     course: { type: Object, default: null },
     categories: { type: Array, default: () => [] },
     title: { type: String, default: '' },
-    maxWidth: { type: String, default: '2xl' }
+    maxWidth: { type: String, default: '2xl' },
+    closeable: { type: Boolean, default: true }
 });
 
 const emit = defineEmits(['close', 'success']);
@@ -186,7 +187,7 @@ const submit = () => {
     
     const isCreate = props.mode === 'create';
     const method = isCreate ? 'post' : 'put';
-    const routeName = `courses.${isCreate ? 'store' : 'update'}`;
+    const routeName = `dashboard.courses.${isCreate ? 'store' : 'update'}`;
     const routeParams = isCreate ? [] : [props.course.id];
     
     form[method](route(routeName, ...routeParams), {
@@ -205,7 +206,7 @@ const handleFileChange = (event) => { if (event.target.files[0]) form.thumbnail 
 </script>
 
 <template>
-    <Modal :show="show" @close="closeModal" :max-width="maxWidth">
+    <Modal :show="show" @close="closeModal" :max-width="maxWidth" :closeable="closeable">
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl">
             <!-- Enhanced Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
