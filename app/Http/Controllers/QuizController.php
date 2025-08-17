@@ -110,6 +110,19 @@ class QuizController extends BaseController
     }
 
     /**
+     * Activate all quizzes
+     */
+    public function activateAll(): RedirectResponse
+    {
+        $updatedCount = Quiz::where('is_active', false)->update(['is_active' => true]);
+        
+        return $this->successResponse(
+            route('quizzes.index'),
+            "Successfully activated {$updatedCount} quizzes"
+        );
+    }
+
+    /**
      * Get validation rules for quiz
      */
     protected function getValidationRules(): array

@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, computed } from "vue";
 import { useForm } from "@inertiajs/vue3";
-import LessonList from "@/Components/Course/LessonList.vue";
+import LectureList from "@/Components/Course/LectureList.vue";
 import LessonModal from "@/Components/Course/LessonModal.vue";
 import VideoPlayer from "@/Components/Course/VideoPlayer.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
@@ -9,7 +9,7 @@ import { PlusIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     course: { type: Object, required: true },
-    lessons: { type: Object, required: true },
+    lectures: { type: Object, required: true },
 });
 
 const emit = defineEmits(['success']);
@@ -22,8 +22,8 @@ const data = reactive({
 });
 
 const totalDuration = computed(() => {
-    return props.lessons?.data?.reduce((total, lesson) => {
-        return total + (lesson.duration || 0);
+    return props.lectures?.data?.reduce((total, lecture) => {
+        return total + (lecture.duration || 0);
     }, 0) || 0;
 });
 
@@ -47,7 +47,7 @@ const playLesson = (lesson, index) => {
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-                        Course Lessons
+                        Course Lectures
                     </h2>
                     <p class="text-sm text-gray-600 dark:text-gray-400">
                         Total Duration: {{ Math.floor(totalDuration / 60) }} hours {{ totalDuration % 60 }} minutes
@@ -55,13 +55,13 @@ const playLesson = (lesson, index) => {
                 </div>
                 <PrimaryButton @click="openLessonModal()">
                     <PlusIcon class="h-4 w-4 mr-2" />
-                    Add Lesson
+                    Add Lecture
                 </PrimaryButton>
             </div>
 
-            <!-- Lessons List -->
-            <LessonList
-                :lessons="lessons.data"
+            <!-- Lectures List -->
+            <LectureList
+                :lectures="lectures.data"
                 @edit="openLessonModal"
                 @play="playLesson"
                 @success="emit('success', $event)"
@@ -82,7 +82,7 @@ const playLesson = (lesson, index) => {
     <VideoPlayer
         :show="data.videoPlayerOpen"
         :lesson="data.currentLesson"
-        :lessons="lessons.data"
+        :lectures="lectures.data"
         :current-index="data.currentLessonIndex"
         @close="data.videoPlayerOpen = false"
     />

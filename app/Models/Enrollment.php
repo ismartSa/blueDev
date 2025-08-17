@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Enrollment extends Model
 {
@@ -22,6 +23,9 @@ class Enrollment extends Model
         'enrollment_date',
         'completion_date',
         'progress_percentage',
+        'current_lecture_id',
+        'viewed_lectures',
+        'completed_lectures',
     ];
 
     /**
@@ -33,6 +37,8 @@ class Enrollment extends Model
         'enrollment_date' => 'datetime',
         'completion_date' => 'datetime',
         'progress_percentage' => 'integer',
+        'viewed_lectures' => 'array',
+        'completed_lectures' => 'array',
     ];
 
     /**
@@ -65,5 +71,16 @@ class Enrollment extends Model
     public function isCompleted(): bool
     {
         return $this->progress_percentage >= 100;
+    }
+
+    /**
+     * Get the lectures that have been viewed for this enrollment.
+     */
+    public function viewedLectures(): BelongsToMany
+    {
+        return $this->belongsToMany(Lecture::class, 'lecture_user_progress', 'user_id', 'lecture_id')
+                    ->wherePivot('completed', true)
+                    ->withPivot('completed')
+                    ->withTimestamps();
     }
 }

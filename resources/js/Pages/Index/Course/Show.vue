@@ -180,10 +180,12 @@
 
             <!-- Curriculum Tab -->
             <div v-show="activeTab === 'curriculum'" class="tab-content">
-              <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Course Curriculum</h2>
-                <div class="text-sm text-gray-500">
-                  {{ course.sections_count || 0 }} modules • {{ statistics?.lecturesCount || 0 }} lessons • {{ statistics?.durationFormatted || '0h 0m' }}
+              <div class="flex justify-between items-center mb-8">
+                <div>
+                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2" id="curriculum-heading" role="heading" aria-level="2">Course Curriculum</h2>
+                  <div class="text-sm text-gray-500 dark:text-gray-400" aria-describedby="curriculum-heading">
+                    {{ course.sections_count || 0 }} modules • {{ statistics?.lecturesCount || 0 }} lessons • {{ statistics?.durationFormatted || '0h 0m' }}
+                  </div>
                 </div>
               </div>
 
@@ -191,33 +193,44 @@
                 <div v-for="section in sectionsWithLectures" :key="section.id"
                      class="border border-gray-200 rounded-lg overflow-hidden">
                   <button @click="toggleSection(section.id)"
-                          class="module-toggle w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100">
+                          class="module-toggle w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                          :aria-expanded="openSections.includes(section.id)"
+                          :aria-controls="`section-${section.id}`"
+                          :aria-label="`Toggle ${section.title} section`">
                     <div class="flex items-center">
-                      <i class="fas fa-folder-open text-indigo-500 mr-3"></i>
-                      <span class="font-medium">{{ section.title }}</span>
+                      <i class="fas fa-folder-open text-indigo-500 mr-3" aria-hidden="true"></i>
+                      <span class="font-medium text-gray-900 dark:text-white">{{ section.title }}</span>
                     </div>
                     <div class="flex items-center">
-                      <span class="text-sm text-gray-500 mr-4">
+                      <span class="text-sm text-gray-500 dark:text-gray-400 mr-4">
                         {{ section.lectures_count || 0 }} lessons • {{ formatSectionDuration(section) }}
                       </span>
-                      <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
-                         :class="{ 'rotate-180': openSections.includes(section.id) }"></i>
+                      <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500 transition-transform duration-200"
+                         :class="{ 'rotate-180': openSections.includes(section.id) }"
+                         aria-hidden="true"></i>
                     </div>
                   </button>
-                  <div v-show="openSections.includes(section.id)" class="module-content">
-                    <div class="divide-y divide-gray-200">
+                  <div v-show="openSections.includes(section.id)" 
+                       class="module-content"
+                       :id="`section-${section.id}`"
+                       role="region"
+                       :aria-labelledby="`section-${section.id}-title`">
+                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
                       <template v-if="section.lectures && section.lectures.length > 0">
                         <div v-for="lecture in section.lectures" :key="lecture.id"
-                             class="module-item p-4 hover:bg-indigo-50 cursor-pointer flex items-center">
-                          <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
-                            <i class="fas fa-play text-indigo-600 text-sm"></i>
+                             class="module-item p-4 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer flex items-center transition-colors duration-200"
+                             role="button"
+                             tabindex="0"
+                             :aria-label="`Play ${lecture.title} lesson`">
+                          <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-play text-indigo-600 dark:text-indigo-400 text-sm" aria-hidden="true"></i>
                           </div>
                           <div class="flex-grow">
                             <div class="flex justify-between items-center mb-2">
-                              <span class="font-medium text-gray-800">{{ lecture.title }}</span>
-                              <span class="text-sm text-gray-500">{{ formatDuration(lecture.duration || 0) }}</span>
+                              <span class="font-medium text-gray-800 dark:text-gray-200">{{ lecture.title }}</span>
+                              <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatDuration(lecture.duration || 0) }}</span>
                             </div>
-                            <div v-if="lecture.is_preview" class="text-sm text-gray-500">Free preview</div>
+                            <div v-if="lecture.is_preview" class="text-sm text-gray-500 dark:text-gray-400">Free preview</div>
                           </div>
                         </div>
                       </template>

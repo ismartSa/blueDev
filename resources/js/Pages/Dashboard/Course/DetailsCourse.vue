@@ -5,7 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Breadcrumb from '@/Components/Breadcrumb.vue'
 import CourseOverview from '@/Components/Course/CourseOverview.vue'
 import CourseTabs from '@/Components/Course/CourseTabs.vue'
-import LessonManager from '@/Components/Course/LessonManager.vue'
+import LectureManager from '@/Components/Course/LectureManager.vue'
 import QuizManager from '@/Components/Course/QuizManager.vue'
 import CourseStatistics from '@/Components/Course/CourseStatistics.vue'
 import SuccessNotification from '@/Components/SuccessNotification.vue'
@@ -14,7 +14,7 @@ import LoadingSpinner from '@/Components/LoadingSpinner.vue'
 // Props definition with defaults
 const props = defineProps({
     course: { type: Object, required: true },
-    lessons: { type: Object, required: true },
+    lectures: { type: Object, required: true },
     stats: { type: Object, default: () => ({}) },
     breadcrumbs: { type: Array, default: () => [] },
     quizzes: { type: Object, default: () => ({}) },
@@ -30,13 +30,13 @@ const data = reactive({
 })
 
 // Optimized computed properties
-const lessonsData = computed(() => props.lessons?.data || [])
-const lessonsCount = computed(() => lessonsData.value.length)
+const lecturesData = computed(() => props.lectures?.data || [])
+const lecturesCount = computed(() => lecturesData.value.length)
 const quizzesCount = computed(() => Object.keys(props.quizzes).length)
 const courseProgress = computed(() => {
-    if (!lessonsCount.value) return 0
-    const completed = lessonsData.value.filter(lesson => lesson.completed).length
-    return Math.round((completed / lessonsCount.value) * 100)
+    if (!lecturesCount.value) return 0
+    const completed = lecturesData.value.filter(lecture => lecture.completed).length
+    return Math.round((completed / lecturesCount.value) * 100)
 })
 
 // Consolidated methods
@@ -79,7 +79,7 @@ const showSuccessMessage = (message) => {
                 :course="props.course.data"
                 :stats="props.stats"
                 :course-progress="courseProgress"
-                :lessons-count="lessonsCount"
+                :lectures-count="lecturesCount"
             />
 
             <!-- Main Content Area -->
@@ -90,7 +90,7 @@ const showSuccessMessage = (message) => {
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4 overflow-hidden">
                             <CourseTabs
                                 :active-tab="data.activeTab"
-                                :lessons-count="lessonsCount"
+                                :lectures-count="lecturesCount"
                                 :quizzes-count="quizzesCount"
                                 @update:active-tab="handleTabChange"
                             />
@@ -98,12 +98,12 @@ const showSuccessMessage = (message) => {
                             <!-- Tab Content -->
                             <div class="p-4">
                                 <Transition name="fade" mode="out-in">
-                                    <LessonManager
-                                        v-if="data.activeTab === 'lessons'"
+                                    <LectureManager
+                                        v-if="data.activeTab === 'lectures'"
                                         :course="props.course.data"
-                                        :lessons="props.lessons"
+                                        :lectures="props.lectures"
                                         @success="showSuccessMessage"
-                                        key="lessons"
+                                        key="lectures"
                                     />
                                     <QuizManager
                                         v-else-if="data.activeTab === 'quizzes'"

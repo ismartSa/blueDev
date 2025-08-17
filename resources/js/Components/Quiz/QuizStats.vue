@@ -1,7 +1,7 @@
 <template>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div 
-      v-for="stat in stats" 
+      v-for="stat in statsData" 
       :key="stat.label"
       :class="getStatClasses(stat.color)"
     >
@@ -26,7 +26,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
-  quizzes: { type: Object, required: true },
+  stats: { type: Object, required: true },
   totalQuestions: { type: Number, default: 0 }
 })
 
@@ -37,10 +37,10 @@ const colorClasses = {
   purple: 'p-4 rounded-lg border bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400'
 }
 
-const stats = computed(() => [
+const statsData = computed(() => [
   { 
     label: 'Total Quizzes', 
-    value: props.quizzes.total || 0, 
+    value: props.stats.total || 0, 
     icon: AcademicCapIcon, 
     color: 'blue' 
   },
@@ -52,12 +52,12 @@ const stats = computed(() => [
   },
   { 
     label: 'Active', 
-    value: props.quizzes.active || 0, 
+    value: props.stats.active || 0, 
     color: 'yellow' 
   },
   { 
-    label: 'Draft', 
-    value: props.quizzes.draft || 0, 
+    label: 'Inactive', 
+    value: props.stats.inactive || 0, 
     color: 'purple' 
   }
 ])

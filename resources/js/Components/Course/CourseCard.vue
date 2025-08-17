@@ -43,6 +43,30 @@
         </div>
       </div>
       
+      <!-- Quiz Section -->
+      <div v-if="course.quizzes && course.quizzes.length > 0" class="mb-4">
+        <button 
+          @click="$emit('toggle-quiz', course.id)"
+          class="flex items-center justify-between w-full text-left p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
+        >
+          <div class="flex items-center space-x-2">
+            <BookOpenIcon class="w-5 h-5 text-blue-600" />
+            <span class="text-sm font-medium text-gray-700">Quiz Playlist</span>
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+              {{ completedQuizCount }}/{{ course.quizzes.length }}
+            </span>
+          </div>
+          <svg 
+            class="w-4 h-4 text-gray-500 transition-transform"
+            :class="{ 'rotate-180': expanded }"
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
       <!-- Action Buttons -->
       <div class="space-y-2">
         <!-- Primary Action -->
@@ -75,6 +99,16 @@
         </div>
       </div>
     </div>
+
+    <!-- Expandable Quiz Playlist -->
+    <div v-if="expanded && course.quizzes && course.quizzes.length > 0" class="border-t border-gray-200">
+      <QuizPlaylist 
+        :course-id="course.id" 
+        :quizzes="course.quizzes" 
+        @quiz-started="handleQuizStarted"
+        @quiz-selected="handleQuizSelected"
+      />
+    </div>
   </div>
 </template>
 
@@ -89,14 +123,16 @@ import {
   HeartIcon
 } from '@heroicons/vue/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/vue/24/solid'
+import QuizPlaylist from '@/Components/Quiz/QuizPlaylist.vue'
 
 // Props
 const props = defineProps({
-  course: { type: Object, required: true }
+  course: { type: Object, required: true },
+  expanded: { type: Boolean, default: false }
 })
 
 // Emits
-const emit = defineEmits(['enroll'])
+const emit = defineEmits(['enroll', 'toggle-quiz', 'continue-learning'])
 
 // Page data
 const page = usePage()
@@ -188,23 +224,29 @@ const wishlistButtonClasses = computed(() => {
 // Dynamic icon rendering
 const wishlistIcon = computed(() => isWishlisted.value ? HeartIconSolid : HeartIcon)
 
+// Quiz functionality
+const completedQuizCount = computed(() => {
+  if (!props.course.quizzes) return 0
+  return props.course.quizzes.filter(quiz => quiz.is_completed).length
+})
+
 // Dynamic course stats
 const courseStats = computed(() => [
   { key: 'duration', icon: ClockIcon, value: props.course.duration || '2h 30m' },
   { key: 'students', icon: UsersIcon, value: `${props.course.enrollments_count || 0} ${content.value.students}` },
-  { key: 'lessons', icon: BookOpenIcon, value: `${props.course.lessons_count || 0} ${content.value.lessons}` }
+  { key: 'lectures', icon: BookOpenIcon, value: `${props.course.lessons_count || 0} ${content.value.lectures}` }
 ])
 
 // Optimized primary action with state-based rendering
 const primaryAction = computed(() => {
   const actionConfig = {
     enrolled: {
-      component: Link,
-      props: { href: route('courses.learn', { courseId: props.course.id, courseSlug: props.course.slug }) },
+      component: 'button',
+      props: { disabled: false },
       classes: `w-full bg-green-600 hover:bg-green-700 text-white ${baseClasses.button} py-2.5 px-4`,
       icon: PlayIcon,
       text: content.value.continue,
-      handler: null
+      handler: handleContinueLearning
     },
     enrolling: {
       component: 'button',
@@ -239,7 +281,7 @@ const primaryAction = computed(() => {
 const content = computed(() => ({
   free: 'FREE',
   students: 'students',
-  lessons: 'lessons',
+  lectures: 'lectures',
   enroll: 'Enroll Now',
   enrollFree: 'Enroll Free',
   enrolling: 'Enrolling...',
@@ -290,6 +332,20 @@ const toggleWishlist = async () => {
     localWishlistStatus.value = originalStatus
     console.error('Wishlist operation failed:', error)
   }
+}
+
+// Continue learning handler
+const handleContinueLearning = () => {
+  emit('continue-learning', props.course.id)
+}
+
+// Quiz event handlers
+const handleQuizStarted = (quiz) => {
+  console.log('Quiz started:', quiz)
+}
+
+const handleQuizSelected = (quiz) => {
+  console.log('Quiz selected:', quiz)
 }
 </script>
 

@@ -7,7 +7,7 @@ const props = defineProps({
     course: { type: Object, required: true },
     stats: { type: Object, default: () => ({}) },
     courseProgress: { type: Number, default: 0 },
-    lessonsCount: { type: Number, default: 0 }
+    lecturesCount: { type: Number, default: 0 }
 });
 
 
@@ -140,11 +140,11 @@ const getCourseImage = () => {
                     <div class="text-xs text-gray-500">Complete</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ props.lessonsCount }}</div>
-                    <div class="text-xs text-gray-500">Lessons</div>
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ props.lecturesCount }}</div>
+                    <div class="text-xs text-gray-500">Lectures</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600">{{ Math.ceil((props.lessonsCount * props.courseProgress) / 100) }}</div>
+                    <div class="text-2xl font-bold text-green-600">{{ Math.ceil((props.lecturesCount * props.courseProgress) / 100) }}</div>
                     <div class="text-xs text-gray-500">Done</div>
                 </div>
             </div>

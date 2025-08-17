@@ -23,6 +23,7 @@ class RoleSeeder extends Seeder
             'update user',
             'read user',
             'create user',
+            'manage courses',
             'delete course',
             'update course',
             'read course',

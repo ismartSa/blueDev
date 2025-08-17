@@ -96,7 +96,11 @@ return [
         'delete' => 'Delete',
         'prev' => 'Prev',
         'next' => 'Next',
-        'delete_account' => 'Delete Account'
+        'delete_account' => 'Delete Account',
+        'enroll_now' => 'Enroll Now',
+        'enroll_free' => 'Enroll Free',
+        'continue_learning' => 'Continue Learning',
+        'go_to_course' => 'Continue Learning'
     ],
     'placeholder' => [
         'search' => 'Search...',

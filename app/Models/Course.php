@@ -86,7 +86,23 @@ class Course extends Model
     // Check if course is published/available
     public function isPublished(): bool
     {
-        return is_bool($this->status) ? $this->status : ($this->status === 'published');
+        $rawStatus = $this->getRawOriginal('status') ?? $this->getAttributes()['status'] ?? $this->status;
+        return is_bool($rawStatus) ? $rawStatus : ($rawStatus === 'published');
+    }
+
+    // Status accessor for display purposes
+    public function getStatusAttribute($value)
+    {
+        if (is_bool($value)) {
+            return $value ? 'Active' : 'Inactive';
+        }
+        
+        return match($value) {
+            'published' => 'Active',
+            'draft' => 'Draft',
+            'inactive' => 'Inactive',
+            default => 'Draft'
+        };
     }
 
     // إضافة دالة للحصول على مدة الدورة بشكل منسق

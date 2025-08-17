@@ -53,12 +53,22 @@ const menuSections = [
     {
         title: 'data',
         permission: 'read user',
-        items: [{
-            route: 'user.index',
-            permission: 'read user',
-            icon: UserIcon,
-            label: 'user'
-        }]
+        items: [
+            {
+                route: 'user.index',
+                permission: 'read user',
+                icon: UserIcon,
+                label: 'user'
+            },
+            {
+                route: 'user.show',
+                routeParams: { user: user.value?.id },
+                permission: 'read user',
+                icon: UserIcon,
+                label: 'user_profile',
+                isTranslated: false
+            }
+        ]
     },
     {
         title: 'Categories',
@@ -214,7 +224,7 @@ const helpers = {
                         :class="helpers.getMenuItemClasses(item.route)"
                     >
                         <Link
-                            :href="route(item.route)"
+                            :href="route(item.route, item.routeParams || {})"
                             :class="classes.link"
                         >
                             <component :is="item.icon" :class="classes.icon" />

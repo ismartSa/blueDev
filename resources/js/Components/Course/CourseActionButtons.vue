@@ -31,5 +31,13 @@ defineEmits(['enroll'])
         >
             {{ $page.props.translations?.course?.label?.continue_learning || 'Continue Learning' }}
         </Link>
+        
+        <!-- Course Details Button -->
+        <Link
+            :href="route('courses.details', { id: course.id, courseSlug: course.slug })"
+            class="block w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-center"
+        >
+            {{ $page.props.translations?.course?.label?.view_details || 'View Details' }}
+        </Link>
     </div>
 </template>

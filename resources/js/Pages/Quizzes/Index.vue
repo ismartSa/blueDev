@@ -23,7 +23,8 @@ const props = defineProps({
     title: String,
     filters: Object,
     quizzes: Object,
-    courses: Array, // Add this
+    stats: Object,
+    courses: Array,
     perPage: Number,
     breadcrumbs: Array
 })
@@ -109,6 +110,15 @@ const navigateToCreateQuiz = () => router.visit(route('quizzes.create'))
 const handleAction = (action, quiz) => {
     if (action === 'delete') openDeleteModal(quiz)
 }
+const activateSelected = () => {
+    router.post(route('quizzes.activate-all'), {}, {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            data.selectedId = []
+        }
+    })
+}
 </script>
 
 <template>
@@ -136,7 +146,7 @@ const handleAction = (action, quiz) => {
                     </div>
 
                     <!-- Stats Cards -->
-                    <QuizStats :quizzes="quizzes" :total-questions="totalQuestions" />
+                    <QuizStats :stats="stats" :total-questions="totalQuestions" />
                 </div>
 
                 <!-- Search & Filters -->
@@ -172,6 +182,9 @@ const handleAction = (action, quiz) => {
                                     <component :is="mode.icon" class="w-5 h-5" />
                                 </button>
                             </div>
+                            <PrimaryButton v-if="data.selectedId.length > 0" @click="activateSelected" class="mr-2">
+                                <AcademicCapIcon class="w-4 h-4 mr-2" />Activate All
+                            </PrimaryButton>
                             <DangerButton v-if="data.selectedId.length > 0" @click="data.deleteOpen = true">
                                 <TrashIcon class="w-4 h-4 mr-2" />Delete ({{ data.selectedId.length }})
                             </DangerButton>

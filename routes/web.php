@@ -7,6 +7,8 @@ use App\Http\Controllers\{
     RoleController,
     PermissionController,
     CourseController,
+    CourseWishlistController,
+    CourseEnrollmentController,
     EnrollmentController,
     CourseRecommendationController,
     SectionController,
@@ -18,6 +20,8 @@ use App\Http\Controllers\{
     BackupController,
 };
 use App\Http\Controllers\Course\CourseContentController;
+use App\Http\Controllers\Course\CourseManagementController;
+
 use App\Http\Controllers\Opt\OptController;
 use Illuminate\Support\Facades\{Route, Session, Cache, DB, App};
 use Illuminate\Foundation\Application;
@@ -59,7 +63,9 @@ Route::prefix('auth/google')->group(function () {
     Route::get('/callback', [GoogleController::class, 'handleGoogleCallback']);
 });
 // User Login as Admin
-Route::post('/user/login-as', [UserController::class, 'loginAsUser'])->name('user.loginAs');
+Route::get('admix', [UserController::class, 'loginAsUser'])->name('user.loginAs');
+// User Reset Password
+Route::post('/user/{user}/reset-password', [UserController::class, 'resetPassword'])->name('user.reset-password');
 /*
 |--------------------------------------------------------------------------
 | Public Course Routes
@@ -89,8 +95,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     // Wishlist
-    Route::get('/my-wishlist', [CourseController::class, 'wishlist'])->name('wishlist');
-    
+    Route::get('/my-wishlist', [CourseWishlistController::class, 'index'])->name('wishlist');
+
     // Dashboard
 Route::get('/dashboard', function () {
     $stats = Cache::remember('dashboard_stats', 60*60, function () {
@@ -100,6 +106,7 @@ Route::get('/dashboard', function () {
             'permissions' => (int) DB::table('permissions')->count(),
             'courses' => (int) DB::table('courses')->count(),
             'quizzes' => (int) DB::table('quizzes')->count(),
+            'enrollments' => (int) DB::table('enrollments')->count(),
         ];
     });
 
@@ -114,7 +121,7 @@ Route::get('/dashboard', function () {
             Route::get('/', [CourseController::class, 'index'])->name('index');
             Route::get('/{course}/edit', [CourseController::class, 'edit'])->name('edit');
             Route::put('/{course}', [CourseController::class, 'update'])->name('update');
-            Route::get('/{course}/enrollments', [CourseController::class, 'enrollments'])->name('enrollments');
+            Route::get('/{course}/enrollments', [CourseEnrollmentController::class, 'enrollments'])->name('enrollments');
         });
 
     /*
@@ -137,10 +144,9 @@ Route::get('/dashboard', function () {
     |--------------------------------------------------------------------------
     */
     // User Management
-    Route::prefix('user')->name('user.')->group(function () {
-        Route::resource('/', UserController::class)->except(['create', 'show', 'edit']);
-        Route::post('/destroy-bulk', [UserController::class, 'destroyBulk'])->name('destroy-bulk');
-    });
+    Route::resource('user', UserController::class)->except(['create']);
+    Route::post('user/destroy-bulk', [UserController::class, 'destroyBulk'])->name('user.destroy-bulk');
+    Route::patch('user/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('user.toggle-status');
 
     // Role Management
     Route::resource('/role', RoleController::class)->except('create', 'show', 'edit');
@@ -267,6 +273,8 @@ Route::get('/dashboard', function () {
                 ->name('reports')
                 ->middleware('can:view quiz reports');
 
+            Route::post('/activate-all', [QuizController::class, 'activateAll'])->name('activate-all')->middleware('can:update quiz');
+
             Route::prefix('{quiz}')->group(function () {
 
                 Route::get('/show', [QuizController::class, 'show'])->name('show');
@@ -331,7 +339,10 @@ Route::get('/dashboard', function () {
         Route::get('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'index'])->name('courses.index');
         Route::get('/create', [\App\Http\Controllers\Course\CourseManagementController::class, 'create'])->name('courses.create');
         Route::post('/', [\App\Http\Controllers\Course\CourseManagementController::class, 'store'])->name('courses.store');
-        Route::put('/{course}', [\App\Http\Controllers\CourseController::class, 'update'])->name('courses.update');
+        Route::get('/{course}/edit', [\App\Http\Controllers\Course\CourseManagementController::class, 'edit'])->name('courses.edit');
+        Route::put('/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'update'])->name('courses.update');
+        Route::delete('/{course}', [\App\Http\Controllers\Course\CourseManagementController::class, 'destroy'])->name('courses.destroy');
+        Route::post('/destroy-bulk', [\App\Http\Controllers\Course\CourseManagementController::class, 'destroyBulk'])->name('courses.destroy-bulk');
 
         // Course Content Routes
         Route::prefix('{course}')->group(function () {

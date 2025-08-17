@@ -1,14 +1,14 @@
 <template>
     <Head title="My Courses" />
-    
+
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     My Courses
                 </h2>
-                <Link :href="route('courses.explore')" 
-                      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                <Link :href="route('courses.explore')"
+                      :class="buttonClasses.primary">
                     Explore More Courses
                 </Link>
             </div>
@@ -18,126 +18,78 @@
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Stats Overview -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                        <div class="text-3xl font-bold text-blue-600">{{ stats.total_enrolled }}</div>
-                        <div class="text-gray-600">Total Enrolled</div>
-                    </div>
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                        <div class="text-3xl font-bold text-green-600">{{ stats.completed }}</div>
-                        <div class="text-gray-600">Completed</div>
-                    </div>
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                        <div class="text-3xl font-bold text-yellow-600">{{ stats.in_progress }}</div>
-                        <div class="text-gray-600">In Progress</div>
-                    </div>
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                        <div class="text-3xl font-bold text-gray-600">{{ stats.not_started }}</div>
-                        <div class="text-gray-600">Not Started</div>
+                    <StatCard
+                        v-for="stat in statsData"
+                        :key="stat.key"
+                        :value="stats[stat.key]"
+                        :label="stat.label"
+                        :color="stat.color"
+                    />
+                </div>
+
+                <!-- Course Filters -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <div class="flex-1 min-w-64">
+                                <input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    placeholder="Search courses..."
+                                    :class="inputClasses"
+                                >
+                            </div>
+                            <select
+                                v-for="filter in filterOptions"
+                                :key="filter.key"
+                                v-model="filters[filter.key]"
+                                :class="inputClasses"
+                            >
+                                <option :value="filter.defaultValue">{{ filter.defaultLabel }}</option>
+                                <option
+                                    v-for="option in filter.options"
+                                    :key="option.value"
+                                    :value="option.value"
+                                >
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Enrolled Courses -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold mb-6">My Enrolled Courses</h3>
-                        
-                        <div v-if="enrolledCourses.length === 0" class="text-center py-12">
-                            <div class="text-gray-500 mb-4">You haven't enrolled in any courses yet.</div>
-                            <Link :href="route('courses.explore')" 
-                                  class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors">
-                                Browse Courses
-                            </Link>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">My Enrolled Courses</h3>
+                            <button
+                                @click="showQuizCreationModal = true"
+                                :class="buttonClasses.secondary"
+                            >
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Add Quiz to Course
+                            </button>
                         </div>
 
+                        <EmptyState
+                            v-if="filteredCourses.length === 0"
+                            icon="📚"
+                            title="No courses found matching your criteria"
+                            subtitle="Try adjusting your search or filters"
+                        />
+
                         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div v-for="course in enrolledCourses" :key="course.id" 
-                                 class="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                                <div class="relative">
-                                    <img :src="course.image || '/images/default-course.jpg'" 
-                                         :alt="course.title" 
-                                         class="w-full h-48 object-cover">
-                                    <div class="absolute top-2 right-2">
-                                        <span v-if="course.is_completed" 
-                                              class="bg-green-500 text-white px-2 py-1 rounded text-xs">
-                                            Completed
-                                        </span>
-                                        <span v-else-if="course.progress > 0" 
-                                              class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">
-                                            {{ course.progress }}% Complete
-                                        </span>
-                                        <span v-else 
-                                              class="bg-gray-500 text-white px-2 py-1 rounded text-xs">
-                                            Not Started
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div class="p-4">
-                                    <h4 class="font-semibold text-lg mb-2">{{ course.title }}</h4>
-                                    <p class="text-gray-600 text-sm mb-2">{{ course.category }}</p>
-                                    <p class="text-gray-500 text-sm mb-3">by {{ course.instructor }}</p>
-                                    
-                                    <!-- Progress Bar -->
-                                    <div class="mb-4">
-                                        <div class="flex justify-between text-sm text-gray-600 mb-1">
-                                            <span>Progress</span>
-                                            <span>{{ course.completed_lectures }}/{{ course.total_lectures }} lectures</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full h-2">
-                                            <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
-                                                 :style="{ width: course.progress + '%' }"></div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Quiz Playlist Section -->
-                                    <div class="mb-4" v-if="course.quizzes && course.quizzes.length > 0">
-                                        <div class="mb-3">
-                                            <button 
-                                                @click="toggleQuizPlaylist(course.id)"
-                                                class="flex items-center justify-between w-full text-left p-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-colors"
-                                            >
-                                                <div class="flex items-center space-x-2">
-                                                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                                                    </svg>
-                                                    <span class="text-sm font-medium text-gray-700">Quiz Playlist</span>
-                                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                                        {{ getCompletedQuizCount(course.quizzes) }}/{{ course.quizzes.length }}
-                                                    </span>
-                                                </div>
-                                                <svg 
-                                                    class="w-4 h-4 text-gray-500 transition-transform"
-                                                    :class="{ 'rotate-180': expandedPlaylists.includes(course.id) }"
-                                                    fill="currentColor" 
-                                                    viewBox="0 0 20 20"
-                                                >
-                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        
-                                        <!-- Expandable Quiz Playlist -->
-                                        <div v-if="expandedPlaylists.includes(course.id)" class="mt-3">
-                                            <QuizPlaylist 
-                                                :course="course"
-                                                :quizzes="course.quizzes"
-                                                @quiz-started="handleQuizStarted"
-                                                @quiz-selected="handleQuizSelected"
-                                            />
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs text-gray-500">
-                                            Enrolled: {{ course.enrollment_date }}
-                                        </span>
-                                        <Link :href="route('courses.player', { courseId: course.id, courseSlug: course.slug })" 
-                                              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition-colors">
-                                            {{ course.progress > 0 ? 'Continue' : 'Start' }}
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
+                            <CourseCard
+                                v-for="course in filteredCourses"
+                                :key="course.id"
+                                :course="course"
+                                :expanded="expandedCourse === course.id"
+                                @toggle-quiz="toggleQuizPlaylist"
+                                @continue-learning="handleContinueLearning"
+                            />
                         </div>
                     </div>
                 </div>
@@ -147,35 +99,35 @@
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-lg font-semibold">Recommended for You</h3>
-                            <button @click="loadMoreSuggestions" 
+                            <button @click="loadMoreSuggestions"
                                     class="text-blue-500 hover:text-blue-600 text-sm">
                                 View More
                             </button>
                         </div>
-                        
+
                         <div v-if="suggestions.length === 0" class="text-center py-8">
                             <div class="text-gray-500">No recommendations available at the moment.</div>
                         </div>
 
                         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div v-for="course in suggestions" :key="course.id" 
+                            <div v-for="course in suggestions" :key="course.id"
                                  class="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                                 <div class="relative">
-                                    <img :src="course.image || '/images/default-course.jpg'" 
-                                         :alt="course.title" 
+                                    <img :src="course.image || '/images/default-course.jpg'"
+                                         :alt="course.title"
                                          class="w-full h-48 object-cover">
                                     <div class="absolute top-2 right-2">
-                                        <span v-if="course.is_free" 
+                                        <span v-if="course.is_free"
                                               class="bg-green-500 text-white px-2 py-1 rounded text-xs">
                                             Free
                                         </span>
-                                        <span v-else 
+                                        <span v-else
                                               class="bg-blue-500 text-white px-2 py-1 rounded text-xs">
                                             ${{ course.price }}
                                         </span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="p-4">
                                     <h4 class="font-semibold text-lg mb-2">{{ course.title }}</h4>
                                     <p class="text-gray-600 text-sm mb-2">{{ course.description }}</p>
@@ -184,13 +136,13 @@
                                         <span>{{ course.duration }}</span>
                                     </div>
                                     <p class="text-gray-500 text-sm mb-4">by {{ course.instructor }}</p>
-                                    
+
                                     <div class="flex justify-between items-center">
-                                        <span v-if="course.level" 
+                                        <span v-if="course.level"
                                               class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                                             {{ course.level }}
                                         </span>
-                                        <Link :href="route('courses.details', { id: course.id, courseSlug: course.slug })" 
+                                        <Link :href="route('courses.details', { id: course.id, courseSlug: course.slug })"
                                               class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition-colors">
                                             View Details
                                         </Link>
@@ -202,35 +154,135 @@
                 </div>
             </div>
         </div>
+
+        <!-- Quiz Creation Modal -->
+        <QuizCreationModal
+            v-if="showQuizCreationModal"
+            :courses="enrolledCourses"
+            @close="showQuizCreationModal = false"
+            @quiz-created="handleQuizCreated"
+        />
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { Head, Link } from '@inertiajs/vue3'
+import { ref, computed, reactive } from 'vue'
+import { Head, Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import QuizPlaylist from '@/Components/Quiz/QuizPlaylist.vue'
-import { ref } from 'vue'
+import StatCard from '@/Components/Common/StatCard.vue'
+import EmptyState from '@/Components/Common/EmptyState.vue'
+import CourseCard from '@/Components/Course/CourseCard.vue'
+import QuizCreationModal from '@/Components/Quiz/QuizCreationModal.vue'
 import axios from 'axios'
 
 const props = defineProps({
-    enrolledCourses: Array,
-    suggestions: Array,
-    stats: Object
+    enrolledCourses: {
+        type: Array,
+        default: () => []
+    },
+    suggestions: {
+        type: Array,
+        default: () => []
+    },
+    stats: {
+        type: Object,
+        default: () => ({
+            total_enrolled: 0,
+            completed: 0,
+            in_progress: 0,
+            not_started: 0
+        })
+    },
+    categories: {
+        type: Array,
+        default: () => []
+    }
 })
 
 const suggestions = ref(props.suggestions)
 
-// Playlist state management
-const expandedPlaylists = ref([])
+// Reactive data
+const expandedCourse = ref(null)
+const searchQuery = ref('')
+const showQuizCreationModal = ref(false)
+const filters = reactive({
+    status: 'all',
+    category: 'all'
+})
 
-// Toggle playlist visibility
-const toggleQuizPlaylist = (courseId) => {
-    const index = expandedPlaylists.value.indexOf(courseId)
-    if (index > -1) {
-        expandedPlaylists.value.splice(index, 1)
-    } else {
-        expandedPlaylists.value.push(courseId)
+// Computed properties for dynamic rendering
+const statsData = computed(() => [
+    { key: 'total_enrolled', label: 'Total Enrolled', color: 'blue' },
+    { key: 'completed', label: 'Completed', color: 'green' },
+    { key: 'in_progress', label: 'In Progress', color: 'yellow' },
+    { key: 'not_started', label: 'Not Started', color: 'gray' }
+])
+
+const filterOptions = computed(() => [
+    {
+        key: 'status',
+        defaultValue: 'all',
+        defaultLabel: 'All Status',
+        options: [
+            { value: 'not_started', label: 'Not Started' },
+            { value: 'in_progress', label: 'In Progress' },
+            { value: 'completed', label: 'Completed' }
+        ]
+    },
+    {
+        key: 'category',
+        defaultValue: 'all',
+        defaultLabel: 'All Categories',
+        options: props.categories.map(cat => ({ value: cat.id, label: cat.name }))
     }
+])
+
+const filteredCourses = computed(() => {
+    return props.enrolledCourses.filter(course => {
+        const matchesSearch = !searchQuery.value ||
+            course.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            course.category?.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+
+        const matchesStatus = filters.status === 'all' ||
+            course.pivot?.status === filters.status
+
+        const matchesCategory = filters.category === 'all' ||
+            course.category_id === filters.category
+
+        return matchesSearch && matchesStatus && matchesCategory
+    })
+})
+
+// Reusable CSS classes
+const buttonClasses = {
+    primary: 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors',
+    secondary: 'flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors'
+}
+
+const inputClasses = 'px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+
+// Methods
+const toggleQuizPlaylist = (courseId) => {
+    expandedCourse.value = expandedCourse.value === courseId ? null : courseId
+}
+
+const handleContinueLearning = (courseId) => {
+    // Navigate to course learning page
+    const course = props.enrolledCourses.find(c => c.id === courseId)
+    if (course) {
+        router.visit(route('courses.player', {
+            courseId: course.id,
+            courseSlug: course.slug
+        }))
+    }
+}
+
+const handleQuizCreated = (quiz) => {
+    // Handle quiz creation success
+    showQuizCreationModal.value = false
+    // Optionally refresh the course data or show success message
+    console.log('Quiz created successfully:', quiz)
 }
 
 // Get completed quiz count

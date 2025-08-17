@@ -102,4 +102,13 @@ class Quiz extends Model
     {
         return $query->where('chapter', $chapter);
     }
+
+    /**
+     * Override route key name to use ID instead of slug
+     * This ensures compatibility with existing frontend routes
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
 }

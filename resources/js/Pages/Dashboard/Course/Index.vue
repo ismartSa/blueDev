@@ -5,11 +5,12 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import SelectInput from "@/Components/SelectInput.vue";
+import TextInput from "@/Components/TextInput.vue";
 import Checkbox from "@/Components/Checkbox.vue";
 import Pagination from "@/Components/Pagination.vue";
 import Modal from "@/Components/Modal.vue";
 import CourseFormModal from "@/Components/Course/CourseFormModal.vue";
-import { reactive, watch, computed, nextTick, ref } from "vue";
+import { reactive, watch, computed, nextTick, ref, onMounted, onUnmounted } from "vue";
 import pkg from "lodash";
 import { router } from "@inertiajs/vue3";
 import {
@@ -21,12 +22,14 @@ import {
     ArrowDownIcon,
     ExclamationTriangleIcon,
     CheckCircleIcon,
-    EyeIcon
+    EyeIcon,
+    FunnelIcon,
+    XMarkIcon
 } from "@heroicons/vue/24/solid";
 
 const { debounce, pickBy } = pkg;
 
-// Constants
+// Enhanced constants for better UX
 const DEBOUNCE_DELAY = 300;
 const PER_PAGE_OPTIONS = [
     { value: 10, label: '10 per page' },
@@ -35,7 +38,16 @@ const PER_PAGE_OPTIONS = [
     { value: 100, label: '100 per page' }
 ];
 
-// Constants removed - CourseFormModal manages its own options
+const STATUS_FILTERS = [
+    { value: '', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'draft', label: 'Draft' }
+];
+
+const CATEGORY_FILTERS = [
+    { value: '', label: 'All Categories' }
+];
 
 // Props with validation
 const props = defineProps({
@@ -48,13 +60,15 @@ const props = defineProps({
     stats: { type: Object, default: () => ({}) },
 });
 
-// Reactive data
+// Enhanced reactive data with better UX state management
 const data = reactive({
     params: {
         search: props.filters.search || '',
         field: props.filters.field || 'created_at',
         order: props.filters.order || 'desc',
         perPage: props.perPage,
+        status: props.filters.status || '',
+        category: props.filters.category || ''
     },
     selectedIds: [],
     loading: false,
@@ -66,19 +80,21 @@ const data = reactive({
     deleteOpen: false,
     deleteBulkOpen: false,
 
-    // UI state
+    // Enhanced UI state
     processing: false,
     showSuccess: false,
     successMessage: '',
     courseToDelete: null,
     courseToEdit: null,
+    showFilters: false,
+    bulkActionOpen: false
 });
 
 // Simplified form handling - CourseFormModal manages its own forms
 
 const deleteForm = useForm({});
 const bulkDeleteForm = useForm({
-    ids: []
+    id: []
 });
 
 // Refs removed - CourseFormModal manages its own form inputs
@@ -97,11 +113,20 @@ const isIndeterminate = computed(() =>
 const hasSelectedItems = computed(() => data.selectedIds.length > 0);
 
 const sortableColumns = computed(() => [
-    { key: 'title', label: 'Course Title', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'created_at', label: 'Created At', sortable: true },
-    { key: 'updated_at', label: 'Updated At', sortable: true },
+    { key: 'title', label: 'Course Title', sortable: true, width: 'w-1/3' },
+    { key: 'status', label: 'Status', sortable: true, width: 'w-24' },
+    { key: 'created_at', label: 'Created At', sortable: true, width: 'w-32' },
+    { key: 'updated_at', label: 'Updated At', sortable: true, width: 'w-32' },
 ]);
+
+const categoryOptions = computed(() => [
+    ...CATEGORY_FILTERS,
+    ...props.categories.map(cat => ({ value: cat.id, label: cat.name }))
+]);
+
+const hasActiveFilters = computed(() => 
+    data.params.search || data.params.status || data.params.category
+);
 
 // categoriesForSelect removed - CourseFormModal manages its own category options
 
@@ -116,7 +141,7 @@ const currentPageRange = computed(() => {
     return `${from}-${to} of ${props.courses.total}`;
 });
 
-// Methods
+// Enhanced methods with better error handling and UX
 const performSearch = debounce(() => {
     data.loading = true;
     data.error = null;
@@ -127,6 +152,9 @@ const performSearch = debounce(() => {
         replace: true,
         preserveState: true,
         preserveScroll: true,
+        onStart: () => {
+            data.loading = true;
+        },
         onFinish: () => {
             data.loading = false;
         },
@@ -137,6 +165,17 @@ const performSearch = debounce(() => {
         }
     });
 }, DEBOUNCE_DELAY);
+
+const clearFilters = () => {
+    data.params.search = '';
+    data.params.status = '';
+    data.params.category = '';
+    data.showFilters = false;
+};
+
+const toggleFilters = () => {
+    data.showFilters = !data.showFilters;
+};
 
 const sortBy = (field) => {
     if (data.params.field === field) {
@@ -198,7 +237,7 @@ const openDeleteModal = (course) => {
 };
 
 const openBulkDeleteModal = () => {
-    bulkDeleteForm.ids = [...data.selectedIds];
+    bulkDeleteForm.id = [...data.selectedIds];
     data.deleteBulkOpen = true;
 };
 
@@ -230,11 +269,11 @@ const submitDelete = () => {
 };
 
 const submitBulkDelete = () => {
-    bulkDeleteForm.post(route('courses.bulk-delete'), {
+    bulkDeleteForm.post(route('courses.destroy-bulk'), {
         onSuccess: () => {
             closeModals();
             clearSelection();
-            showSuccessMessage(`${bulkDeleteForm.ids.length} courses deleted successfully!`);
+            showSuccessMessage(`${bulkDeleteForm.id.length} courses deleted successfully!`);
         },
         onError: (errors) => {
             console.error('Bulk delete error:', errors);
@@ -271,9 +310,9 @@ const getSortIcon = (field) => {
     return data.params.order === 'asc' ? ArrowUpIcon : ArrowDownIcon;
 };
 
-// Watchers
+// Enhanced watchers for better reactivity
 watch(
-    () => [data.params.search, data.params.field, data.params.order, data.params.perPage],
+    () => [data.params.search, data.params.field, data.params.order, data.params.perPage, data.params.status, data.params.category],
     performSearch
 );
 
@@ -289,7 +328,7 @@ watch(
     }
 );
 
-// Keyboard shortcuts
+// Enhanced keyboard shortcuts and lifecycle management
 const handleKeydown = (event) => {
     // Ctrl/Cmd + N for new course
     if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
@@ -297,21 +336,31 @@ const handleKeydown = (event) => {
         openCreateModal();
     }
 
-    // Escape to close modals
+    // Ctrl/Cmd + F for search focus
+    if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault();
+        const searchInput = document.querySelector('#search-input');
+        if (searchInput) searchInput.focus();
+    }
+
+    // Escape to close modals or clear search
     if (event.key === 'Escape') {
-        closeModals();
+        if (data.createOpen || data.editOpen || data.deleteOpen || data.deleteBulkOpen) {
+            closeModals();
+        } else if (data.params.search) {
+            data.params.search = '';
+        }
     }
 };
 
-// Add event listener for keyboard shortcuts
-nextTick(() => {
+// Lifecycle management
+onMounted(() => {
     document.addEventListener('keydown', handleKeydown);
 });
 
-// Cleanup
-const cleanup = () => {
+onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
-};
+});
 </script>
 
 <template>
@@ -376,7 +425,7 @@ const cleanup = () => {
                         <h3 class="text-sm font-medium text-blue-600 dark:text-blue-400">Total Courses</h3>
                         <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">{{ props.stats.total || 0 }}</p>
                     </div>
-                    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                    <div class="bg-white dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
                         <h3 class="text-sm font-medium text-green-600 dark:text-green-400">Active</h3>
                         <p class="text-2xl font-bold text-green-900 dark:text-green-100">{{ props.stats.active || 0 }}</p>
                     </div>
@@ -393,49 +442,114 @@ const cleanup = () => {
 
             <!-- Data Table -->
             <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-                <!-- Table Controls -->
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center p-4 border-b border-gray-200 dark:border-gray-700 gap-4">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                        <SelectInput
-                            v-model="data.params.perPage"
-                            :dataSet="PER_PAGE_OPTIONS"
-                            class="w-32"
-                            aria-label="Items per page"
-                        />
-
-                        <Transition
-                            enter-active-class="transition ease-out duration-200"
-                            enter-from-class="opacity-0 transform scale-95"
-                            enter-to-class="opacity-100 transform scale-100"
-                            leave-active-class="transition ease-in duration-150"
-                            leave-from-class="opacity-100 transform scale-100"
-                            leave-to-class="opacity-0 transform scale-95"
-                        >
-                            <DangerButton
-                                v-show="hasSelectedItems"
-                                @click="openBulkDeleteModal"
+                <!-- Enhanced Table Controls with Filters -->
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 space-y-4">
+                    <!-- Top Row: Search and Filter Toggle -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <SelectInput
+                                v-model="data.params.perPage"
+                                :dataSet="PER_PAGE_OPTIONS"
+                                class="w-32"
+                                aria-label="Items per page"
+                            />
+                            
+                            <SecondaryButton
+                                @click="toggleFilters"
                                 class="flex items-center gap-2"
-                                :aria-label="`Delete ${data.selectedIds.length} selected courses`"
+                                :class="{ 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800': data.showFilters }"
                             >
-                                <TrashIcon class="w-4 h-4" />
-                                Delete Selected ({{ data.selectedIds.length }})
-                            </DangerButton>
-                        </Transition>
+                                <FunnelIcon class="w-4 h-4" />
+                                Filters
+                                <span v-if="hasActiveFilters" class="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                                    {{ [data.params.search, data.params.status, data.params.category].filter(Boolean).length }}
+                                </span>
+                            </SecondaryButton>
+                        </div>
+
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <div class="relative flex-1 sm:w-80">
+                                <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <TextInput
+                                    id="search-input"
+                                    v-model="data.params.search"
+                                    type="text"
+                                    class="w-full pl-10 pr-10"
+                                    placeholder="Search courses... (Ctrl+F)"
+                                    aria-label="Search courses"
+                                />
+                                <button
+                                    v-if="data.params.search"
+                                    @click="data.params.search = ''"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <XMarkIcon class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expandable Filters Row -->
+                    <Transition
+                        enter-active-class="transition-all duration-300 ease-out"
+                        enter-from-class="opacity-0 max-h-0 overflow-hidden"
+                        enter-to-class="opacity-100 max-h-20 overflow-visible"
+                        leave-active-class="transition-all duration-200 ease-in"
+                        leave-from-class="opacity-100 max-h-20 overflow-visible"
+                        leave-to-class="opacity-0 max-h-0 overflow-hidden"
+                    >
+                        <div v-show="data.showFilters" class="flex flex-wrap items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <SelectInput
+                                v-model="data.params.status"
+                                :dataSet="STATUS_FILTERS"
+                                class="w-40"
+                                aria-label="Filter by status"
+                            />
+                            
+                            <SelectInput
+                                v-model="data.params.category"
+                                :dataSet="categoryOptions"
+                                class="w-48"
+                                aria-label="Filter by category"
+                            />
+                            
+                            <SecondaryButton
+                                v-if="hasActiveFilters"
+                                @click="clearFilters"
+                                class="flex items-center gap-2 text-sm"
+                            >
+                                <XMarkIcon class="w-4 h-4" />
+                                Clear Filters
+                            </SecondaryButton>
+                        </div>
+                    </Transition>
+
+                    <!-- Bottom Row: Bulk Actions and Results Count -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="flex items-center gap-3">
+                            <Transition
+                                enter-active-class="transition ease-out duration-200"
+                                enter-from-class="opacity-0 transform scale-95"
+                                enter-to-class="opacity-100 transform scale-100"
+                                leave-active-class="transition ease-in duration-150"
+                                leave-from-class="opacity-100 transform scale-100"
+                                leave-to-class="opacity-0 transform scale-95"
+                            >
+                                <DangerButton
+                                    v-show="hasSelectedItems"
+                                    @click="openBulkDeleteModal"
+                                    class="flex items-center gap-2"
+                                    :aria-label="`Delete ${data.selectedIds.length} selected courses`"
+                                >
+                                    <TrashIcon class="w-4 h-4" />
+                                    Delete Selected ({{ data.selectedIds.length }})
+                                </DangerButton>
+                            </Transition>
+                        </div>
 
                         <div v-if="filteredCoursesCount" class="text-sm text-gray-600 dark:text-gray-400">
                             Showing {{ currentPageRange }}
                         </div>
-                    </div>
-
-                    <div class="relative w-full lg:w-80">
-                        <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <TextInput
-                            v-model="data.params.search"
-                            type="text"
-                            class="w-full pl-10"
-                            placeholder="Search courses, categories, status..."
-                            aria-label="Search courses"
-                        />
                     </div>
                 </div>
 
@@ -516,8 +630,11 @@ const cleanup = () => {
                             <tr
                                 v-for="(course, index) in props.courses.data"
                                 :key="course.id"
-                                class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
-                                :class="{ 'bg-blue-50 dark:bg-blue-900/20': data.selectedIds.includes(course.id) }"
+                                class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all duration-200 group"
+                                :class="{ 
+                                    'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500': data.selectedIds.includes(course.id),
+                                    'hover:shadow-sm': !data.selectedIds.includes(course.id)
+                                }"
                             >
                                 <td class="px-4 py-3 text-center">
                                     <input
@@ -532,18 +649,21 @@ const cleanup = () => {
                                     {{ getTableIndex(index) }}
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="text-sm font-medium">
+                                    <div class="min-w-0 flex-1">
                                         <button
                                             @click="goToCourseDetails(course)"
-                                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors text-left"
-                                            :title="`View details for ${course.title}`"
+                                            class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors text-left block truncate max-w-xs group-hover:max-w-none group-hover:whitespace-normal"
+                                            :title="course.title"
                                             :aria-label="`View details for course: ${course.title}`"
                                         >
                                             {{ course.title }}
                                         </button>
-                                    </div>
-                                    <div v-if="course.description" class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                                        {{ course.description }}
+                                        <div v-if="course.description" class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs mt-1 group-hover:max-w-none group-hover:whitespace-normal">
+                                            {{ course.description }}
+                                        </div>
+                                        <div v-if="course.price" class="text-xs text-green-600 dark:text-green-400 font-medium mt-1">
+                                            ${{ parseFloat(course.price).toFixed(2) }}
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
@@ -574,28 +694,28 @@ const cleanup = () => {
                                     <div class="flex items-center justify-center gap-1">
                                         <button
                                             @click="goToCourseDetails(course)"
-                                            class="p-2 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                            class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group"
                                             :title="`View details for ${course.title}`"
                                             :aria-label="`View details for course: ${course.title}`"
                                         >
-                                            <EyeIcon class="w-4 h-4" />
+                                            <EyeIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
                                         </button>
-                                        <PrimaryButton
+                                        <button
                                             @click="openEditModal(course)"
-                                            class="p-2 text-xs"
+                                            class="inline-flex items-center justify-center w-8 h-8 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all duration-200 group"
                                             :title="`Edit ${course.title}`"
                                             :aria-label="`Edit course: ${course.title}`"
                                         >
-                                            <PencilIcon class="w-4 h-4" />
-                                        </PrimaryButton>
-                                        <DangerButton
+                                            <PencilIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                        </button>
+                                        <button
                                             @click="openDeleteModal(course)"
-                                            class="p-2 text-xs"
+                                            class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group"
                                             :title="`Delete ${course.title}`"
                                             :aria-label="`Delete course: ${course.title}`"
                                         >
-                                            <TrashIcon class="w-4 h-4" />
-                                        </DangerButton>
+                                            <TrashIcon class="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -676,7 +796,7 @@ const cleanup = () => {
 
                 <div class="mb-6">
                     <p class="text-gray-600 dark:text-gray-400">
-                        Are you sure you want to delete <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bulkDeleteForm.ids.length }}</span> selected courses?
+                        Are you sure you want to delete <span class="font-semibold text-gray-900 dark:text-gray-100">{{ bulkDeleteForm.id.length }}</span> selected courses?
                     </p>
                     <p class="text-sm text-red-600 dark:text-red-400 mt-2">
                         This action cannot be undone.
@@ -693,7 +813,7 @@ const cleanup = () => {
                         class="flex items-center gap-2"
                     >
                         <span v-if="bulkDeleteForm.processing" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                        {{ bulkDeleteForm.processing ? 'Deleting...' : `Delete ${bulkDeleteForm.ids.length} Courses` }}
+                        {{ bulkDeleteForm.processing ? 'Deleting...' : `Delete ${bulkDeleteForm.id.length} Courses` }}
                     </DangerButton>
                 </div>
             </div>

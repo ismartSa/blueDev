@@ -108,6 +108,7 @@ class EnrollmentController extends Controller
                     'instructor' => $course->instructor->name,
                     'progress' => $totalLectures > 0 ? round(($completedLectures / $totalLectures) * 100) : 0,
                     'completed_lectures' => $completedLectures,
+                    'user_enrolled' => true, // User is enrolled since this is from enrollments
                     'total_lectures' => $totalLectures,
                     'enrolled_at' => $enrollment->created_at->format('M d, Y'),
                 ];

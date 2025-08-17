@@ -13,7 +13,7 @@
       :href="route('course.player', [course.id, course.slug])"
       class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out transform hover:scale-105 mb-2"
     >
-      {{ lang().button.go_to_course }}
+      {{ lang().button.continue_learning }}
     </Link>
 
     <Link

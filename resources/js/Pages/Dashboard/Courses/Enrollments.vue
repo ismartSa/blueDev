@@ -38,25 +38,37 @@ const state = reactive({
 
 // Computed properties
 const filteredEnrollments = computed(() => {
+    if (!props.enrollments || !props.enrollments.data || !Array.isArray(props.enrollments.data)) {
+        return []
+    }
+    
     let filtered = props.enrollments.data
     
     if (state.searchTerm) {
         filtered = filtered.filter(enrollment => 
-            enrollment.user.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-            enrollment.user.email.toLowerCase().includes(state.searchTerm.toLowerCase())
+            enrollment?.user?.name?.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+            enrollment?.user?.email?.toLowerCase().includes(state.searchTerm.toLowerCase())
         )
     }
     
     if (state.filterStatus !== 'all') {
-        filtered = filtered.filter(enrollment => enrollment.status === state.filterStatus)
+        filtered = filtered.filter(enrollment => enrollment?.enrollment_status === state.filterStatus)
     }
     
     return filtered
 })
 
 const progressPercentage = (enrollment) => {
-    if (!props.stats.total_lessons || props.stats.total_lessons === 0) return 0
-    return Math.round((enrollment.completed_lessons / props.stats.total_lessons) * 100)
+    if (!enrollment || !props.stats.total_lessons || props.stats.total_lessons === 0) return 0
+    
+    // Use progress_percentage from database if available
+    if (enrollment.progress_percentage !== undefined) {
+        return enrollment.progress_percentage
+    }
+    
+    // Fallback calculation using completed_lectures JSON field
+    const completedLectures = enrollment.completed_lectures ? JSON.parse(enrollment.completed_lectures).length : 0
+    return Math.round((completedLectures / props.stats.total_lessons) * 100)
 }
 
 const getProgressColor = (percentage) => {
@@ -88,6 +100,8 @@ const toggleSelection = (enrollmentId) => {
 }
 
 const selectAll = () => {
+    if (!filteredEnrollments.value || !Array.isArray(filteredEnrollments.value)) return
+    
     if (state.selectedEnrollments.length === filteredEnrollments.value.length) {
         state.selectedEnrollments = []
     } else {

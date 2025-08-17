@@ -58,14 +58,7 @@ class EnrollmentService
      */
     private function validateCourseAvailability(Course $course): void
     {
-        $isAvailable = match (true) {
-            is_bool($course->status) => $course->status,
-            is_int($course->status) => $course->status === 1,
-            is_string($course->status) => $course->status === '1',
-            default => false
-        };
-        
-        if (!$isAvailable) {
+        if (!$course->isPublished()) {
             throw new Exception('This course is not available for enrollment currently');
         }
     }

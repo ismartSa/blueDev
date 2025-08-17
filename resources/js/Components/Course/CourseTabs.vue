@@ -1,14 +1,14 @@
 <script setup>
 const props = defineProps({
     activeTab: { type: String, required: true },
-    lessonsCount: { type: Number, default: 0 },
+    lecturesCount: { type: Number, default: 0 },
     quizzesCount: { type: Number, default: 0 },
 });
 
 const emit = defineEmits(['update:activeTab']);
 
 const tabs = [
-    { id: 'lessons', name: `Lessons (${props.lessonsCount})`, icon: 'VideoCameraIcon' },
+    { id: 'lectures', name: `Lectures (${props.lecturesCount})`, icon: 'VideoCameraIcon' },
     { id: 'quizzes', name: `Quizzes (${props.quizzesCount})`, icon: 'AcademicCapIcon' },
 ];
 </script>

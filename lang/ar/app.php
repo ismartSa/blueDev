@@ -71,7 +71,11 @@ return [
         'delete' => 'حذف',
         'prev' => 'السابق',
         'next' => 'التالي',
-        'delete_account' => 'حذف الحساب'
+        'delete_account' => 'حذف الحساب',
+        'enroll_now' => 'سجل الآن',
+        'enroll_free' => 'سجل مجاناً',
+        'continue_learning' => 'متابعة التعلم',
+        'go_to_course' => 'متابعة التعلم'
     ],
     'placeholder' => [
         'search' => 'بحث...',
