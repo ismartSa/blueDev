@@ -35,14 +35,14 @@ class UserSeeder extends Seeder
         );
         $admin->assignRole('admin');
 
-        $operator = User::firstOrCreate(
-            ['email' => 'operator@operator.com'],
+        $student = User::firstOrCreate(
+            ['email' => 'student@student.com'],
             [
-                'name'              => 'Operator',
-                'password'          => bcrypt('operator'),
+                'name'              => 'student',
+                'password'          => bcrypt('student'),
                 'email_verified_at' => date('Y-m-d H:i')
             ]
         );
-        $operator->assignRole('operator');
+        $student->assignRole('student');
     }
 }

@@ -16,7 +16,7 @@ class SettingsSeeder extends Seeder
             // Branding Settings
             [
                 'key' => 'app_name',
-                'value' => 'Laravel Brive',
+                'value' => 'siteeblue',
                 'type' => 'string',
                 'group' => 'branding',
                 'description' => 'Application name displayed throughout the site'
