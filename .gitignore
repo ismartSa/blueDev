@@ -20,3 +20,14 @@ yarn-error.log
 /.idea
 /.vscode
 .DS_Store
+.qodo
+
+# Backup files
+backups/
+*.tar.gz
+*.zip
+*.backup
+*backup*.tar.gz
+laravel-brive-backup-*.tar.gz
+*.tar.gz
+*.zip

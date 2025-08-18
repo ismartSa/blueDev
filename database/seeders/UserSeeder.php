@@ -15,28 +15,34 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        $superadmin = User::create([
-            'name'              => 'Superadmin',
-            'email'             => 'superadmin@superadmin.com',
-            'password'          => bcrypt('superadmin'),
-            'email_verified_at' => date('Y-m-d H:i')
-        ]);
+        $superadmin = User::firstOrCreate(
+            ['email' => 'superadmin@superadmin.com'],
+            [
+                'name'              => 'Superadmin',
+                'password'          => bcrypt('superadmin'),
+                'email_verified_at' => date('Y-m-d H:i')
+            ]
+        );
         $superadmin->assignRole('superadmin');
 
-        $admin = User::create([
-            'name'              => 'Admin',
-            'email'             => 'admin@admin.com',
-            'password'          => bcrypt('admin'),
-            'email_verified_at' => date('Y-m-d H:i')
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@admin.com'],
+            [
+                'name'              => 'Admin',
+                'password'          => bcrypt('admin'),
+                'email_verified_at' => date('Y-m-d H:i')
+            ]
+        );
         $admin->assignRole('admin');
 
-        $operator = User::create([
-            'name'              => 'Operator',
-            'email'             => 'operator@operator.com',
-            'password'          => bcrypt('operator'),
-            'email_verified_at' => date('Y-m-d H:i')
-        ]);
+        $operator = User::firstOrCreate(
+            ['email' => 'operator@operator.com'],
+            [
+                'name'              => 'Operator',
+                'password'          => bcrypt('operator'),
+                'email_verified_at' => date('Y-m-d H:i')
+            ]
+        );
         $operator->assignRole('operator');
     }
 }

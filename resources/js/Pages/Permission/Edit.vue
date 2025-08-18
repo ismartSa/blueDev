@@ -17,10 +17,14 @@ const props = defineProps({
 const emit = defineEmits(["close"]);
 
 const form = useForm({
+    id: null,  // إضافة حقل id
     name: "",
 });
 
 const update = () => {
+    // تعيين معرف الإذن في بيانات النموذج قبل الإرسال
+    form.id = props.permission?.id;
+
     form.put(route("permission.update", props.permission?.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -35,6 +39,7 @@ const update = () => {
 watchEffect(() => {
     if (props.show) {
         form.errors = {};
+        form.id = props.permission?.id;  // تعيين معرف الإذن عند فتح النموذج
         form.name = props.permission?.name;
     }
 });
@@ -52,6 +57,13 @@ watchEffect(() => {
                 <div class="my-6 space-y-4">
                     <div>
                         <InputLabel for="name" :value="lang().label.role" />
+
+                        <input
+                            type="hidden"
+                            class="mt-1 block w-full"
+                            :value="props.permission?.id"
+                            disabled
+                        />
                         <TextInput
                             id="name"
                             type="text"

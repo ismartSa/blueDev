@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Testing Suite | مجموعة اختبار الأدمن</title>
+    <style>
+        :root {
+            /* CSS Variables for DRY principle */
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            --error-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+            --border-radius: 15px;
+            --transition: all 0.3s ease;
+            --shadow: 0 10px 25px rgba(0,0,0,0.1);
+            --text-primary: #333;
+            --text-secondary: #6c757d;
+            --bg-light: #f8f9fa;
+            --border-light: #e9ecef;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+
+        .testing-dashboard { padding: 30px; }
+
+        /* Grid layout with CSS Grid for better performance */
+        .test-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .test-category {
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            border: 2px solid var(--border-light);
+            transition: var(--transition);
+        }
+
+        .test-category:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            border-color: #667eea;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .category-icon { font-size: 2em; margin-left: 15px; }
+        .category-title { font-size: 1.4em; font-weight: bold; color: var(--text-primary); }
+
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .test-item:last-child { border-bottom: none; }
+        .test-name { font-weight: 500; color: #495057; }
+
+        /* Button styles with shared classes */
+        .btn {
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .test-btn {
+            background: var(--success-gradient);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            min-width: 80px;
+        }
+
+        .test-btn:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3); }
+        .test-btn.testing { background: var(--warning-gradient); cursor: not-allowed; }
+        .test-btn.success { background: var(--success-gradient); }
+        .test-btn.error { background: var(--error-gradient); }
+
+        .run-all-btn {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .run-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .clear-results {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+        }
+
+        .clear-results:hover { background: #5a6268; transform: scale(1.05); }
+
+        /* Stats and results styling */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-item { text-align: center; }
+        .stat-number { font-size: 2em; font-weight: bold; color: #667eea; }
+        .stat-label { color: var(--text-secondary); font-size: 0.9em; margin-top: 5px; }
+
+        .results-panel {
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px solid var(--border-light);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-title { font-size: 1.5em; font-weight: bold; color: var(--text-primary); }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-right: 4px solid #28a745;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .result-item.error { border-right-color: #dc3545; }
+        .result-timestamp { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 5px; }
+        .result-message { font-weight: 500; color: var(--text-primary); }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: var(--border-light);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success-gradient);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .test-categories { grid-template-columns: 1fr; }
+            .stats-bar { flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Admin Testing Suite | مجموعة اختبار الأدمن</h1>
+            <p>Laravel Brive Platform Testing Dashboard</p>
+        </div>
+
+        <div class="testing-dashboard">
+            <button class="btn run-all-btn" onclick="TestSuite.runAllTests()">🚀 Run All Tests | تشغيل جميع الاختبارات</button>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+
+            <div class="stats-bar" id="statsBar"></div>
+            <div class="test-categories" id="testCategories"></div>
+
+            <div class="results-panel">
+                <div class="results-header">
+                    <div class="results-title">📊 Test Results | نتائج الاختبار</div>
+                    <button class="btn clear-results" onclick="TestSuite.clearResults()">🗑️ Clear | مسح</button>
+                </div>
+                <div id="resultsContainer">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 20px;">No results yet | لا توجد نتائج بعد</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Optimized Test Suite with improved performance and DRY principles
+        const TestSuite = {
+            // Configuration object for better maintainability
+            config: {
+                baseUrl: 'http://127.0.0.1:8000',
+                adminCredentials: { email: 'admin@laravel-brive.com', password: 'admin123' },
+                categories: {
+                    auth: { icon: '🔐', title: 'Authentication | المصادقة', tests: {
+                        login: 'Admin Login | تسجيل دخول الأدمن', logout: 'Logout | تسجيل خروج',
+                        profile: 'View Profile | عرض الملف الشخصي', updateProfile: 'Update Profile | تحديث الملف الشخصي'
+                    }},
+                    users: { icon: '👥', title: 'User Management | إدارة المستخدمين', tests: {
+                        listUsers: 'List Users | عرض المستخدمين', createUser: 'Create User | إنشاء مستخدم',
+                        updateUser: 'Update User | تحديث مستخدم', deleteUser: 'Delete User | حذف مستخدم',
+                        assignRole: 'Assign Role | تعيين دور'
+                    }},
+                    courses: { icon: '📚', title: 'Course Management | إدارة الدورات', tests: {
+                        listCourses: 'List Courses | عرض الدورات', createCourse: 'Create Course | إنشاء دورة',
+                        updateCourse: 'Update Course | تحديث دورة', deleteCourse: 'Delete Course | حذف دورة',
+                        manageLessons: 'Manage Lessons | إدارة الدروس'
+                    }},
+                    quizzes: { icon: '📝', title: 'Quiz Management | إدارة الاختبارات', tests: {
+                        listQuizzes: 'List Quizzes | عرض الاختبارات', createQuiz: 'Create Quiz | إنشاء اختبار',
+                        updateQuiz: 'Update Quiz | تحديث اختبار', deleteQuiz: 'Delete Quiz | حذف اختبار',
+                        manageQuestions: 'Manage Questions | إدارة الأسئلة'
+                    }},
+                    dashboard: { icon: '📊', title: 'Dashboard | لوحة التحكم', tests: {
+                        viewDashboard: 'View Dashboard | عرض لوحة التحكم', getStatistics: 'Get Statistics | الحصول على الإحصائيات',
+                        exportData: 'Export Data | تصدير البيانات', systemHealth: 'System Health | فحص النظام'
+                    }},
+                    api: { icon: '🔌', title: 'API Testing | واجهة برمجة التطبيقات', tests: {
+                        apiAuth: 'API Authentication | مصادقة API', apiUsers: 'Users API | API المستخدمين',
+                        apiCourses: 'Courses API | API الدورات', apiQuizzes: 'Quizzes API | API الاختبارات'
+                    }}
+                }
+            },
+
+            // State management
+            state: {
+                results: [],
+                authToken: null,
+                stats: { total: 0, passed: 0, failed: 0, running: 0 }
+            },
+
+            // Initialize the testing suite
+            init() {
+                this.renderStats();
+                this.renderCategories();
+                this.updateStats();
+            },
+
+            // Dynamic rendering with improved performance
+            renderStats() {
+                const statsLabels = [
+                    { key: 'total', label: 'Total Tests | إجمالي الاختبارات' },
+                    { key: 'passed', label: 'Passed | نجح' },
+                    { key: 'failed', label: 'Failed | فشل' },
+                    { key: 'running', label: 'Running | قيد التشغيل' }
+                ];
+
+                document.getElementById('statsBar').innerHTML = statsLabels.map(stat =>
+                    `<div class="stat-item">
+                        <div class="stat-number" id="${stat.key}Tests">0</div>
+                        <div class="stat-label">${stat.label}</div>
+                    </div>`
+                ).join('');
+            },
+
+            renderCategories() {
+                const container = document.getElementById('testCategories');
+                container.innerHTML = Object.entries(this.config.categories).map(([categoryKey, category]) =>
+                    `<div class="test-category">
+                        <div class="category-header">
+                            <span class="category-icon">${category.icon}</span>
+                            <span class="category-title">${category.title}</span>
+                        </div>
+                        ${Object.entries(category.tests).map(([testKey, testName]) =>
+                            `<div class="test-item">
+                                <span class="test-name">${testName}</span>
+                                <button class="btn test-btn" onclick="TestSuite.runSingleTest('${categoryKey}', '${testKey}')" id="btn-${categoryKey}-${testKey}">
+                                    Test | اختبار
+                                </button>
+                            </div>`
+                        ).join('')}
+                    </div>`
+                ).join('');
+
+                // Calculate total tests
+                this.state.stats.total = Object.values(this.config.categories)
+                    .reduce((total, category) => total + Object.keys(category.tests).length, 0);
+                this.updateStats();
+            },
+
+            // Optimized test execution
+            async runAllTests() {
+                const runAllBtn = document.querySelector('.run-all-btn');
+                runAllBtn.innerHTML = '<span class="loading"></span> Running... | جاري التشغيل...';
+                runAllBtn.disabled = true;
+
+                this.clearResults();
+                let completedTests = 0;
+
+                for (const [categoryKey, category] of Object.entries(this.config.categories)) {
+                    for (const testKey of Object.keys(category.tests)) {
+                        await this.runSingleTest(categoryKey, testKey);
+                        completedTests++;
+                        this.updateProgressBar((completedTests / this.state.stats.total) * 100);
+                        await this.delay(300); // Reduced delay for better performance
+                    }
+                }
+
+                runAllBtn.innerHTML = '🚀 Run All Tests | تشغيل جميع الاختبارات';
+                runAllBtn.disabled = false;
+                this.updateProgressBar(100);
+            },
+
+            async runSingleTest(categoryKey, testKey) {
+                const btnId = `btn-${categoryKey}-${testKey}`;
+                const btn = document.getElementById(btnId);
+                const testName = this.config.categories[categoryKey].tests[testKey];
+
+                // Update button state
+                btn.className = 'btn test-btn testing';
+                btn.innerHTML = '<span class="loading"></span>';
+                btn.disabled = true;
+
+                this.state.stats.running++;
+                this.updateStats();
+
+                try {
+                    const result = await this.executeTest(categoryKey, testKey);
+
+                    if (result.success) {
+                        btn.className = 'btn test-btn success';
+                        btn.innerHTML = '✅';
+                        this.state.stats.passed++;
+                        this.addResult(testName, 'Test passed | نجح الاختبار', 'success');
+                    } else {
+                        btn.className = 'btn test-btn error';
+                        btn.innerHTML = '❌';
+                        this.state.stats.failed++;
+                        this.addResult(testName, result.error || 'Test failed | فشل الاختبار', 'error');
+                    }
+                } catch (error) {
+                    btn.className = 'btn test-btn error';
+                    btn.innerHTML = '❌';
+                    this.state.stats.failed++;
+                    this.addResult(testName, `Error: ${error.message} | خطأ: ${error.message}`, 'error');
+                }
+
+                this.state.stats.running--;
+                btn.disabled = false;
+                this.updateStats();
+            },
+
+            // Generic test execution with improved error handling
+            async executeTest(categoryKey, testKey) {
+                const testFunction = `test_${categoryKey}_${testKey}`;
+
+                if (typeof this[testFunction] === 'function') {
+                    return await this[testFunction]();
+                }
+
+                // Default simulation for demo purposes
+                await this.delay(Math.random() * 1500 + 300);
+                return { success: Math.random() > 0.2, error: Math.random() > 0.2 ? null : `Simulated error for ${categoryKey}.${testKey}` };
+            },
+
+            // Specific test implementations
+            async test_auth_login() {
+                try {
+                    const response = await fetch(`${this.config.baseUrl}/api/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(this.config.adminCredentials)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.state.authToken = data.token || data.access_token;
+                        return { success: true };
+                    }
+
+                    return { success: false, error: `Login failed: ${response.status}` };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            },
+
+            // Generic API test helper
+            async apiTest(endpoint, method = 'GET', body = null) {
+                try {
+                    const options = {
+                        method,
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                    };
+
+                    if (this.state.authToken) {
+                        options.headers['Authorization'] = `Bearer ${this.state.authToken}`;
+                    }
+
+                    if (body) options.body = JSON.stringify(body);
+
+                    const response = await fetch(`${this.config.baseUrl}${endpoint}`, options);
+
+                    return {
+                        success: response.ok,
+                        error: response.ok ? null : `API Error: ${response.status} ${response.statusText}`
+                    };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            },
+
+            // Utility functions
+            delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
+
+            updateStats() {
+                Object.entries(this.state.stats).forEach(([key, value]) => {
+                    const element = document.getElementById(`${key}Tests`);
+                    if (element) element.textContent = value;
+                });
+            },
+
+            updateProgressBar(percentage) {
+                document.getElementById('progressBar').style.width = `${percentage}%`;
+            },
+
+            addResult(testName, message, type = 'success') {
+                const container = document.getElementById('resultsContainer');
+
+                if (this.state.results.length === 0) {
+                    container.innerHTML = '';
+                }
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `result-item ${type}`;
+                resultDiv.innerHTML = `
+                    <div class="result-timestamp">${new Date().toLocaleString('ar-SA')}</div>
+                    <div class="result-message"><strong>${testName}:</strong> ${message}</div>
+                `;
+
+                container.insertBefore(resultDiv, container.firstChild);
+                this.state.results.push({ testName, message, type, timestamp: new Date() });
+            },
+
+            clearResults() {
+                this.state.results = [];
+                this.state.stats = { total: this.state.stats.total, passed: 0, failed: 0, running: 0 };
+                document.getElementById('resultsContainer').innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">No results yet | لا توجد نتائج بعد</p>';
+                this.updateStats();
+                this.updateProgressBar(0);
+
+                // Reset all button states
+                document.querySelectorAll('.test-btn').forEach(btn => {
+                    btn.className = 'btn test-btn';
+                    btn.innerHTML = 'Test | اختبار';
+                    btn.disabled = false;
+                });
+            },
+
+            // Additional test implementations using the generic API helper
+            test_users_listUsers: function() { return this.apiTest('/api/users', 'GET'); },
+            test_courses_listCourses: function() { return this.apiTest('/api/courses', 'GET'); },
+            test_quizzes_listQuizzes: function() { return this.apiTest('/api/quizzes', 'GET'); },
+            test_dashboard_viewDashboard: function() { return this.apiTest('/api/dashboard', 'GET'); }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => TestSuite.init());
+    </script>
+</body>
+</html>

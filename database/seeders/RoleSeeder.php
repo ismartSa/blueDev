@@ -15,7 +15,7 @@ class RoleSeeder extends Seeder
      */
     public function run()
     {
-        $superadmin = Role::create([
+        $superadmin = Role::firstOrCreate([
             'name'          => 'superadmin'
         ]);
         $superadmin->givePermissionTo([
@@ -23,6 +23,11 @@ class RoleSeeder extends Seeder
             'update user',
             'read user',
             'create user',
+            'manage courses',
+            'delete course',
+            'update course',
+            'read course',
+            'create course',
             'delete role',
             'update role',
             'read role',
@@ -30,9 +35,10 @@ class RoleSeeder extends Seeder
             'delete permission',
             'update permission',
             'read permission',
-            'create permission'
+            'create permission',
+            'manage database'
         ]);
-        $admin = Role::create([
+        $admin = Role::firstOrCreate([
             'name'          => 'admin'
         ]);
         $admin->givePermissionTo([
@@ -42,16 +48,39 @@ class RoleSeeder extends Seeder
             'create user',
             'read role',
             'read permission',
+            'manage database'
         ]);
-        $operator = Role::create([
+        $operator = Role::firstOrCreate([
             'name'          => 'operator'
         ]);
-        
+
         $operator->givePermissionTo([
             'read user',
             'create user',
             'read role',
             'read permission',
         ]);
+        $instructor = Role::firstOrCreate([
+            'name' => 'instructor'
+        ]);
+        
+        $instructor->givePermissionTo([
+            'create course',
+            'update course',
+            'read course',
+            'read quiz',
+            'create quiz',
+            'view quiz reports'
+        ]);
+
+        // Student role
+        $student = Role::firstOrCreate([
+            'name' => 'student'
+        ]);
+        $student->givePermissionTo([
+            'read course',
+            'read quiz'
+        ]);
+        
     }
 }

@@ -24,6 +24,11 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
+            CategoriesTableSeeder::class,
+            CourseSeeder::class,
+            QuizSeeder::class,
+            LectureSeeder::class,
+            QuestionSeeder::class,
         ]);
     }
 }

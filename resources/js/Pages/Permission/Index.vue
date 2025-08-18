@@ -28,7 +28,7 @@ const props = defineProps({
     title: String,
     filters: Object,
     permissions: Object,
-    breadcrumbs: Object,
+    breadcrumbs: Array,
     perPage: Number,
 });
 const data = reactive({
@@ -293,9 +293,7 @@ const select = () => {
                         </tbody>
                     </table>
                 </div>
-                <div
-                    class="flex justify-between items-center p-2 border-t border-slate-200 dark:border-slate-700"
-                >
+                <div class="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">
                     <Pagination
                         :links="props.permissions"
                         :filters="data.params"

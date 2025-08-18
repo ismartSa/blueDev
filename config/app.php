@@ -41,7 +41,13 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => env('APP_DEBUG', false),
+    /*
+    |--------------------------------------------------------------------------
+    | Error Reporting
+    |--------------------------------------------------------------------------
+    */
+    'error_reporting' => E_ALL & ~E_DEPRECATED,
 
     /*
     |--------------------------------------------------------------------------
@@ -191,9 +197,11 @@ return [
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
+        App\Providers\SettingsServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\TelescopeServiceProvider::class,
 
     ],
 
