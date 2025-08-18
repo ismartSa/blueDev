@@ -78,6 +78,20 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        'backup_pgsql' => [
+            'driver' => 'pgsql',
+            'host' => env('BACKUP_DB_HOST', '127.0.0.1'),
+            'port' => env('BACKUP_DB_PORT', '5432'),
+            'database' => env('BACKUP_DB_DATABASE', 'siteebluedb'),
+            'username' => env('BACKUP_DB_USERNAME', 'siteebluedb'),
+            'password' => env('BACKUP_DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DATABASE_URL'),

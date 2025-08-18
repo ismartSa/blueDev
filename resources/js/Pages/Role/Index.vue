@@ -15,7 +15,7 @@ import {
     ChevronUpDownIcon,
     PencilIcon,
     TrashIcon,
-} from "@heroicons/vue/24/solid";
+} from "@heroicons/vue/24/outline";
 import Create from "@/Pages/Role/Create.vue";
 import Edit from "@/Pages/Role/Edit.vue";
 import Delete from "@/Pages/Role/Delete.vue";
@@ -30,7 +30,7 @@ const props = defineProps({
     filters: Object,
     roles: Object,
     permissions: Object,
-    breadcrumbs: Object,
+    breadcrumbs: Array,
     perPage: Number,
 });
 const data = reactive({
@@ -295,47 +295,33 @@ const select = () => {
                                 <td class="whitespace-nowrap py-4 px-2 sm:py-3">
                                     {{ role.updated_at }}
                                 </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    <div
-                                        class="flex justify-center items-center"
-                                    >
-                                        <div class="rounded-md overflow-hidden">
-                                            <InfoButton
-                                                v-show="can(['update role'])"
-                                                type="button"
-                                                @click="
-                                                    (data.editOpen = true),
-                                                        (data.role = role)
-                                                "
-                                                class="px-2 py-1.5 rounded-none"
-                                                v-tooltip="lang().tooltip.edit"
-                                            >
-                                                <PencilIcon class="w-4 h-4" />
-                                            </InfoButton>
-                                            <DangerButton
-                                                v-show="can(['delete role'])"
-                                                type="button"
-                                                @click="
-                                                    (data.deleteOpen = true),
-                                                        (data.role = role)
-                                                "
-                                                class="px-2 py-1.5 rounded-none"
-                                                v-tooltip="
-                                                    lang().tooltip.delete
-                                                "
-                                            >
-                                                <TrashIcon class="w-4 h-4" />
-                                            </DangerButton>
-                                        </div>
+                                <td class="whitespace-nowrap py-4 px-3">
+                                    <div class="flex justify-center items-center gap-1">
+                                        <InfoButton
+                                            v-show="can(['update role'])"
+                                            type="button"
+                                            @click="(data.editOpen = true), (data.role = role)"
+                                            class="px-3 py-2 rounded-lg"
+                                            v-tooltip="lang().tooltip.edit"
+                                        >
+                                            <PencilIcon class="w-4 h-4" />
+                                        </InfoButton>
+                                        <DangerButton
+                                            v-show="can(['delete role'])"
+                                            type="button"
+                                            @click="(data.deleteOpen = true), (data.role = role)"
+                                            class="px-3 py-2 rounded-lg"
+                                            v-tooltip="lang().tooltip.delete"
+                                        >
+                                            <TrashIcon class="w-4 h-4" />
+                                        </DangerButton>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div
-                    class="flex justify-between items-center p-2 border-t border-slate-200 dark:border-slate-700"
-                >
+                <div class="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">
                     <Pagination :links="props.roles" :filters="data.params" />
                 </div>
             </div>

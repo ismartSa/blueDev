@@ -1,0 +1,273 @@
+<svg width="1200" height="1600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2563eb; }
+      .section-title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #1f2937; }
+      .route-text { font-family: Arial, sans-serif; font-size: 12px; fill: #374151; }
+      .method-get { fill: #10b981; }
+      .method-post { fill: #f59e0b; }
+      .method-put { fill: #3b82f6; }
+      .method-delete { fill: #ef4444; }
+      .route-box { fill: #f9fafb; stroke: #d1d5db; stroke-width: 1; rx: 4; }
+      .section-box { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; rx: 8; }
+      .connector { stroke: #6b7280; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" class="title">Laravel-Brive Route Flowchart</text>
+  
+  <!-- Main Application Routes -->
+  <rect x="50" y="60" width="300" height="200" class="section-box"/>
+  <text x="200" y="85" text-anchor="middle" class="section-title">Main Application</text>
+  
+  <rect x="70" y="100" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="112" r="4" class="method-get"/>
+  <text x="95" y="117" class="route-text">GET / → Welcome Page</text>
+  
+  <rect x="70" y="130" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="142" r="4" class="method-get"/>
+  <text x="95" y="147" class="route-text">GET /setLang/{locale} → Language Switch</text>
+  
+  <rect x="70" y="160" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="172" r="4" class="method-get"/>
+  <text x="95" y="177" class="route-text">GET /api/user → User API</text>
+  
+  <rect x="70" y="190" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="202" r="4" class="method-get"/>
+  <text x="95" y="207" class="route-text">GET /sanctum/csrf-cookie → CSRF</text>
+  
+  <!-- Authentication Routes -->
+  <rect x="400" y="60" width="350" height="280" class="section-box"/>
+  <text x="575" y="85" text-anchor="middle" class="section-title">Authentication & Security</text>
+  
+  <rect x="420" y="100" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="112" r="4" class="method-get"/>
+  <text x="445" y="117" class="route-text">GET /login → Login Form</text>
+  
+  <rect x="420" y="130" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="142" r="4" class="method-post"/>
+  <text x="445" y="147" class="route-text">POST /login → Authenticate User</text>
+  
+  <rect x="420" y="160" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="172" r="4" class="method-get"/>
+  <text x="445" y="177" class="route-text">GET /register → Registration Form</text>
+  
+  <rect x="420" y="190" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="202" r="4" class="method-post"/>
+  <text x="445" y="207" class="route-text">POST /register → Create Account</text>
+  
+  <rect x="420" y="220" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="232" r="4" class="method-post"/>
+  <text x="445" y="237" class="route-text">POST /logout → Sign Out</text>
+  
+  <rect x="420" y="250" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="262" r="4" class="method-get"/>
+  <text x="445" y="267" class="route-text">GET /forgot-password → Password Reset</text>
+  
+  <rect x="420" y="280" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="292" r="4" class="method-get"/>
+  <text x="445" y="297" class="route-text">GET /auth/google → Google OAuth</text>
+  
+  <rect x="420" y="310" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="322" r="4" class="method-get"/>
+  <text x="445" y="327" class="route-text">GET /verify-email → Email Verification</text>
+  
+  <!-- Course Management -->
+  <rect x="800" y="60" width="350" height="320" class="section-box"/>
+  <text x="975" y="85" text-anchor="middle" class="section-title">Course Management</text>
+  
+  <rect x="820" y="100" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="112" r="4" class="method-get"/>
+  <text x="845" y="117" class="route-text">GET /courses → Course List</text>
+  
+  <rect x="820" y="130" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="142" r="4" class="method-post"/>
+  <text x="845" y="147" class="route-text">POST /courses → Create Course</text>
+  
+  <rect x="820" y="160" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="172" r="4" class="method-get"/>
+  <text x="845" y="177" class="route-text">GET /courses/create → Course Form</text>
+  
+  <rect x="820" y="190" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="202" r="4" class="method-get"/>
+  <text x="845" y="207" class="route-text">GET /courses/explore → Browse Courses</text>
+  
+  <rect x="820" y="220" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="232" r="4" class="method-get"/>
+  <text x="845" y="237" class="route-text">GET /courses/{id}/details → Course Info</text>
+  
+  <rect x="820" y="250" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="262" r="4" class="method-post"/>
+  <text x="845" y="267" class="route-text">POST /courses/{id}/enroll → Enroll Student</text>
+  
+  <rect x="820" y="280" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="292" r="4" class="method-get"/>
+  <text x="845" y="297" class="route-text">GET /courses/{id}/learn → Learning Interface</text>
+  
+  <rect x="820" y="310" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="322" r="4" class="method-post"/>
+  <text x="845" y="327" class="route-text">POST /courses/lectures/mark-completed</text>
+  
+  <rect x="820" y="340" width="310" height="25" class="route-box"/>
+  <circle cx="835" cy="352" r="4" class="method-post"/>
+  <text x="845" y="357" class="route-text">POST /courses/destroy-bulk → Bulk Delete</text>
+  
+  <!-- Admin Panel -->
+  <rect x="50" y="400" width="350" height="280" class="section-box"/>
+  <text x="225" y="425" text-anchor="middle" class="section-title">Admin Panel</text>
+  
+  <rect x="70" y="440" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="452" r="4" class="method-get"/>
+  <text x="95" y="457" class="route-text">GET /admin/settings → Settings Dashboard</text>
+  
+  <rect x="70" y="470" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="482" r="4" class="method-post"/>
+  <text x="95" y="487" class="route-text">POST /admin/settings/update → Save Settings</text>
+  
+  <rect x="70" y="500" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="512" r="4" class="method-post"/>
+  <text x="95" y="517" class="route-text">POST /admin/settings/reset → Reset Settings</text>
+  
+  <rect x="70" y="530" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="542" r="4" class="method-get"/>
+  <text x="95" y="547" class="route-text">GET /admin/settings/get/{key} → Get Setting</text>
+  
+  <rect x="70" y="560" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="572" r="4" class="method-post"/>
+  <text x="95" y="577" class="route-text">POST /admin/settings/upload/{key} → Upload</text>
+  
+  <rect x="70" y="590" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="602" r="4" class="method-get"/>
+  <text x="95" y="607" class="route-text">GET /admin/settings/database-status</text>
+  
+  <rect x="70" y="620" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="632" r="4" class="method-get"/>
+  <text x="95" y="637" class="route-text">GET /admin/quizzes → Quiz Management</text>
+  
+  <rect x="70" y="650" width="310" height="25" class="route-box"/>
+  <circle cx="85" cy="662" r="4" class="method-post"/>
+  <text x="95" y="667" class="route-text">POST /admin/quizzes → Create Quiz</text>
+  
+  <!-- Quiz System -->
+  <rect x="450" y="400" width="350" height="200" class="section-box"/>
+  <text x="625" y="425" text-anchor="middle" class="section-title">Quiz System</text>
+  
+  <rect x="470" y="440" width="310" height="25" class="route-box"/>
+  <circle cx="485" cy="452" r="4" class="method-get"/>
+  <text x="495" y="457" class="route-text">GET /quiz → Quiz List</text>
+  
+  <rect x="470" y="470" width="310" height="25" class="route-box"/>
+  <circle cx="485" cy="482" r="4" class="method-post"/>
+  <text x="495" y="487" class="route-text">POST /quiz → Create Quiz</text>
+  
+  <rect x="470" y="500" width="310" height="25" class="route-box"/>
+  <circle cx="485" cy="512" r="4" class="method-get"/>
+  <text x="495" y="517" class="route-text">GET /quiz/{id}/take → Take Quiz</text>
+  
+  <rect x="470" y="530" width="310" height="25" class="route-box"/>
+  <circle cx="485" cy="542" r="4" class="method-post"/>
+  <text x="495" y="547" class="route-text">POST /quiz/{id}/submit → Submit Quiz</text>
+  
+  <rect x="470" y="560" width="310" height="25" class="route-box"/>
+  <circle cx="485" cy="572" r="4" class="method-get"/>
+  <text x="495" y="577" class="route-text">GET /admin/quizzes/reports → Quiz Reports</text>
+  
+  <!-- User Management -->
+  <rect x="850" y="400" width="300" height="240" class="section-box"/>
+  <text x="1000" y="425" text-anchor="middle" class="section-title">User Management</text>
+  
+  <rect x="870" y="440" width="260" height="25" class="route-box"/>
+  <circle cx="885" cy="452" r="4" class="method-get"/>
+  <text x="895" y="457" class="route-text">GET /user → User List</text>
+  
+  <rect x="870" y="470" width="260" height="25" class="route-box"/>
+  <circle cx="885" cy="482" r="4" class="method-post"/>
+  <text x="895" y="487" class="route-text">POST /user → Create User</text>
+  
+  <rect x="870" y="500" width="260" height="25" class="route-box"/>
+  <circle cx="885" cy="512" r="4" class="method-put"/>
+  <text x="895" y="517" class="route-text">PUT /user/{id} → Update User</text>
+  
+  <rect x="870" y="530" width="260" height="25" class="route-box"/>
+  <circle cx="885" cy="542" r="4" class="method-delete"/>
+  <text x="895" y="547" class="route-text">DELETE /user/{id} → Delete User</text>
+  
+  <rect x="870" y="560" width="260" height="25" class="route-box"/>
+  <circle cx="885" cy="572" r="4" class="method-post"/>
+  <text x="895" y="577" class="route-text">POST /user/login-as → Login As</text>
+  
+  <rect x="870" y="590" width="260" height="25" class="route-box"/>
+  <circle cx="885" cy="602" r="4" class="method-post"/>
+  <text x="895" y="607" class="route-text">POST /user/destroy-bulk</text>
+  
+  <!-- Categories & Roles -->
+  <rect x="50" y="720" width="300" height="200" class="section-box"/>
+  <text x="200" y="745" text-anchor="middle" class="section-title">Categories & Roles</text>
+  
+  <rect x="70" y="760" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="772" r="4" class="method-get"/>
+  <text x="95" y="777" class="route-text">GET /category → Categories</text>
+  
+  <rect x="70" y="790" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="802" r="4" class="method-post"/>
+  <text x="95" y="807" class="route-text">POST /category → Create Category</text>
+  
+  <rect x="70" y="820" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="832" r="4" class="method-get"/>
+  <text x="95" y="837" class="route-text">GET /role → Roles</text>
+  
+  <rect x="70" y="850" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="862" r="4" class="method-post"/>
+  <text x="95" y="867" class="route-text">POST /role → Create Role</text>
+  
+  <rect x="70" y="880" width="260" height="25" class="route-box"/>
+  <circle cx="85" cy="892" r="4" class="method-delete"/>
+  <text x="95" y="897" class="route-text">DELETE /role/{id} → Delete Role</text>
+  
+  <!-- Debug & Development -->
+  <rect x="400" y="720" width="350" height="160" class="section-box"/>
+  <text x="575" y="745" text-anchor="middle" class="section-title">Debug & Development</text>
+  
+  <rect x="420" y="760" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="772" r="4" class="method-get"/>
+  <text x="445" y="777" class="route-text">GET /_debugbar/* → Debug Bar Assets</text>
+  
+  <rect x="420" y="790" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="802" r="4" class="method-get"/>
+  <text x="445" y="807" class="route-text">GET /_ignition/* → Error Handling</text>
+  
+  <rect x="420" y="820" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="832" r="4" class="method-post"/>
+  <text x="445" y="837" class="route-text">POST /_debugbar/queries/explain</text>
+  
+  <rect x="420" y="850" width="310" height="25" class="route-box"/>
+  <circle cx="435" cy="862" r="4" class="method-delete"/>
+  <text x="445" y="867" class="route-text">DELETE /_debugbar/cache/{key}</text>
+  
+  <!-- Legend -->
+  <rect x="800" y="720" width="350" height="160" class="section-box"/>
+  <text x="975" y="745" text-anchor="middle" class="section-title">HTTP Methods Legend</text>
+  
+  <circle cx="830" cy="770" r="6" class="method-get"/>
+  <text x="845" y="775" class="route-text">GET - Retrieve data</text>
+  
+  <circle cx="830" cy="800" r="6" class="method-post"/>
+  <text x="845" y="805" class="route-text">POST - Create/Submit data</text>
+  
+  <circle cx="830" cy="830" r="6" class="method-put"/>
+  <text x="845" y="835" class="route-text">PUT/PATCH - Update data</text>
+  
+  <circle cx="830" cy="860" r="6" class="method-delete"/>
+  <text x="845" y="865" class="route-text">DELETE - Remove data</text>
+  
+  <!-- Connection Lines -->
+  <line x1="200" y1="260" x2="200" y2="400" class="connector"/>
+  <line x1="575" y1="340" x2="575" y2="400" class="connector"/>
+  <line x1="975" y1="380" x2="975" y2="400" class="connector"/>
+  
+  <!-- Route Count -->
+  <text x="600" y="950" text-anchor="middle" class="section-title">Total Routes: 130+</text>
+  <text x="600" y="980" text-anchor="middle" class="route-text">Laravel-Brive Application Route Structure</text>
+  
+</svg>

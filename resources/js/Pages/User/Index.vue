@@ -14,23 +14,63 @@ import Pagination from "@/Components/Pagination.vue";
 import {
     CheckBadgeIcon,
     ChevronUpDownIcon,
+    LanguageIcon,
     PencilIcon,
     TrashIcon,
+    PowerIcon,
+    KeyIcon,
+    UserIcon,
 } from "@heroicons/vue/24/solid";
 import Create from "@/Pages/User/Create.vue";
 import Edit from "@/Pages/User/Edit.vue";
 import Delete from "@/Pages/User/Delete.vue";
 import DeleteBulk from "@/Pages/User/DeleteBulk.vue";
 import Checkbox from "@/Components/Checkbox.vue";
+// WarningButton component doesn't exist, using DangerButton instead
 import { usePage } from "@inertiajs/vue3";
+import { computed } from "vue";
 
 const { _, debounce, pickBy } = pkg;
+const page = usePage();
+
+// Permission check function
+const can = (permissions) => {
+    const userPermissions = page.props.auth?.can || {};
+    const permissionArray = Array.isArray(permissions) ? permissions : [permissions];
+    return permissionArray.some(permission => userPermissions[permission]);
+};
+
+// Translation function
+const translations = computed(() => ({
+    label: {
+        name: 'Name',
+        email: 'Email',
+        created: 'Created',
+        updated: 'Updated',
+        role: 'Role'
+    },
+    tooltip: {
+        edit: 'Edit',
+        delete: 'Delete',
+        delete_selected: 'Delete Selected',
+        login_as_user: 'Login as User',
+        loginAs: 'Login as User'
+    },
+    button: {
+        add: 'Add User'
+    },
+    placeholder: {
+        search: 'Search users...'
+    }
+}));
+
+const lang = () => translations.value;
 const props = defineProps({
     title: String,
     filters: Object,
     users: Object,
     roles: Object,
-    breadcrumbs: Object,
+    breadcrumbs: Array,
     perPage: Number,
 });
 const data = reactive({
@@ -83,6 +123,74 @@ const select = () => {
         data.multipleSelect = false;
     }
 };
+const loginAsUser = (user) => {
+    // Confirm action and warn about local environment restriction
+    if (confirm(`Login as ${user.name}?\n\nNote: This feature only works in local environment for security reasons.`)) {
+        router.post(route('user.loginAs'), {
+            id: user.id
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                window.location.reload();
+            },
+            onError: (errors) => {
+                console.error('Login as user failed:', errors);
+                alert('Login failed. This feature is only available in local environment.');
+            }
+        });
+    }
+};
+
+const toggleUserStatus = (user) => {
+    router.patch(route('user.toggle-status', user.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Update local data to reflect the change immediately
+            const userIndex = props.users.data.findIndex(u => u.id === user.id);
+            if (userIndex !== -1) {
+                props.users.data[userIndex].active = !props.users.data[userIndex].active;
+            }
+        },
+        onError: (errors) => {
+            console.error('Toggle user status failed:', errors);
+        }
+    });
+};
+
+const resetPassword = (user) => {
+    if (confirm(`Are you sure you want to reset password for ${user.name}?`)) {
+        router.post(route('user.reset-password', user.id), {}, {
+            onSuccess: () => {
+                alert('Password reset successfully. New password sent to user email.');
+            },
+            onError: (errors) => {
+                console.error('Error resetting password:', errors);
+            }
+        });
+    }
+};
+
+// Dynamic components for table optimization
+const getStatusBadge = (isActive) => ({
+    class: `px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+        isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+    }`,
+    text: isActive ? 'Active' : 'Inactive'
+});
+
+// Sortable column configuration
+const sortableColumns = [
+    { key: 'name', label: 'name' },
+    { key: 'email', label: 'email' },
+    { key: 'created_at', label: 'created' },
+    { key: 'updated_at', label: 'updated' }
+];
+
+// Table cell classes for consistency
+const cellClasses = 'whitespace-nowrap py-4 px-2 sm:py-3';
+const centerCellClasses = `${cellClasses} text-center`;
+const actionCellClasses = 'whitespace-nowrap py-4 px-3';
+
 </script>
 
 <template>
@@ -160,77 +268,36 @@ const select = () => {
                     />
                 </div>
                 <div class="overflow-x-auto scrollbar-table">
-                    <table class="w-full">
-                        <thead
-                            class="uppercase text-sm border-t border-slate-200 dark:border-slate-700"
-                        >
+                    <table class="w-full divide-y divide-slate-200 dark:divide-slate-700">
+                        <thead class="uppercase text-sm border-t border-slate-200 dark:border-slate-700">
                             <tr class="dark:bg-slate-900/50 text-left">
                                 <th class="px-2 py-4 text-center">
-                                    <Checkbox
-                                        v-model:checked="data.multipleSelect"
-                                        @change="selectAll"
-                                    />
+                                    <Checkbox v-model:checked="data.multipleSelect" @change="selectAll" />
                                 </th>
                                 <th class="px-2 py-4 text-center">#</th>
                                 <th
+                                    v-for="column in sortableColumns"
+                                    :key="column.key"
                                     class="px-2 py-4 cursor-pointer"
-                                    v-on:click="order('name')"
+                                    @click="order(column.key)"
                                 >
-                                    <div
-                                        class="flex justify-between items-center"
-                                    >
-                                        <span>{{ lang().label.name }}</span>
+                                    <div class="flex justify-between items-center">
+                                        <span>{{ lang().label[column.label] }}</span>
                                         <ChevronUpDownIcon class="w-4 h-4" />
                                     </div>
                                 </th>
-                                <th
-                                    class="px-2 py-4 cursor-pointer"
-                                    v-on:click="order('email')"
-                                >
-                                    <div
-                                        class="flex justify-between items-center"
-                                    >
-                                        <span>{{ lang().label.email }}</span>
-                                        <ChevronUpDownIcon class="w-4 h-4" />
-                                    </div>
-                                </th>
-                                <th class="px-2 py-4">
-                                    {{ lang().label.role }}
-                                </th>
-                                <th
-                                    class="px-2 py-4 cursor-pointer"
-                                    v-on:click="order('created_at')"
-                                >
-                                    <div
-                                        class="flex justify-between items-center"
-                                    >
-                                        <span>{{ lang().label.created }}</span>
-                                        <ChevronUpDownIcon class="w-4 h-4" />
-                                    </div>
-                                </th>
-                                <th
-                                    class="px-2 py-4 cursor-pointer"
-                                    v-on:click="order('updated_at')"
-                                >
-                                    <div
-                                        class="flex justify-between items-center"
-                                    >
-                                        <span>{{ lang().label.updated }}</span>
-                                        <ChevronUpDownIcon class="w-4 h-4" />
-                                    </div>
-                                </th>
+                                <th class="px-2 py-4">{{ lang().label.role }}</th>
+                                <th class="px-2 py-4">Status</th>
                                 <th class="px-2 py-4 sr-only">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr
                                 v-for="(user, index) in users.data"
-                                :key="index"
+                                :key="user.id"
                                 class="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-200/30 hover:dark:bg-slate-900/20"
                             >
-                                <td
-                                    class="whitespace-nowrap py-4 px-2 sm:py-3 text-center"
-                                >
+                                <td :class="centerCellClasses">
                                     <input
                                         class="rounded dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-primary dark:text-primary shadow-sm focus:ring-primary/80 dark:focus:ring-primary dark:focus:ring-offset-slate-800 dark:checked:bg-primary dark:checked:border-primary"
                                         type="checkbox"
@@ -239,79 +306,76 @@ const select = () => {
                                         v-model="data.selectedId"
                                     />
                                 </td>
-                                <td
-                                    class="whitespace-nowrap py-4 px-2 sm:py-3 text-center"
-                                >
-                                    {{ ++index }}
-                                </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    <span
-                                        class="flex justify-start items-center"
-                                    >
+                                <td :class="centerCellClasses">{{ index + 1 }}</td>
+                                <td :class="cellClasses">
+                                    <div class="flex justify-start items-center">
                                         {{ user.name }}
                                         <CheckBadgeIcon
-                                            class="ml-[2px] w-4 h-4 text-primary dark:text-white"
                                             v-show="user.email_verified_at"
+                                            class="ml-1 w-4 h-4 text-primary dark:text-white"
                                         />
+                                    </div>
+                                </td>
+                                <td :class="cellClasses">{{ user.email }}</td>
+                                <td :class="cellClasses">{{ user.created_at }}</td>
+                                <td :class="cellClasses">{{ user.updated_at }}</td>
+                                <td :class="cellClasses">
+                                    {{ user.roles.length === 0 ? 'not selected' : user.roles[0].name }}
+                                </td>
+                                <td :class="cellClasses">
+                                    <span :class="getStatusBadge(user.active).class">
+                                        {{ getStatusBadge(user.active).text }}
                                     </span>
                                 </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    {{ user.email }}
-                                </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    {{
-                                        user.roles.length == 0
-                                            ? "not selected"
-                                            : user.roles[0].name
-                                    }}
-                                </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    {{ user.created_at }}
-                                </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    {{ user.updated_at }}
-                                </td>
-                                <td class="whitespace-nowrap py-4 px-2 sm:py-3">
-                                    <div
-                                        class="flex justify-center items-center"
-                                    >
-                                        <div class="rounded-md overflow-hidden">
-                                            <InfoButton
-                                                v-show="can(['update user'])"
-                                                type="button"
-                                                @click="
-                                                    (data.editOpen = true),
-                                                        (data.user = user)
-                                                "
-                                                class="px-2 py-1.5 rounded-none"
-                                                v-tooltip="lang().tooltip.edit"
-                                            >
-                                                <PencilIcon class="w-4 h-4" />
-                                            </InfoButton>
-                                            <DangerButton
-                                                v-show="can(['delete user'])"
-                                                type="button"
-                                                @click="
-                                                    (data.deleteOpen = true),
-                                                        (data.user = user)
-                                                "
-                                                class="px-2 py-1.5 rounded-none"
-                                                v-tooltip="
-                                                    lang().tooltip.delete
-                                                "
-                                            >
-                                                <TrashIcon class="w-4 h-4" />
-                                            </DangerButton>
-                                        </div>
+                                <td :class="actionCellClasses">
+                                    <div class="flex justify-center items-center gap-1">
+                                        <InfoButton
+                                            v-show="can(['update user'])"
+                                            @click="data.editOpen = true; data.user = user"
+                                            class="px-3 py-2 rounded-lg"
+                                            v-tooltip="lang().tooltip.edit"
+                                        >
+                                            <PencilIcon class="w-4 h-4" />
+                                        </InfoButton>
+                                        <DangerButton
+                                            v-show="can(['delete user'])"
+                                            @click="data.deleteOpen = true; data.user = user"
+                                            class="px-3 py-2 rounded-lg"
+                                            v-tooltip="lang().tooltip.delete"
+                                        >
+                                            <TrashIcon class="w-4 h-4" />
+                                        </DangerButton>
+                                        <InfoButton
+                                            v-show="can(['update user'])"
+                                            @click="toggleUserStatus(user)"
+                                            :class="`px-3 py-2 rounded-lg ${user.active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white`"
+                                            v-tooltip="user.active ? 'Deactivate User' : 'Activate User'"
+                                        >
+                                            <PowerIcon class="w-4 h-4" />
+                                        </InfoButton>
+                                        <DangerButton
+                                            v-show="can(['update user'])"
+                                            @click="resetPassword(user)"
+                                            class="px-3 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600"
+                                            v-tooltip="'Reset Password'"
+                                        >
+                                            <KeyIcon class="w-4 h-4" />
+                                        </DangerButton>
+                                        <InfoButton
+                                            v-show="can(['login as user'])"
+                                            @click="loginAsUser(user)"
+                                            class="px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                                            v-tooltip="lang().tooltip.loginAs"
+                                        >
+                                            <LanguageIcon class="w-4 h-4" />
+                                        </InfoButton>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div
-                    class="flex justify-between items-center p-2 border-t border-slate-200 dark:border-slate-700"
-                >
+                <div class="flex justify-between items-center px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700">
                     <Pagination :links="props.users" :filters="data.params" />
                 </div>
             </div>
