@@ -70,7 +70,7 @@ class AnalyticsService
      */
     private function getEnrollmentAverage(): float
     {
-        $enrollments = DB::table('course_user')
+        $enrollments = DB::table('enrollments')
             ->select('course_id', DB::raw('COUNT(*) as enrollment_count'))
             ->groupBy('course_id')
             ->get();
@@ -83,9 +83,9 @@ class AnalyticsService
      */
     private function getCompletionRate(): float
     {
-        $totalEnrollments = DB::table('course_user')->count();
-        $completedEnrollments = DB::table('course_user')
-            ->where('completed', true)
+        $totalEnrollments = DB::table('enrollments')->count();
+        $completedEnrollments = DB::table('enrollments')
+            ->whereNotNull('completion_date')
             ->count();
 
         return $totalEnrollments > 0 ? ($completedEnrollments / $totalEnrollments) * 100 : 0;
@@ -109,7 +109,7 @@ class AnalyticsService
     private function getActiveUsersToday(): int
     {
         return DB::table('users')
-            ->whereDate('last_login_at', today())
+            ->whereDate('updated_at', today())
             ->count();
     }
 

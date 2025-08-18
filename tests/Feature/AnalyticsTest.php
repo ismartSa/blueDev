@@ -6,22 +6,24 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Course;
 use App\Services\AnalyticsService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class AnalyticsTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions, WithFaker;
 
-    private AnalyticsService $analyticsService;
-    private User $user;
+    protected AnalyticsService $analyticsService;
+    protected User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->analyticsService = new AnalyticsService();
+        $this->artisan('route:clear');
+        $this->analyticsService = app(AnalyticsService::class);
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
     }
@@ -159,7 +161,7 @@ class AnalyticsTest extends TestCase
             'duration' => 8
         ]);
         
-        $response = $this->getJson(route('analytics.course-averages'));
+        $response = $this->getJson(route('analytics.course.averages'));
         
         $response->assertStatus(200)
                  ->assertJson([
@@ -236,9 +238,9 @@ class AnalyticsTest extends TestCase
     /** @test */
     public function user_engagement_metrics_are_calculated()
     {
-        // Create users with recent login
+        // Create users with recent activity
         User::factory()->count(5)->create([
-            'last_login_at' => now()
+            'updated_at' => now()
         ]);
         
         $result = $this->analyticsService->calculateCourseAverages();
@@ -254,10 +256,10 @@ class AnalyticsTest extends TestCase
         $course = Course::factory()->create();
         
         // Create enrollments with different completion status
-        DB::table('course_user')->insert([
-            ['course_id' => $course->id, 'user_id' => User::factory()->create()->id, 'completed' => true],
-            ['course_id' => $course->id, 'user_id' => User::factory()->create()->id, 'completed' => false],
-            ['course_id' => $course->id, 'user_id' => User::factory()->create()->id, 'completed' => true],
+        DB::table('enrollments')->insert([
+            ['course_id' => $course->id, 'user_id' => User::factory()->create()->id, 'completion_date' => now(), 'created_at' => now(), 'updated_at' => now()],
+            ['course_id' => $course->id, 'user_id' => User::factory()->create()->id, 'completion_date' => null, 'created_at' => now(), 'updated_at' => now()],
+            ['course_id' => $course->id, 'user_id' => User::factory()->create()->id, 'completion_date' => now(), 'created_at' => now(), 'updated_at' => now()],
         ]);
         
         $result = $this->analyticsService->calculateCourseAverages();
