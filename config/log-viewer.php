@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'route_path' => 'log-viewer',
+    'route_path' => 'logs',
 
     /*
     |--------------------------------------------------------------------------
@@ -62,9 +62,9 @@ return [
     |
     */
 
-    'back_to_system_url' => config('app.url', null),
+    'back_to_system_url' => config('app.url') . '/admin',
 
-    'back_to_system_label' => null, // Displayed by default: "Back to {{ app.name }}"
+    'back_to_system_label' => 'Back to Admin Dashboard',
 
     /*
     |--------------------------------------------------------------------------
@@ -97,7 +97,8 @@ return [
 
     'middleware' => [
         'web',
-        \Opcodes\LogViewer\Http\Middleware\AuthorizeLogViewer::class,
+        'auth',
+        'can:manage courses',
     ],
 
     /*
@@ -111,7 +112,8 @@ return [
 
     'api_middleware' => [
         \Opcodes\LogViewer\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        \Opcodes\LogViewer\Http\Middleware\AuthorizeLogViewer::class,
+        'auth',
+        'can:manage courses',
     ],
 
     'api_stateful_domains' => env('LOG_VIEWER_API_STATEFUL_DOMAINS') ? explode(',', env('LOG_VIEWER_API_STATEFUL_DOMAINS')) : null,

@@ -19,6 +19,7 @@ use App\Http\Controllers\{
     SettingsController,
     BackupController,
     AnalyticsController,
+
 };
 use App\Http\Controllers\Course\CourseContentController;
 use App\Http\Controllers\Course\CourseManagementController;
@@ -275,6 +276,14 @@ Route::get('/dashboard', function () {
             Route::post('/reset', [SettingsController::class, 'reset'])->name('reset');
             Route::get('/database-status', [SettingsController::class, 'refreshDatabaseStatus'])->name('database.status');
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Log Viewer Routes
+    |--------------------------------------------------------------------------
+    | The Opcodes Log Viewer package automatically registers its routes
+    | at /admin/log-viewer with the middleware configured in config/log-viewer.php
+    */
 
     /*
     |--------------------------------------------------------------------------

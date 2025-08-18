@@ -7883,6 +7883,7 @@ return array(
     'Termwind\\ValueObjects\\Style' => $vendorDir . '/nunomaduro/termwind/src/ValueObjects/Style.php',
     'Termwind\\ValueObjects\\Styles' => $vendorDir . '/nunomaduro/termwind/src/ValueObjects/Styles.php',
     'Tests\\CreatesApplication' => $baseDir . '/tests/CreatesApplication.php',
+    'Tests\\Feature\\AnalyticsTest' => $baseDir . '/tests/Feature/AnalyticsTest.php',
     'Tests\\Feature\\Auth\\AuthenticationTest' => $baseDir . '/tests/Feature/Auth/AuthenticationTest.php',
     'Tests\\Feature\\Auth\\EmailVerificationTest' => $baseDir . '/tests/Feature/Auth/EmailVerificationTest.php',
     'Tests\\Feature\\Auth\\PasswordConfirmationTest' => $baseDir . '/tests/Feature/Auth/PasswordConfirmationTest.php',
