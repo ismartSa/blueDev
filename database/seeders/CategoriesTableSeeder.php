@@ -17,7 +17,10 @@ class CategoriesTableSeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            Category::create($category);
+            Category::firstOrCreate(
+                ['slug' => $category['slug']], // Check by slug (unique field)
+                $category // Create with all data if not found
+            );
         }
     }
 }
