@@ -18,19 +18,19 @@ class CourseFactory extends Factory
      */
     public function definition(): array
     {
-        $title = $this->faker->sentence;
+        $title = fake()->sentence;
         return [
             'user_id' => User::factory(), // Add this line to associate a user
             'title' => $title,
-            'name' => $this->faker->name,
+            'name' => fake()->name,
             'slug' => Str::slug($title),
-            'description' => $this->faker->paragraph,
-            'body' => $this->faker->text,
-            'duration' => $this->faker->numberBetween(1, 60),
-            'image' => $this->faker->imageUrl(),
-            'status' => $this->faker->boolean,
-            'intro_video' => $this->faker->url,
-            'price' => $this->faker->randomFloat(2, 0, 1000), // Add price field
+            'description' => fake()->paragraph,
+            'body' => fake()->text,
+            'duration' => fake()->numberBetween(1, 60),
+            'image' => fake()->imageUrl(),
+            'status' => fake()->boolean,
+            'intro_video' => fake()->url,
+            'price' => fake()->randomFloat(2, 0, 1000), // Add price field
         ];
     }
 }

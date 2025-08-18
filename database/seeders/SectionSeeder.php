@@ -4,6 +4,10 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use App\Models\Section;
+use App\Models\Lecture;
 
 class SectionSeeder extends Seeder
 {
@@ -12,71 +16,66 @@ class SectionSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('sections')->insert([
-            [
-                'title' => 'Introduction to PMP',
-                'course_id' => 299,
-                'order' => 1,
-            ],
-            [
-                'title' => 'Framework',
-                'course_id' => 299,
-                'order' => 2,
-            ],
-            [
-                'title' => 'Framework',
-                'course_id' => 299,
-                'order' => 3,
-            ],
-            [
-                'title' => 'Domain People I ',
-                'course_id' => 299,
-                'order' => 4,
-            ],
+        // Create sections using firstOrCreate to prevent duplicates
+        $sections = [
+            ['title' => 'Introduction to PMP', 'course_id' => 2, 'order' => 1],
+            ['title' => 'Framework', 'course_id' => 2, 'order' => 2],
+            ['title' => 'Advanced Framework', 'course_id' => 2, 'order' => 3], // Fixed duplicate title
+            ['title' => 'Domain People I', 'course_id' => 2, 'order' => 4],
+        ];
 
-        ]);
+        $createdSections = [];
+        foreach ($sections as $sectionData) {
+            $section = Section::firstOrCreate(
+                ['title' => $sectionData['title'], 'course_id' => $sectionData['course_id']],
+                $sectionData
+            );
+            $createdSections[] = $section;
+        }
 
-
-        DB::table('lectures')->insert([
+        // Create lectures using firstOrCreate to prevent duplicates
+        $lectures = [
             [
-                'uuid' => Str::uuid(),
                 'name' => 'Framework 1',
                 'title' => 'Framework 1',
-                'course_id' => 299,
-                'section_id' => 13,
-                'description' => 'This section covers the basics of programming.',
-                'video_url' => 'https://example.com/intro-to-programming',
+                'course_id' => 2,
+                'section_id' => $createdSections[1]->id, // Framework section
+                'description' => 'This section covers the framework basics.',
+                'video_url' => 'https://example.com/framework-1',
                 'duration' => 45,
                 'order' => 1,
-                'slug' => 'Framework_1',
+                'slug' => 'framework-1',
             ],
             [
-                'uuid' => Str::uuid(),
                 'name' => 'Introduction 2',
                 'title' => 'Introduction 2',
-                'course_id' => 299,
-                'section_id' => 12,
-                'description' => 'This section covers the basics of programming.',
-                'video_url' => 'https://example.com/intro-to-programming',
+                'course_id' => 2,
+                'section_id' => $createdSections[0]->id, // Introduction section
+                'description' => 'This section covers introduction concepts.',
+                'video_url' => 'https://example.com/introduction-2',
                 'duration' => 45,
                 'order' => 2,
-                'slug' => 'Introduction_2',
+                'slug' => 'introduction-2',
             ],
-
             [
-                'uuid' => Str::uuid(),
                 'name' => 'Introduction 3',
                 'title' => 'Introduction 3',
-                'course_id' => 299,
-                'section_id' => 12,
-                'description' => 'This section covers the basics of programming.',
-                'video_url' => 'https://example.com/intro-to-programming',
+                'course_id' => 2,
+                'section_id' => $createdSections[0]->id, // Introduction section
+                'description' => 'This section covers advanced introduction topics.',
+                'video_url' => 'https://example.com/introduction-3',
                 'duration' => 45,
-                'order' => 2,
-                'slug' => 'Introduction_3',
+                'order' => 3,
+                'slug' => 'introduction-3',
             ],
+        ];
 
-        ]);
-
+        foreach ($lectures as $lectureData) {
+            $lectureData['uuid'] = Str::uuid();
+            Lecture::firstOrCreate(
+                ['slug' => $lectureData['slug'], 'course_id' => $lectureData['course_id']],
+                $lectureData
+            );
+        }
     }
 }

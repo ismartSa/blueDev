@@ -23,10 +23,10 @@ class EnrollFactory extends Factory
         return [
             'user_id' => User::factory(),
             'course_id' => Course::factory(),
-            'enrollment_date' => $this->faker->dateTimeBetween('-1 year', 'now'),
-            'enrollment_status' => $this->faker->randomElement($statuses),
-            'completion_date' => $this->faker->optional(0.3)->dateTimeBetween('-6 months', 'now'),
-            'progress_percentage' => $this->faker->numberBetween(0, 100),
+            'enrollment_date' => fake()->dateTimeBetween('-1 year', 'now'),
+            'enrollment_status' => fake()->randomElement($statuses),
+            'completion_date' => fake()->optional(0.3)->dateTimeBetween('-6 months', 'now'),
+            'progress_percentage' => fake()->numberBetween(0, 100),
         ];
     }
 
@@ -48,7 +48,7 @@ class EnrollFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'enrollment_status' => 'confirmed',
             'progress_percentage' => 100,
-            'completion_date' => $this->faker->dateTimeBetween('-3 months', 'now'),
+            'completion_date' => fake()->dateTimeBetween('-3 months', 'now'),
         ]);
     }
 }

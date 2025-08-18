@@ -18,15 +18,15 @@ class LectureFactory extends Factory
     {
         return [
 
-                'uuid' => $this->faker->uuid,
-                'name' => $this->faker->sentence,
-                'title' => $this->faker->sentence,
+                'uuid' => fake()->uuid,
+                'name' => fake()->sentence,
+                'title' => fake()->sentence,
                 'course_id' => \App\Models\Course::inRandomOrder()->first()->id,
                 'section_id' => \App\Models\Section::inRandomOrder()->first()->id,
-                'description' => $this->faker->paragraph,
-                'video_url' => $this->faker->url,
-                'duration' => $this->faker->numberBetween(10, 60),
-                'order' => $this->faker->numberBetween(1, 10),
+                'description' => fake()->paragraph,
+                'video_url' => fake()->url,
+                'duration' => fake()->numberBetween(10, 60),
+                'order' => fake()->numberBetween(1, 10),
 
         ];
     }

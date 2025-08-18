@@ -18,9 +18,9 @@ class SectionFactory extends Factory
     {
         return [
             'course_id' => \App\Models\Course::factory(),
-            'title' => $this->faker->sentence,
-            'description' => $this->faker->paragraph,
-            'order' => $this->faker->numberBetween(1, 10),
+            'title' => fake()->sentence,
+            'description' => fake()->paragraph,
+            'order' => fake()->numberBetween(1, 10),
         ];
     }
 }

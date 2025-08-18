@@ -23,11 +23,11 @@ class QuizFactory extends Factory
                   ?? Section::factory()->create(['course_id' => $course->id]);
 
         return [
-            'title' => $this->faker->sentence,
-            'description' => $this->faker->paragraph,
-            'time_limit' => $this->faker->numberBetween(10, 60),
-            'passing_score' => $this->faker->numberBetween(60, 80),
-            'is_active' => $this->faker->boolean(80),
+            'title' => fake()->sentence,
+            'description' => fake()->paragraph,
+            'time_limit' => fake()->numberBetween(10, 60),
+            'passing_score' => fake()->numberBetween(60, 80),
+            'is_active' => fake()->boolean(80),
             'course_id' => $course->id,
             'section_id' => $section->id,
         ];
