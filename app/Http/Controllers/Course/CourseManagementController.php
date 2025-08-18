@@ -20,10 +20,10 @@ class CourseManagementController extends Controller
     public function __construct(CourseService $courseService)
     {
         $this->courseService = $courseService;
-        $this->middleware('permission:view courses', ['only' => ['index']]);
-        $this->middleware('permission:create courses', ['only' => ['create', 'store']]);
-        $this->middleware('permission:edit courses', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:delete courses', ['only' => ['destroy', 'destroyBulk']]);
+        $this->middleware('permission:read course', ['only' => ['index']]);
+        $this->middleware('permission:create course', ['only' => ['create', 'store']]);
+        $this->middleware('permission:update course', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete course', ['only' => ['destroy', 'destroyBulk']]);
     }
 
     public function index(Request $request)

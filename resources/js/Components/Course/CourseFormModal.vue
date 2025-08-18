@@ -1,17 +1,31 @@
 <script setup>
-import { reactive, watch, computed } from 'vue';
-import { useForm } from '@inertiajs/vue3';
-import Modal from '@/Components/Modal.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import TextArea from '@/Components/TextArea.vue';
-import SelectInput from '@/Components/SelectInput.vue';
-import FileInput from '@/Components/FileInput.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import InputError from '@/Components/InputError.vue';
-import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/solid';
+import { reactive, watch, computed, ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { useForm } from '@inertiajs/vue3'
+import Modal from '@/Components/Modal.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import TextInput from '@/Components/TextInput.vue'
+import TextArea from '@/Components/TextArea.vue'
+import SelectInput from '@/Components/SelectInput.vue'
+import FileInput from '@/Components/FileInput.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
+import SecondaryButton from '@/Components/SecondaryButton.vue'
+import { XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, QuestionMarkCircleIcon } from '@heroicons/vue/24/solid'
+import StatusSwitch from '@/Components/UI/StatusSwitch.vue'
 
+// Component registration
+const components = {
+    Modal,
+    InputLabel,
+    TextInput,
+    TextArea,
+    SelectInput,
+    FileInput,
+    PrimaryButton,
+    SecondaryButton,
+    StatusSwitch
+}
+
+// Props and emits
 const props = defineProps({
     show: { type: Boolean, default: false },
     mode: { type: String, default: 'create', validator: value => ['create', 'edit'].includes(value) },
@@ -20,358 +34,427 @@ const props = defineProps({
     title: { type: String, default: '' },
     maxWidth: { type: String, default: '2xl' },
     closeable: { type: Boolean, default: true }
-});
+})
 
-const emit = defineEmits(['close', 'success']);
+const emit = defineEmits(['close', 'success'])
 
-// Optimized form configuration with consolidated structure
-const FORM_FIELDS = [
-    { key: 'title', label: 'Course Title', component: 'TextInput', required: true, placeholder: 'Enter course title', validation: { required: true, minLength: 3 } },
-    { key: 'description', label: 'Description', component: 'TextArea', placeholder: 'Enter course description (optional)', rows: 4, validation: { minLength: 10 } },
-    { key: 'price', label: 'Price', component: 'TextInput', type: 'number', required: false, step: '0.01', min: '0', validation: { min: 0 }, editOnly: true },
-    { key: 'category_id', label: 'Category', component: 'SelectInput', required: false, validation: {} },
-    { key: 'status', label: 'Status', component: 'SelectInput', required: true, validation: { required: true } },
-    { key: 'level', label: 'Level', component: 'SelectInput', required: false, validation: {}, editOnly: true },
-    { key: 'duration', label: 'Duration (hours)', component: 'TextInput', type: 'number', required: false, min: '1', validation: { min: 1 }, editOnly: true },
-    { key: 'language', label: 'Language', component: 'SelectInput', required: false, validation: {}, editOnly: true },
-    { key: 'thumbnail', label: 'Thumbnail (optional)', component: 'FileInput', accept: 'image/*', editOnly: true }
-];
+// Dynamic field configuration
+const FIELD_CONFIG = {
+    title: { label: 'Course Title', component: 'TextInput', required: true, maxLength: 100, help: 'Choose a clear, descriptive title' },
+    description: { label: 'Description', component: 'TextArea', rows: 4, maxLength: 1000, help: 'Describe what students will learn' },
+    price: { label: 'Price ($)', component: 'TextInput', type: 'number', step: '0.01', min: '0', editOnly: true, help: 'Set to 0 for free courses' },
+    category_id: { label: 'Category', component: 'SelectInput', help: 'Select relevant category for discoverability' },
+    status: { label: 'Status', component: 'StatusSwitch', required: true, help: 'Draft: Hidden, Active: Published' },
+    level: { label: 'Level', component: 'SelectInput', editOnly: true, help: 'Help students choose appropriate difficulty' },
+    duration: { label: 'Duration (hours)', component: 'TextInput', type: 'number', min: '0.5', step: '0.5', editOnly: true, help: 'Estimated completion time' },
+    language: { label: 'Language', component: 'SelectInput', editOnly: true, help: 'Primary course language' },
+    thumbnail: { label: 'Thumbnail', component: 'FileInput', accept: 'image/*', editOnly: true, help: 'Upload course image (max 2MB)' }
+}
 
-// Consolidated field options
+// Field options
 const FIELD_OPTIONS = {
-    status: [{ value: 'draft', label: 'Draft' }, { value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }],
+    status: { draft: false, active: true }, // StatusSwitch uses boolean values
     level: [{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Intermediate' }, { value: 'advanced', label: 'Advanced' }],
-    language: [{ value: 'en', label: 'English' }, { value: 'ar', label: 'Arabic' }, { value: 'fr', label: 'French' }, { value: 'es', label: 'Spanish' }]
-};
+    language: [{ value: 'en', label: 'English' }, { value: 'ar', label: 'Arabic' }, { value: 'fr', label: 'French' }]
+}
 
-// Optimized form data initialization
-const getDefaultFormData = () => {
-    const defaults = { 
-        title: '', 
-        description: '', 
-        price: '', 
-        status: 'draft', 
-        category_id: '', 
-        level: '', 
-        duration: '', 
-        language: '', 
-        thumbnail: null 
-    };
-    return defaults;
-};
+// Form initialization
+const getDefaultData = () => ({ title: '', description: '', price: '', status: false, category_id: '', level: '', duration: '', language: '', thumbnail: null })
+const form = useForm(getDefaultData())
 
-const form = useForm(getDefaultFormData());
+// Reactive state
+const state = reactive({
+    isSubmitting: false,
+    submitSuccess: false,
+    validation: {},
+    activeTooltip: null,
+    autoSaveTimer: null,
+    lastAutoSave: null
+})
 
-// Optimized validation state initialization
-const validationState = reactive(Object.fromEntries(FORM_FIELDS.map(field => [field.key, { valid: true, message: '' }])));
+// Computed properties
+const visibleFields = computed(() => 
+    Object.entries(FIELD_CONFIG).filter(([key, config]) => !config.editOnly || props.mode === 'edit')
+)
 
-// Consolidated validation function
-const validateField = (fieldKey, value) => {
-    const field = FORM_FIELDS.find(f => f.key === fieldKey);
-    if (!field?.validation) {
-        validationState[fieldKey] = { valid: true, message: '' };
-        return true;
+const isFormValid = computed(() => 
+    visibleFields.value.every(([key, config]) => !config.required || form[key])
+)
+
+const modalTitle = computed(() => props.title || `${props.mode === 'create' ? 'Create' : 'Edit'} Course`)
+
+// Dynamic field options getter
+const getFieldOptions = (key) => {
+    if (key === 'category_id') {
+        return [{ value: '', label: 'Select category' }, ...props.categories.map(cat => ({ value: cat.id, label: cat.name }))]
+    }
+    return FIELD_OPTIONS[key] ? [{ value: '', label: `Select ${key}` }, ...FIELD_OPTIONS[key]] : []
+}
+
+// Validation logic
+const validateField = (key, value) => {
+    const config = FIELD_CONFIG[key]
+    if (!config) return true
+    
+    let isValid = true, message = '', type = 'neutral'
+    
+    if (config.required && (!value || value.toString().trim() === '')) {
+        isValid = false
+        message = `${config.label} is required`
+        type = 'error'
+    } else if (config.maxLength && value && value.toString().length > config.maxLength) {
+        isValid = false
+        message = `${config.label} cannot exceed ${config.maxLength} characters`
+        type = 'error'
+    } else if (config.min !== undefined && value !== '' && parseFloat(value) < parseFloat(config.min)) {
+        isValid = false
+        message = `${config.label} must be at least ${config.min}`
+        type = 'error'
+    } else if (config.required && value) {
+        type = 'success'
     }
     
-    const { validation: rules, label } = field;
-    let isValid = true, message = '';
+    state.validation[key] = { valid: isValid, message, type }
+    return isValid
+}
+
+// File handling
+const handleFileChange = (event) => {
+    const file = event.target.files[0]
+    if (!file) return
     
-    // Check required fields
-    if (rules.required && (!value || value.toString().trim() === '')) {
-        isValid = false;
-        message = `${label} is required`;
-    }
-    // Check minimum length for strings
-    else if (rules.minLength && value && value.toString().length < rules.minLength) {
-        isValid = false;
-        message = `${label} must be at least ${rules.minLength} characters`;
-    }
-    // Check minimum value for numbers
-    else if (rules.min !== undefined && value !== '' && value !== null && parseFloat(value) < rules.min) {
-        isValid = false;
-        message = `${label} must be at least ${rules.min}`;
+    if (file.size > 2 * 1024 * 1024) {
+        state.validation.thumbnail = { valid: false, message: 'File must be less than 2MB', type: 'error' }
+        return
     }
     
-    validationState[fieldKey] = { valid: isValid, message };
-    return isValid;
-};
+    form.thumbnail = file
+    state.validation.thumbnail = { valid: true, message: `Selected: ${file.name}`, type: 'success' }
+}
 
-// Enhanced computed properties for better organization
-const basicFields = computed(() => FORM_FIELDS.filter(field => 
-    !field.editOnly
-));
+// Auto-save functionality
+const getAutoSaveKey = () => `course-form-${props.mode}-${props.course?.id || 'new'}`
 
-const advancedFields = computed(() => FORM_FIELDS.filter(field => 
-    field.editOnly && props.mode === 'edit'
-));
-
-const visibleFields = computed(() => FORM_FIELDS.filter(field => !field.editOnly || props.mode === 'edit'));
-const isFormValid = computed(() => {
-    // Check required fields only
-    const requiredFields = visibleFields.value.filter(field => field.validation?.required);
-    return requiredFields.every(field => {
-        const value = form[field.key];
-        return value !== null && value !== undefined && value !== '';
-    });
-});
-
-// Optimized helper functions and computed properties
-const getFieldOptions = (fieldKey) => {
-    if (fieldKey === 'category_id') {
-        return [{ value: '', label: 'Select a category' }, ...props.categories.map(cat => ({ value: cat.id, label: cat.name }))];
+const saveFormData = () => {
+    if (props.mode === 'create') {
+        try {
+            const data = {}
+            visibleFields.value.forEach(([key]) => {
+                if (key !== 'thumbnail' && form[key] !== '') data[key] = form[key]
+            })
+            // Only save if there's actual data
+            if (Object.keys(data).length > 0) {
+                localStorage.setItem(getAutoSaveKey(), JSON.stringify({ data, timestamp: Date.now() }))
+                state.lastAutoSave = new Date().toLocaleTimeString()
+            }
+        } catch (error) {
+            console.warn('Failed to auto-save form data:', error)
+        }
     }
-    if (FIELD_OPTIONS[fieldKey]) {
-        return [{ value: '', label: `Select ${fieldKey.replace('_', ' ')}` }, ...FIELD_OPTIONS[fieldKey]];
+}
+
+const loadSavedData = () => {
+    if (props.mode === 'create') {
+        const saved = localStorage.getItem(getAutoSaveKey())
+        if (saved) {
+            try {
+                const { data, timestamp } = JSON.parse(saved)
+                if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+                    Object.assign(form, data)
+                    state.lastAutoSave = new Date(timestamp).toLocaleTimeString()
+                }
+            } catch (e) {
+                console.warn('Failed to restore auto-saved data:', e)
+            }
+        }
     }
-    return [];
-};
+}
 
-const modalTitle = computed(() => props.title || (props.mode === 'create' ? 'Create Course' : 'Edit Course'));
-const submitButtonText = computed(() => {
-    const action = props.mode === 'create' ? 'Create' : 'Update';
-    return form.processing ? `${action.slice(0, -1)}ing...` : `${action} Course`;
-});
+const debouncedAutoSave = () => {
+    if (state.autoSaveTimer) clearTimeout(state.autoSaveTimer)
+    state.autoSaveTimer = setTimeout(saveFormData, 2000)
+}
 
-// Optimized watchers
-watch(() => props.course, (newCourse) => {
-    if (props.mode === 'edit' && newCourse) {
-        const defaultData = getDefaultFormData();
-        Object.keys(defaultData).forEach(key => {
-            form[key] = newCourse[key] !== undefined ? newCourse[key] : defaultData[key];
-        });
-        form.clearErrors();
-        // Clear validation state
-        Object.keys(validationState).forEach(key => {
-            validationState[key] = { valid: true, message: '' };
-        });
+// Form submission
+const submit = async () => {
+    // Validate all fields
+    let hasErrors = false
+    visibleFields.value.forEach(([key]) => {
+        if (!validateField(key, form[key])) hasErrors = true
+    })
+    
+    if (hasErrors) return
+    
+    state.isSubmitting = true
+    const isCreate = props.mode === 'create'
+    const method = isCreate ? 'post' : 'put'
+    const routeName = `dashboard.courses.${isCreate ? 'store' : 'update'}`
+    const routeParams = isCreate ? [] : [props.course.id]
+    
+    // Convert boolean status back to string for API
+    const formData = { ...form.data() }
+    if (typeof formData.status === 'boolean') {
+        formData.status = formData.status ? 'active' : 'draft'
     }
-}, { immediate: true });
+    
+    // Create a temporary form with converted data
+    const submitForm = useForm(formData)
+    
+    submitForm[method](route(routeName, ...routeParams), {
+        onSuccess: () => {
+            state.isSubmitting = false
+            state.submitSuccess = true
+            if (isCreate) localStorage.removeItem(getAutoSaveKey())
+            // Update the original form's processing state
+            form.processing = false
+            emit('success', `Course ${isCreate ? 'created' : 'updated'} successfully!`)
+            setTimeout(() => state.submitSuccess = false, 3000)
+        },
+        onError: async (errors) => {
+            state.isSubmitting = false
+            // Update the original form's processing state
+            form.processing = false
+            // Handle server validation errors
+            Object.keys(errors).forEach(key => {
+                const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key]
+                state.validation[key] = { valid: false, message: errorMessage, type: 'error' }
+            })
+            // Focus on first error field
+            await nextTick()
+            const firstErrorField = Object.keys(errors)[0]
+            if (firstErrorField) {
+                const element = document.getElementById(firstErrorField)
+                element?.focus()
+            }
+        },
+        onFinish: () => state.isSubmitting = false
+    })
+}
 
+const closeModal = () => {
+    state.isSubmitting = false
+    state.submitSuccess = false
+    state.activeTooltip = null
+    if (state.autoSaveTimer) {
+        clearTimeout(state.autoSaveTimer)
+        state.autoSaveTimer = null
+    }
+    // Clear validation state
+    state.validation = {}
+    emit('close')
+}
+
+// Watchers
 watch(() => props.show, (show) => {
     if (show) {
         if (props.mode === 'create') {
-            form.reset();
-            const defaultData = getDefaultFormData();
-            Object.keys(defaultData).forEach(key => {
-                form[key] = defaultData[key];
-            });
-        } else if (props.mode === 'edit' && props.course) {
-            // Ensure edit mode gets fresh course data
-            const defaultData = getDefaultFormData();
-            Object.keys(defaultData).forEach(key => {
-                form[key] = props.course[key] !== undefined ? props.course[key] : defaultData[key];
-            });
+            form.reset()
+            Object.assign(form, getDefaultData())
+            loadSavedData()
+        } else if (props.course) {
+            // Reset form first, then populate with course data
+            form.reset()
+            const courseData = { ...getDefaultData(), ...props.course }
+            // Convert status string to boolean for StatusSwitch
+            if (courseData.status) {
+                courseData.status = courseData.status === 'active'
+            }
+            // Ensure all form fields are properly set
+            Object.keys(courseData).forEach(key => {
+                if (form.hasOwnProperty(key)) {
+                    form[key] = courseData[key]
+                }
+            })
         }
-        // Clear validation state when opening
-        Object.keys(validationState).forEach(key => {
-            validationState[key] = { valid: true, message: '' };
-        });
-        form.clearErrors();
-    }
-});
-
-// Clear validation state when modal closes
-watch(() => props.show, (show) => {
-    if (!show) {
-        form.clearErrors();
-        Object.keys(validationState).forEach(key => {
-            validationState[key].valid = true;
-            validationState[key].message = '';
-        });
-    }
-}, { flush: 'post' });
-
-// Optimized form submission and handlers
-const submit = () => {
-    if (!isFormValid.value) return;
-    
-    const isCreate = props.mode === 'create';
-    const method = isCreate ? 'post' : 'put';
-    const routeName = `dashboard.courses.${isCreate ? 'store' : 'update'}`;
-    const routeParams = isCreate ? [] : [props.course.id];
-    
-    form[method](route(routeName, ...routeParams), {
-        onSuccess: () => emit('success', `Course ${isCreate ? 'created' : 'updated'} successfully!`),
-        onError: (errors) => {
-            console.error('Form errors:', errors);
-            Object.keys(errors).forEach(field => {
-                if (validationState[field]) Object.assign(validationState[field], { valid: false, message: errors[field] });
-            });
+        state.validation = {}
+        form.clearErrors()
+        // Trigger validation for all fields in edit mode
+        if (props.mode === 'edit') {
+            nextTick(() => {
+                visibleFields.value.forEach(([key]) => {
+                    validateField(key, form[key])
+                })
+            })
         }
-    });
-};
+        // Focus first input field when modal opens
+        nextTick(() => {
+            const firstField = visibleFields.value[0]?.[0]
+            if (firstField) {
+                const element = document.getElementById(firstField)
+                element?.focus()
+            }
+        })
+    }
+})
 
-const closeModal = () => emit('close');
-const handleFileChange = (event) => { if (event.target.files[0]) form.thumbnail = event.target.files[0]; };
+watch(() => form.data(), () => {
+    if (props.show && props.mode === 'create') debouncedAutoSave()
+}, { deep: true })
+
+// Watch for course prop changes in edit mode
+watch(() => props.course, (newCourse) => {
+    if (props.show && props.mode === 'edit' && newCourse) {
+        form.reset()
+        const courseData = { ...getDefaultData(), ...newCourse }
+        // Convert status string to boolean for StatusSwitch
+        if (courseData.status) {
+            courseData.status = courseData.status === 'active'
+        }
+        Object.keys(courseData).forEach(key => {
+            if (form.hasOwnProperty(key)) {
+                form[key] = courseData[key]
+            }
+        })
+        state.validation = {}
+        form.clearErrors()
+        nextTick(() => {
+            visibleFields.value.forEach(([key]) => {
+                validateField(key, form[key])
+            })
+        })
+    }
+}, { deep: true })
+
+// Cleanup
+onUnmounted(() => {
+    if (state.autoSaveTimer) clearTimeout(state.autoSaveTimer)
+})
+
+// Helper functions for dynamic rendering
+const getValidationIcon = (key) => {
+    const validation = state.validation[key]
+    if (validation?.type === 'error') return ExclamationTriangleIcon
+    if (validation?.type === 'success') return CheckCircleIcon
+    return null
+}
+
+const getValidationClasses = (key) => {
+    const validation = state.validation[key]
+    const base = 'transition-all duration-200'
+    if (validation?.type === 'error') return `${base} border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50`
+    if (validation?.type === 'success') return `${base} border-green-300 focus:border-green-500 focus:ring-green-500 bg-green-50`
+    return `${base} border-gray-300 focus:border-blue-500 focus:ring-blue-500`
+}
+
+const getSubmitButtonText = () => {
+    if (state.isSubmitting || form.processing) return props.mode === 'create' ? 'Creating...' : 'Updating...'
+    if (state.submitSuccess) return props.mode === 'create' ? 'Created!' : 'Updated!'
+    return props.mode === 'create' ? 'Create Course' : 'Update Course'
+}
 </script>
 
 <template>
     <Modal :show="show" @close="closeModal" :max-width="maxWidth" :closeable="closeable">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl">
-            <!-- Enhanced Header -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+            <!-- Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                 <div>
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                        {{ modalTitle }}
-                    </h2>
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ modalTitle }}</h2>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {{ mode === 'create' ? 'Fill in the details to create a new course' : 'Update the course information below' }}
+                        {{ mode === 'create' ? 'Fill in the details to create a new course' : 'Update the course information' }}
                     </p>
                 </div>
-                <button
-                    @click="closeModal"
-                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
+                <button @click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <XMarkIcon class="w-6 h-6" />
                 </button>
             </div>
             
-            <!-- Enhanced Form with Better Layout -->
-            <form @submit.prevent="submit" class="p-6">
-                <div class="space-y-6">
-                    <!-- Basic Information Section -->
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
-                            Basic Information
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 gap-4">
-                            <div v-for="field in basicFields" :key="field.key" class="form-field">
-                                <InputLabel :for="field.key" :value="field.label" class="font-medium" />
-                                
-                                <component 
-                                    :is="field.component"
-                                    :id="field.key"
-                                    v-model="form[field.key]"
-                                    v-bind="field"
-                                    class="mt-2 block w-full transition-all duration-200"
-                                    :class="{
-                                        'border-red-300 focus:border-red-500 focus:ring-red-500': !validationState[field.key].valid,
-                                        'border-gray-300 focus:border-blue-500 focus:ring-blue-500': validationState[field.key].valid
-                                    }"
-                                    @blur="validateField(field.key, form[field.key])"
-                                    @input="validateField(field.key, form[field.key])"
-                                >
-                                    <option 
-                                        v-if="field.component === 'SelectInput'"
-                                        v-for="option in getFieldOptions(field.key)" 
-                                        :key="option.value" 
-                                        :value="option.value"
-                                    >
-                                        {{ option.label }}
-                                    </option>
-                                </component>
-                                
-                                <Transition
-                                    enter-active-class="transition ease-out duration-200"
-                                    enter-from-class="opacity-0 transform -translate-y-1"
-                                    enter-to-class="opacity-100 transform translate-y-0"
-                                    leave-active-class="transition ease-in duration-150"
-                                    leave-from-class="opacity-100 transform translate-y-0"
-                                    leave-to-class="opacity-0 transform -translate-y-1"
-                                >
-                                    <InputError 
-                                        v-if="validationState[field.key].message || form.errors[field.key]"
-                                        :message="validationState[field.key].message || form.errors[field.key]" 
-                                        class="mt-2" 
-                                    />
-                                </Transition>
+            <!-- Form -->
+            <form @submit.prevent="submit" @keydown.esc="closeModal" class="flex-1 overflow-y-auto">
+                <div class="p-6 space-y-6">
+                    <!-- Dynamic Field Rendering -->
+                    <div class="grid grid-cols-1 gap-6">
+                        <div v-for="[key, config] in visibleFields" :key="key" class="space-y-2 relative">
+                            <!-- Label with tooltip -->
+                            <div class="flex items-center gap-2">
+                                <InputLabel :for="key" :value="config.label" class="font-medium" :class="{ 'text-red-600': state.validation[key]?.type === 'error' }" />
+                                <div v-if="config.help" class="relative">
+                                    <button type="button" @mouseenter="state.activeTooltip = key" @mouseleave="state.activeTooltip = null" @focus="state.activeTooltip = key" @blur="state.activeTooltip = null" class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
+                                        <QuestionMarkCircleIcon class="w-4 h-4" />
+                                    </button>
+                                    <!-- Tooltip -->
+                                    <div v-if="state.activeTooltip === key" class="absolute left-0 top-6 z-50 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg transform -translate-x-1/2">
+                                        {{ config.help }}
+                                        <div class="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                                    </div>
+                                </div>
+                                <component v-if="getValidationIcon(key)" :is="getValidationIcon(key)" class="w-4 h-4" :class="{ 'text-red-500': state.validation[key]?.type === 'error', 'text-green-500': state.validation[key]?.type === 'success' }" />
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Advanced Settings Section (Edit Mode Only) -->
-                    <div v-if="mode === 'edit'" class="space-y-4">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
-                            Course Details
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div v-for="field in advancedFields" :key="field.key" class="form-field">
-                                <InputLabel :for="field.key" :value="field.label" class="font-medium" />
-                                
-                                <component 
-                                    :is="field.component"
-                                    :id="field.key"
-                                    v-model="form[field.key]"
-                                    v-bind="field"
-                                    class="mt-2 block w-full transition-all duration-200"
-                                    :class="{
-                                        'border-red-300 focus:border-red-500 focus:ring-red-500': !validationState[field.key].valid,
-                                        'border-gray-300 focus:border-blue-500 focus:ring-blue-500': validationState[field.key].valid
-                                    }"
-                                    @blur="validateField(field.key, form[field.key])"
-                                    @input="field.component !== 'FileInput' ? validateField(field.key, form[field.key]) : null"
-                                    @change="field.component === 'FileInput' ? handleFileChange($event) : null"
-                                >
-                                    <option 
-                                        v-if="field.component === 'SelectInput'"
-                                        v-for="option in getFieldOptions(field.key)" 
-                                        :key="option.value" 
-                                        :value="option.value"
-                                    >
-                                        {{ option.label }}
-                                    </option>
-                                </component>
-                                
-                                <Transition
-                                    enter-active-class="transition ease-out duration-200"
-                                    enter-from-class="opacity-0 transform -translate-y-1"
-                                    enter-to-class="opacity-100 transform translate-y-0"
-                                    leave-active-class="transition ease-in duration-150"
-                                    leave-from-class="opacity-100 transform translate-y-0"
-                                    leave-to-class="opacity-0 transform -translate-y-1"
-                                >
-                                    <InputError 
-                                        v-if="validationState[field.key].message || form.errors[field.key]"
-                                        :message="validationState[field.key].message || form.errors[field.key]" 
-                                        class="mt-2" 
-                                    />
-                                </Transition>
+                            
+                            <!-- Input Field -->
+                            <StatusSwitch
+                                v-if="config.component === 'StatusSwitch'"
+                                :id="key"
+                                v-model="form[key]"
+                                variant="primary"
+                                show-status
+                                show-icons
+                                on-text="Active"
+                                off-text="Draft"
+                                class="block w-full"
+                                :class="getValidationClasses(key)"
+                                @change="validateField(key, form[key])"
+                            />
+                            <component 
+                                v-else
+                                :is="config.component"
+                                :id="key"
+                                v-model="form[key]"
+                                v-bind="config"
+                                class="block w-full"
+                                :class="getValidationClasses(key)"
+                                @blur="validateField(key, form[key])"
+                                @input="config.component !== 'FileInput' ? validateField(key, form[key]) : null"
+                                @change="config.component === 'FileInput' ? handleFileChange($event) : null"
+                            >
+                                <option v-if="config.component === 'SelectInput'" v-for="option in getFieldOptions(key)" :key="option.value" :value="option.value">
+                                    {{ option.label }}
+                                </option>
+                            </component>
+                            
+                            <!-- Help Text -->
+                            <div v-if="config.help && !state.validation[key]?.message" class="p-2 bg-blue-50 rounded-md border border-blue-200">
+                                <p class="text-xs text-blue-700 flex items-start gap-2">
+                                    <InformationCircleIcon class="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                    <span>{{ config.help }}</span>
+                                </p>
                             </div>
+                            
+                            <!-- Validation Message -->
+                            <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0">
+                                <div v-if="state.validation[key]?.message || form.errors[key]" class="flex items-start gap-2">
+                                    <component :is="getValidationIcon(key)" class="w-4 h-4 mt-0.5 flex-shrink-0" :class="{ 'text-red-500': state.validation[key]?.type === 'error', 'text-green-500': state.validation[key]?.type === 'success' }" />
+                                    <span class="text-sm" :class="{ 'text-red-600': state.validation[key]?.type === 'error', 'text-green-600': state.validation[key]?.type === 'success' }">
+                                        {{ state.validation[key]?.message || form.errors[key] }}
+                                    </span>
+                                </div>
+                            </Transition>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Enhanced Footer with Better Actions -->
-                <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                        <span v-if="mode === 'edit'" class="flex items-center gap-2">
-                            <CheckCircleIcon class="w-4 h-4 text-green-500" />
-                            Last updated: {{ course?.updated_at || 'Never' }}
-                        </span>
-                    </div>
-                    
-                    <div class="flex gap-3">
-                        <SecondaryButton 
-                            @click="closeModal" 
-                            type="button"
-                            class="px-6 py-2"
-                        >
-                            Cancel
-                        </SecondaryButton>
-                        <PrimaryButton 
-                            type="submit" 
-                            :disabled="!isFormValid || form.processing" 
-                            class="flex items-center gap-2 px-6 py-2 min-w-[120px] justify-center"
-                            :class="{
-                                'opacity-50 cursor-not-allowed': !isFormValid || form.processing,
-                                'hover:shadow-lg transform hover:scale-105': isFormValid && !form.processing
-                            }"
-                        >
-                            <span v-if="form.processing" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                            <CheckCircleIcon v-else class="w-4 h-4" />
-                            {{ submitButtonText }}
-                        </PrimaryButton>
+                <!-- Footer -->
+                <div class="sticky bottom-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-500">
+                            <span v-if="mode === 'create' && state.lastAutoSave" class="flex items-center gap-2 text-blue-600">
+                                Auto-saved: {{ state.lastAutoSave }}
+                            </span>
+                        </div>
+                        <div class="flex gap-3">
+                            <SecondaryButton @click="closeModal" type="button">Cancel</SecondaryButton>
+                            <PrimaryButton type="submit" :disabled="!isFormValid || state.isSubmitting || form.processing" class="flex items-center gap-2">
+                                <svg v-if="state.isSubmitting || form.processing" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <CheckCircleIcon v-else class="w-4 h-4" />
+                                <span>{{ getSubmitButtonText() }}</span>
+                            </PrimaryButton>
+                        </div>
                     </div>
                 </div>
             </form>
         </div>
     </Modal>
 </template>
-
-<style scoped>
-.form-field {
-    @apply space-y-1;
-}
-</style>

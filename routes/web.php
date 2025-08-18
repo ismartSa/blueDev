@@ -18,6 +18,7 @@ use App\Http\Controllers\{
     CategoryController,
     SettingsController,
     BackupController,
+    AnalyticsController,
 };
 use App\Http\Controllers\Course\CourseContentController;
 use App\Http\Controllers\Course\CourseManagementController;
@@ -112,6 +113,25 @@ Route::get('/dashboard', function () {
 
     return Inertia::render('Dashboard', $stats);
 })->name('dashboard');
+
+    // Demo Routes
+    Route::get('/demo/status-switch', function () {
+        return Inertia::render('Demo/StatusSwitchDemo');
+    })->name('demo.status-switch');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Analytics Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/dashboard', [AnalyticsController::class, 'dashboard'])->name('dashboard');
+        Route::get('/data', [AnalyticsController::class, 'data'])->name('data');
+        Route::post('/track', [AnalyticsController::class, 'track'])->name('track');
+        Route::get('/course-averages', [AnalyticsController::class, 'courseAverages'])->name('course.averages');
+        Route::post('/refresh', [AnalyticsController::class, 'refresh'])->name('refresh');
+        Route::get('/health', [AnalyticsController::class, 'health'])->name('health');
+    });
 
     // Dashboard Course Management Routes
     Route::middleware(['can:manage courses'])

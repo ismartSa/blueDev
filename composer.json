@@ -11,6 +11,7 @@
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.15",
+        "laravel/telescope": "^5.11",
         "laravel/tinker": "^2.7",
         "maatwebsite/excel": "^3.1",
         "opcodesio/log-viewer": "^3.17",

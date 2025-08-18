@@ -41,21 +41,20 @@ const goBack = () => {
 <template>
     <Head :title="`Edit ${course.title}`" />
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Edit Course</h2>
-                <div class="flex gap-3">
-                    <SecondaryButton @click="goBack" class="flex items-center gap-2">
-                        <ArrowLeftIcon class="w-4 h-4" />
-                        Back to Courses
-                    </SecondaryButton>
-                    <PrimaryButton @click="openEditModal" class="flex items-center gap-2">
-                        <PencilIcon class="w-4 h-4" />
-                        Edit Course
-                    </PrimaryButton>
-                </div>
+        <!-- Header Section -->
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Edit Course</h2>
+            <div class="flex gap-3">
+                <SecondaryButton @click="goBack" class="flex items-center gap-2">
+                    <ArrowLeftIcon class="w-4 h-4" />
+                    Back to Courses
+                </SecondaryButton>
+                <PrimaryButton @click="openEditModal" class="flex items-center gap-2">
+                    <PencilIcon class="w-4 h-4" />
+                    Edit Course
+                </PrimaryButton>
             </div>
-        </template>
+        </div>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

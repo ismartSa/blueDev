@@ -31,7 +31,7 @@ class CoursePolicy
      */
     public function create(User $user)
     {
-        return $user->hasPermissionTo('create courses') || $user->hasRole('admin');
+        return $user->hasPermissionTo('create course') || $user->hasRole('admin');
     }
 
     /**
@@ -41,7 +41,7 @@ class CoursePolicy
     {
         // User can edit if they are the course instructor or have admin/edit permissions
         return $course->user_id === $user->id || 
-               $user->hasPermissionTo('edit courses') || 
+               $user->hasPermissionTo('update course') || 
                $user->hasRole('admin');
     }
 
