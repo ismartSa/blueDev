@@ -14,9 +14,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
+use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
 {
+    private const DEFAULT_ROLE = 'student';
+    private const PASSWORD_FIELDS = ['password', 'password_confirmation'];
+    
     /**
      * Display the registration view.
      */
@@ -27,40 +32,90 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validatedData = $this->validateRegistration($request);
+        
+        try {
+            $user = $this->createUser($validatedData);
+            $this->completeRegistration($user);
+            
+            return redirect(RouteServiceProvider::HOME);
+        } catch (ValidationException $e) {
+            // Re-throw validation exceptions to let Laravel handle them properly
+            throw $e;
+        } catch (Throwable $e) {
+            return $this->handleRegistrationError($e, $request);
+        }
+    }
+    
+    /**
+     * Validate registration request data.
+     */
+    private function validateRegistration(Request $request): array
+    {
+        return $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:'.User::class,
+            'email' => 'required|string|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-
-        try {
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-            ]);
-            
-            // Assign the student role to the user
-            $user->assignRole('student');
-
-            event(new Registered($user));
-
-            Auth::login($user);
-
-            return redirect(RouteServiceProvider::HOME);
-        } catch (\Exception $e) {
-            // Log the error for debugging
-             Log::error('User registration failed: ' . $e->getMessage());
-            
-            // Redirect back with error message
-            return back()->withErrors([
-                'registration' => 'Registration failed. Please try again.'
-            ])->withInput($request->except('password', 'password_confirmation'));
+    }
+    
+    /**
+     * Create a new user with validated data.
+     */
+    private function createUser(array $data): User
+    {
+        return User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+    }
+    
+    /**
+     * Complete user registration process.
+     */
+    private function completeRegistration(User $user): void
+    {
+        $user->assignRole(self::DEFAULT_ROLE);
+        event(new Registered($user));
+        Auth::login($user);
+    }
+    
+    /**
+     * Handle registration errors with proper logging and user feedback.
+     */
+    private function handleRegistrationError(Throwable $e, Request $request): RedirectResponse
+    {
+        Log::error('User registration failed', [
+            'error' => $e->getMessage(),
+            'email' => $request->email,
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        $errorMessage = $this->getErrorMessage($e);
+        
+        return back()
+            ->withErrors(['registration' => $errorMessage])
+            ->withInput($request->except(self::PASSWORD_FIELDS));
+    }
+    
+    /**
+     * Get appropriate error message based on exception type.
+     */
+    private function getErrorMessage(Throwable $e): string
+    {
+        // Provide more specific error messages based on exception type
+        if (str_contains($e->getMessage(), 'Duplicate entry')) {
+            return 'An account with this email already exists.';
         }
+        
+        if (str_contains($e->getMessage(), 'Connection refused')) {
+            return 'Database connection failed. Please try again later.';
+        }
+        
+        return 'Registration failed. Please try again.';
     }
 }
