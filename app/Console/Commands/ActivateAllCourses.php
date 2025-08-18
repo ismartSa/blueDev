@@ -27,24 +27,24 @@ class ActivateAllCourses extends Command
     public function handle()
     {
         $this->info('Starting to activate all courses...');
-        
+
         // Count total courses before update
         $totalCourses = Course::count();
-        
+
         if ($totalCourses === 0) {
             $this->warn('No courses found in the database.');
             return;
         }
-        
+
         // Update all courses to published status
-        $updatedCount = Course::query()->update(['status' => 'published']);
-        
+        $updatedCount = Course::query()->update(['status' => '1']);
+
         $this->info("Successfully activated {$updatedCount} out of {$totalCourses} courses.");
-        
+
         // Display summary
-        $activeCourses = Course::where('status', 'published')->count();
+        $activeCourses = Course::where('status', '1')->count();
         $this->line("Total active courses: {$activeCourses}");
-        
+
         $this->info('All courses have been activated successfully!');
     }
 }
