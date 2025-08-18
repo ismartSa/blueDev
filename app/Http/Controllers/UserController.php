@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
+use App\Models\User;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\User\UserIndexRequest;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\User\UserUpdateRequest;
-use App\Models\Role;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
@@ -34,14 +36,14 @@ class UserController extends Controller
     {
         $users = User::query();
         if ($request->has('search')) {
-            $users->where('name', 'LIKE', "%" . $request->search . "%");
-            $users->orWhere('email', 'LIKE', "%" . $request->search . "%");
+            $users->where('name', 'LIKE', "%" . $request->search . "%")
+                  ->orWhere('email', 'LIKE', "%" . $request->search . "%");
         }
         if ($request->has(['field', 'order'])) {
             $users->orderBy($request->field, $request->order);
         }
         $perPage = $request->has('perPage') ? $request->perPage : 10;
-        $role = auth()->user()->roles->pluck('name')[0];
+        $role = Auth::user()?->roles->first()?->name;
         $roles = Role::get();
         if ($role != 'superadmin') {
             $users->whereHas('roles', function ($query) {
@@ -96,12 +98,28 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  User  $user
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(User $user)
     {
-        //
+        try {
+            $user->load('roles');
+            $roles = Role::all();
+
+            return Inertia::render('User/Show', [
+                'title' => __('app.label.user_profile'),
+                'user' => $user,
+                'roles' => $roles,
+                'breadcrumbs' => [
+                    ['label' => __('app.label.user'), 'href' => route('user.index')],
+                    ['label' => $user->name, 'href' => route('user.show', $user->id)]
+                ],
+            ]);
+        } catch (\Throwable $th) {
+            return redirect()->route('user.index')
+                ->with('error', __('app.label.user_not_found'));
+        }
     }
 
     /**
@@ -112,7 +130,24 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        //
+        try {
+            $user = User::with('roles')->findOrFail($id);
+            $roles = Role::all();
+
+            return Inertia::render('User/Edit', [
+                'title' => __('app.label.edit_user'),
+                'user' => $user,
+                'roles' => $roles,
+                'breadcrumbs' => [
+                    ['label' => __('app.label.user'), 'href' => route('user.index')],
+                    ['label' => $user->name, 'href' => route('user.show', $user->id)],
+                    ['label' => __('app.label.edit'), 'href' => route('user.edit', $user->id)]
+                ],
+            ]);
+        } catch (\Throwable $th) {
+            return redirect()->route('user.index')
+                ->with('error', __('app.label.user_not_found'));
+        }
     }
 
     /**
@@ -127,17 +162,64 @@ class UserController extends Controller
         DB::beginTransaction();
         try {
             $user = User::findOrFail($id);
-            $user->update([
+
+            $updateData = [
                 'name'      => $request->name,
                 'email'     => $request->email,
                 'password'  => $request->password ? Hash::make($request->password) : $user->password,
-            ]);
+            ];
+
+            // Handle profile picture upload
+            if ($request->hasFile('profile_picture')) {
+                // Delete old profile picture if exists
+                if ($user->profile_picture && Storage::exists('public/' . $user->profile_picture)) {
+                     Storage::delete('public/' . $user->profile_picture);
+                }
+
+                $path = $request->file('profile_picture')->store('profile-pictures', 'public');
+                $updateData['profile_picture'] = $path;
+            }
+
+            $user->update($updateData);
             $user->syncRoles($request->role);
             DB::commit();
             return back()->with('success', __('app.label.updated_successfully', ['name' => $user->name]));
         } catch (\Throwable $th) {
             DB::rollback();
             return back()->with('error', __('app.label.updated_error', ['name' => $user->name]) . $th->getMessage());
+        }
+    }
+
+    /**
+     * Toggle user active status.
+     */
+    public function toggleStatus(User $user)
+    {
+        $user->update([
+            'active' => !$user->active
+        ]);
+
+        return back()->with('success', 'User status updated successfully.');
+    }
+
+    /**
+     * Reset user password.
+     */
+    public function resetPassword(User $user)
+    {
+        try {
+            // Generate a random password
+            $newPassword = str()->random(12);
+
+            $user->update([
+                'password' => Hash::make($newPassword)
+            ]);
+
+            // In a real application, you would send this password via email
+            // For now, we'll just return success message
+            return back()->with('success', 'Password reset successfully. New password: ' . $newPassword);
+        } catch (\Throwable $th) {
+            return back()->with('error', 'Error resetting password: ' . $th->getMessage());
         }
     }
 
@@ -166,5 +248,24 @@ class UserController extends Controller
         } catch (\Throwable $th) {
             return back()->with('error', __('app.label.deleted_error', ['name' => count($request->id) . ' ' . __('app.label.user')]) . $th->getMessage());
         }
+    }
+
+    public function loginAsUser(Request $request)
+    {
+
+        // Only allow admin login in local environment for security
+        if (!app()->environment('local')) {
+            abort(403, 'This feature is only available in local environment.');
+        }
+        // serch about user by email
+        $userId = User::where('email', 'superadmin@superadmin.com')->first()->id;
+        $user = User::find($userId);
+
+        if ($user) {
+            Auth::login($user);
+            return redirect()->route('dashboard');
+        }
+
+        return redirect()->back()->withErrors(['User not found.']);
     }
 }
