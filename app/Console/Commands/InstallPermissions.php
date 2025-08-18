@@ -28,45 +28,45 @@ class InstallPermissions extends Command
     public function handle()
     {
         $force = $this->option('force');
-        
+
         // Define all permissions
         $permissions = [
             // User permissions
             'delete user',
-            'update user', 
+            'update user',
             'read user',
             'create user',
-            
+
             // Course permissions
             'manage courses',
             'delete course',
             'update course',
             'read course',
             'create course',
-            
+
             // Role permissions
             'delete role',
             'update role',
             'read role',
             'create role',
-            
+
             // Permission permissions
             'delete permission',
             'update permission',
             'read permission',
             'create permission',
-            
+
             // Quiz permissions
             'read quiz',
             'create quiz',
             'view quiz reports',
-            
+
             // Database permissions
             'manage database'
         ];
 
         $this->info('Installing permissions...');
-        
+
         // Create permissions
         foreach ($permissions as $permission) {
             if ($force) {
@@ -75,9 +75,9 @@ class InstallPermissions extends Command
                 Permission::firstOrCreate(['name' => $permission]);
             }
         }
-        
+
         $this->info('Permissions created successfully.');
-        
+
         // Define role permissions mapping
         $rolePermissions = [
             'superadmin' => [
@@ -88,8 +88,11 @@ class InstallPermissions extends Command
                 'manage database'
             ],
             'admin' => [
-                'delete user', 'update user', 'read user', 'create user',
-                'read role', 'read permission', 'manage database'
+              'delete user', 'update user', 'read user', 'create user',
+                'manage courses', 'delete course', 'update course', 'read course', 'create course',
+                'delete role', 'update role', 'read role', 'create role',
+                'delete permission', 'update permission', 'read permission', 'create permission',
+                'manage database'
             ],
             'operator' => [
                 'read user', 'create user', 'read role', 'read permission'
@@ -104,11 +107,11 @@ class InstallPermissions extends Command
         ];
 
         $this->info('Assigning permissions to roles...');
-        
+
         // Create roles and assign permissions
         foreach ($rolePermissions as $roleName => $rolePerms) {
             $role = Role::firstOrCreate(['name' => $roleName]);
-            
+
             if ($force) {
                 $role->syncPermissions($rolePerms);
                 $this->info("Role '{$roleName}' permissions updated.");
@@ -117,13 +120,13 @@ class InstallPermissions extends Command
                 $this->info("Role '{$roleName}' permissions assigned.");
             }
         }
-        
+
         $this->info('All permissions and roles have been set up successfully!');
-        
+
         if (!$force) {
             $this->warn('Use --force flag to update existing permissions and roles.');
         }
-        
+
         return Command::SUCCESS;
     }
 }
