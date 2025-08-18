@@ -207,7 +207,7 @@ class InstallCourses extends Command
                 'level' => $courseData['level'],
                 'category_id' => $category->id,
                 'user_id' => $instructor->id,
-                'status' => 'published'
+                'status' => true
             ];
 
             $course = $force 
