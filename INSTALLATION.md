@@ -59,9 +59,7 @@ The system will create the following roles with their respective permissions:
 - Role and permission viewing
 - Database management
 
-### Operator
-- User creation and viewing
-- Role and permission viewing
+
 
 ### Instructor
 - Course management (create, update, read)

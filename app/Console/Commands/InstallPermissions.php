@@ -94,9 +94,6 @@ class InstallPermissions extends Command
                 'delete permission', 'update permission', 'read permission', 'create permission',
                 'manage database'
             ],
-            'operator' => [
-                'read user', 'create user', 'read role', 'read permission'
-            ],
             'instructor' => [
                 'create course', 'update course', 'read course',
                 'read quiz', 'create quiz', 'view quiz reports'

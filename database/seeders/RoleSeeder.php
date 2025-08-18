@@ -50,16 +50,7 @@ class RoleSeeder extends Seeder
             'read permission',
             'manage database'
         ]);
-        $operator = Role::firstOrCreate([
-            'name'          => 'operator'
-        ]);
 
-        $operator->givePermissionTo([
-            'read user',
-            'create user',
-            'read role',
-            'read permission',
-        ]);
         $instructor = Role::firstOrCreate([
             'name' => 'instructor'
         ]);
